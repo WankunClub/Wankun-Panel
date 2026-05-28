@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -546,19 +545,8 @@ async function fetchGSheetRaw(sheetName){
 }
 
 async function fetchGoogleSheets(){
-  const url=`https://docs.google.com/spreadsheets/d/${GS_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(GS_SHEET)}`;
-  const res=await fetch(url);
-  if(!res.ok) throw new Error('Error leyendo Google Sheets');
-  const text=await res.text();
-  // Strip Google's JSONP wrapper
-  const json=JSON.parse(text.substring(text.indexOf('(')+ 1,text.lastIndexOf(')')));
-  const cols=json.table.cols.map(c=>c.label);
-  const rows=json.table.rows.map(r=>{
-    const obj={};
-    r.c.forEach((cell,i)=>{
-      obj[cols[i]]=cell?cell.v:null;
-    });
-    return obj;
+  return await fetchCSV('Ventas');
+  const rows = [];
   });
   return rows;
 }
@@ -784,8 +772,7 @@ let clData=[],clFiltered=[],clToken='';
 const BASE='appjbyYBMtU1GUTuu',TABLE='tblmJVO8hN2eMdHUU';
 
 async function conectarClientes(){
-  clToken=document.getElementById('cl-token').value.trim();
-  if(clToken) localStorage.setItem('wk_token',clToken);
+  clToken='';
   if(!clToken)return;
   const st=document.getElementById('cl-status');
   st.className='conn-status conn-loading';st.textContent='Conectando...';
@@ -1093,15 +1080,8 @@ function avExportar(){
 window.addEventListener('DOMContentLoaded', function(){
   const saved = localStorage.getItem('wk_token');
   if(saved){
-    const inputs = ['cl-token','av-token'];
-    inputs.forEach(id => { const el=document.getElementById(id); if(el) el.value=saved; });
-    // Auto-conectar silenciosamente si hay token guardado
-    setTimeout(()=>{ 
-      if(document.getElementById('cl-token')) conectarClientes();
-    }, 300);
-    setTimeout(()=>{
-      if(document.getElementById('av-token')) avConectar();
-    }, 600);
+    setTimeout(()=>conectarClientes(), 300);
+    setTimeout(()=>avConectar(), 600);
   }
 });
 </script>
