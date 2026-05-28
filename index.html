@@ -1,1109 +1,1216 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wankun Club — Panel de Control</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-:root{
-  --verde:#2d6a4f;--verde-claro:#74c69d;--verde-bg:#d8f3dc;
-  --azul:#1d3557;--azul-med:#457b9d;--azul-claro:#a8dadc;
-  --gris:#f8f9fa;--gris-med:#e9ecef;--gris-dark:#6c757d;
-  --texto:#1a1a2e;--blanco:#ffffff;
-  --radio:12px;--sombra:0 2px 12px rgba(0,0,0,.08);
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-height:100vh}
-
-/* SIDEBAR */
-.sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;background:var(--azul);padding:0;z-index:100;display:flex;flex-direction:column}
-.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.1)}
-.logo-text{font-size:18px;font-weight:600;color:#fff;letter-spacing:-.3px}
-.logo-sub{font-size:11px;color:var(--azul-claro);margin-top:2px;letter-spacing:.5px;text-transform:uppercase}
-.nav{padding:16px 0;flex:1}
-.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;font-size:13px;color:rgba(255,255,255,.65);transition:all .15s;border-left:3px solid transparent}
-.nav-item:hover{color:#fff;background:rgba(255,255,255,.07)}
-.nav-item.active{color:#fff;background:rgba(255,255,255,.1);border-left-color:var(--verde-claro)}
-.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.8}
-.nav-item.active svg{opacity:1}
-.nav-section{font-size:10px;font-weight:600;color:rgba(255,255,255,.3);padding:16px 20px 6px;text-transform:uppercase;letter-spacing:.8px}
-.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.1);font-size:11px;color:rgba(255,255,255,.35)}
-
-/* MAIN */
-.main{margin-left:220px;min-height:100vh}
-.topbar{background:var(--blanco);border-bottom:1px solid var(--gris-med);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-.topbar-title{font-size:15px;font-weight:600;color:var(--texto)}
-.topbar-right{display:flex;align-items:center;gap:12px}
-.fecha{font-size:12px;color:var(--gris-dark);font-family:'DM Mono',monospace}
-.objetivo-pill{font-size:11px;padding:4px 12px;border-radius:20px;background:var(--verde-bg);color:var(--verde);font-weight:500}
-
-.content{padding:24px 28px}
-
-/* PÁGINA */
-.page{display:none}
-.page.active{display:block}
-
-/* MÉTRICAS */
-.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
-.metric{background:var(--blanco);border-radius:var(--radio);padding:18px 20px;box-shadow:var(--sombra)}
-.metric-label{font-size:11px;color:var(--gris-dark);font-weight:500;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
-.metric-value{font-size:26px;font-weight:600;color:var(--texto);line-height:1}
-.metric-delta{font-size:12px;margin-top:6px}
-.delta-up{color:var(--verde)}
-.delta-neutral{color:var(--gris-dark)}
-
-/* CARDS */
-.card{background:var(--blanco);border-radius:var(--radio);padding:20px 22px;box-shadow:var(--sombra);margin-bottom:16px}
-.card-title{font-size:14px;font-weight:600;color:var(--texto);margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.card-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-
-/* TABLA CLIENTES */
-.table-wrap{border:1px solid var(--gris-med);border-radius:8px;overflow:hidden}
-.table-head{display:grid;grid-template-columns:1fr 120px 130px 90px 80px;gap:0;background:var(--gris);padding:8px 14px;font-size:11px;font-weight:600;color:var(--gris-dark);text-transform:uppercase;letter-spacing:.4px}
-.table-row{display:grid;grid-template-columns:1fr 120px 130px 90px 80px;gap:0;padding:9px 14px;border-top:1px solid var(--gris-med);font-size:13px;align-items:center;transition:background .1s}
-.table-row:hover{background:var(--gris)}
-.local-tag{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--verde-bg);color:var(--verde);font-weight:500}
-.fuera-tag{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--gris-med);color:var(--gris-dark)}
-.wa-link{font-size:11px;padding:4px 10px;border-radius:6px;background:var(--verde-bg);color:var(--verde);font-weight:500;text-decoration:none;border:none;cursor:pointer}
-.wa-link:hover{background:#b7e4c7}
-.table-body{max-height:380px;overflow-y:auto}
-
-/* FILTROS */
-.filtros{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-.filtro-group{display:flex;flex-direction:column;gap:4px}
-.filtro-group label{font-size:11px;color:var(--gris-dark);font-weight:500}
-.filtro-group select,.filtro-group input{padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--blanco);color:var(--texto)}
-.filtro-group select:focus,.filtro-group input:focus{outline:none;border-color:var(--verde-claro)}
-
-/* BOTONES */
-.btn{padding:8px 16px;border-radius:8px;border:1px solid var(--gris-med);background:var(--blanco);cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;color:var(--texto);transition:all .15s}
-.btn:hover{background:var(--gris);border-color:#ccc}
-.btn-primary{background:var(--verde);color:#fff;border-color:var(--verde)}
-.btn-primary:hover{background:var(--azul)}
-.btn-row{display:flex;gap:8px;flex-wrap:wrap}
-
-/* CONEXIÓN */
-.conn-card{background:var(--blanco);border-radius:var(--radio);padding:20px 22px;box-shadow:var(--sombra);margin-bottom:20px}
-.conn-row{display:flex;gap:10px;align-items:center}
-.conn-row input{flex:1;padding:9px 12px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Mono',monospace}
-.conn-row input:focus{outline:none;border-color:var(--verde-claro)}
-.conn-status{font-size:12px;padding:4px 12px;border-radius:20px;font-weight:500}
-.conn-ok{background:var(--verde-bg);color:var(--verde)}
-.conn-err{background:#ffe5e5;color:#c0392b}
-.conn-loading{background:#e8f4fd;color:var(--azul-med)}
-
-/* CHAT MARKETING */
-.chat-wrap{background:var(--blanco);border-radius:var(--radio);box-shadow:var(--sombra);overflow:hidden}
-.chat-msgs{padding:16px;height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;background:#f8faf8}
-.msg{display:flex;gap:10px;align-items:flex-start}
-.msg.user{flex-direction:row-reverse}
-.msg-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
-.msg.agent .msg-av{background:var(--azul);color:#fff}
-.msg.user .msg-av{background:var(--verde);color:#fff}
-.msg-bubble{padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;max-width:85%}
-.msg.agent .msg-bubble{background:var(--blanco);border:1px solid var(--gris-med);border-radius:4px 12px 12px 12px}
-.msg.user .msg-bubble{background:var(--verde);color:#fff;border-radius:12px 4px 12px 12px}
-.typing-dots{display:flex;gap:4px;padding:4px 0}
-.typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--gris-dark);animation:blink 1.2s infinite}
-.typing-dots span:nth-child(2){animation-delay:.2s}
-.typing-dots span:nth-child(3){animation-delay:.4s}
-@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
-.chat-input-area{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--gris-med);background:var(--blanco)}
-.chat-input-area textarea{flex:1;resize:none;border:1px solid var(--gris-med);border-radius:8px;padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;height:40px;line-height:1.5}
-.chat-input-area textarea:focus{outline:none;border-color:var(--verde-claro)}
-
-/* QUICK BTNS */
-.quick-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:16px}
-.quick-btn{padding:10px 14px;border-radius:8px;border:1px solid var(--gris-med);background:var(--blanco);cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--texto);text-align:left;line-height:1.4;transition:all .15s}
-.quick-btn:hover{background:var(--verde-bg);border-color:var(--verde-claro);color:var(--verde)}
-
-/* VENTAS CHART */
-.chart-container{position:relative;height:220px;width:100%}
-.bar-chart{display:flex;align-items:flex-end;gap:6px;height:180px;padding:0 4px}
-.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
-.bar{width:100%;border-radius:6px 6px 0 0;transition:opacity .2s;cursor:default;position:relative}
-.bar:hover{opacity:.85}
-.bar-label{font-size:10px;color:var(--gris-dark);font-family:'DM Mono',monospace;text-align:center}
-.bar-val{font-size:10px;color:var(--texto);font-weight:600;font-family:'DM Mono',monospace;text-align:center}
-
-/* CHECKLIST */
-.checklist{list-style:none}
-.check-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--gris-med);font-size:13px}
-.check-item:last-child{border-bottom:none}
-.check-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px}
-.dot-ok{background:var(--verde-bg);color:var(--verde)}
-.dot-warn{background:#fff3cd;color:#856404}
-.dot-bad{background:#ffe5e5;color:#c0392b}
-.check-tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;margin-left:6px}
-.tag-ok{background:var(--verde-bg);color:var(--verde)}
-.tag-warn{background:#fff3cd;color:#856404}
-.tag-bad{background:#ffe5e5;color:#c0392b}
-
-/* ROADMAP */
-.rm-list{display:flex;flex-direction:column;gap:8px}
-.rm-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:8px;background:var(--gris)}
-.rm-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
-.rm-done{background:var(--verde-bg);color:var(--verde)}
-.rm-next{background:#dbeafe;color:#1d4ed8}
-.rm-future{background:var(--gris-med);color:var(--gris-dark)}
-.rm-text{font-size:13px;font-weight:500;color:var(--texto)}
-.rm-sub{font-size:11px;color:var(--gris-dark);margin-top:2px}
-
-/* MENSAJE SORTEO */
-.msg-template{background:var(--gris);border:1px solid var(--gris-med);border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;margin-bottom:12px;font-family:'DM Sans',sans-serif}
-
-@media(max-width:768px){
-  .sidebar{width:100%;height:56px;flex-direction:row;position:fixed;top:0}
-  .main{margin-left:0;margin-top:56px}
-  .nav{display:flex;flex-direction:row;padding:0;overflow-x:auto}
-  .nav-section{display:none}
-  .sidebar-footer{display:none}
-  .sidebar-logo{padding:0 16px;display:flex;align-items:center;border-bottom:none;border-right:1px solid rgba(255,255,255,.1)}
-  .table-head,.table-row{grid-template-columns:1fr 100px 110px 70px 70px}
-  .card-grid{grid-template-columns:1fr}
-}
-</style>
-</head>
-<body>
-
-<div class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-text">Wankun Club</div>
-    <div class="logo-sub">Panel de Control</div>
-  </div>
-  <nav class="nav">
-    <div class="nav-section">Principal</div>
-    <div class="nav-item active" onclick="irA('inicio')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-      Inicio
-    </div>
-    <div class="nav-item" onclick="irA('ventas')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      Ventas
-    </div>
-    <div class="nav-section">Clientes</div>
-    <div class="nav-item" onclick="irA('clientes')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Clientes
-    </div>
-    <div class="nav-section">Marketing</div>
-    <div class="nav-item" onclick="irA('marketing')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 5.61 5.61l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-      Agente Marketing
-    </div>
-    <div class="nav-item" onclick="irA('sorteo')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
-      Sorteo Mundial
-    </div>
-    <div class="nav-section">Sistema</div>
-    <div class="nav-item" onclick="irA('roadmap')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      Roadmap
-    </div>
-    <div class="nav-item" onclick="irA('agente-ventas')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-      Agente Ventas
-    </div>
-  </nav>
-  <div class="sidebar-footer">v1.0 · Mayo 2026</div>
-</div>
-
-<div class="main">
-  <div class="topbar">
-    <span class="topbar-title" id="page-title">Inicio</span>
-    <div class="topbar-right">
-      <span class="fecha" id="fecha-hoy"></span>
-      <span class="objetivo-pill">Objetivo +15% mensual</span>
-    </div>
-  </div>
-
-  <div class="content">
-
-    <!-- INICIO -->
-    <div class="page active" id="page-inicio">
-      <div class="metrics-grid">
-        <div class="metric"><div class="metric-label">Facturación total</div><div class="metric-value">$106.3M</div><div class="metric-delta delta-neutral">Sep 2025 – May 2026</div></div>
-        <div class="metric"><div class="metric-label">Mayo al 26/5</div><div class="metric-value">$18.5M</div><div class="metric-delta delta-up">↑ +15.4% vs abril</div></div>
-        <div class="metric"><div class="metric-label">Clientes zona local</div><div class="metric-value">56</div><div class="metric-delta delta-neutral">de 480 en Airtable</div></div>
-        <div class="metric"><div class="metric-label">Ticket promedio</div><div class="metric-value">$106K</div><div class="metric-delta delta-neutral">por pedido</div></div>
-        <div class="metric"><div class="metric-label">Radio local</div><div class="metric-value">54%</div><div class="metric-delta delta-up">↑ de facturación</div></div>
-        <div class="metric"><div class="metric-label">Seguidores IG</div><div class="metric-value">140</div><div class="metric-delta delta-neutral">Sorteo activo</div></div>
-      </div>
-
-      <div class="card-grid">
-        <div class="card">
-          <div class="card-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            Evolución mensual
-          </div>
-          <div class="bar-chart" id="bar-chart-inicio"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-            Acciones prioritarias esta semana
-          </div>
-          <ul class="checklist">
-            <li class="check-item"><div class="check-dot dot-bad">!</div><span>Mandar sorteo mundialista a los 56 clientes locales por WhatsApp <span class="check-tag tag-bad">Urgente</span></span></li>
-            <li class="check-item"><div class="check-dot dot-bad">!</div><span>Promocionar publicación del sorteo en Instagram segmentada a zona norte GBA <span class="check-tag tag-bad">Urgente</span></span></li>
-            <li class="check-item"><div class="check-dot dot-warn">~</div><span>Optimizar horarios en Google Maps <span class="check-tag tag-warn">Esta semana</span></span></li>
-            <li class="check-item"><div class="check-dot dot-warn">~</div><span>Subir fotos de productos a Google Maps <span class="check-tag tag-warn">Esta semana</span></span></li>
-            <li class="check-item"><div class="check-dot dot-ok">✓</div><span>Base de clientes Airtable conectada y segmentada <span class="check-tag tag-ok">Listo</span></span></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- VENTAS -->
-    <div class="page" id="page-ventas">
-      <div class="metrics-grid">
-        <div class="metric"><div class="metric-label">Mejor mes</div><div class="metric-value">Abril</div><div class="metric-delta delta-up">$19.3M</div></div>
-        <div class="metric"><div class="metric-label">Crecimiento sep→abr</div><div class="metric-value">+344%</div><div class="metric-delta delta-up">↑ tracción real</div></div>
-        <div class="metric"><div class="metric-label">Kilos vendidos</div><div class="metric-value">15.156</div><div class="metric-delta delta-neutral">total 9 meses</div></div>
-        <div class="metric"><div class="metric-label">Royal Canin</div><div class="metric-value">~66%</div><div class="metric-delta delta-neutral">de facturación</div></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Facturación mensual (Sep 2025 – May 2026)</div>
-        <div class="bar-chart" id="bar-chart-ventas"></div>
-      </div>
-      <div class="card-grid">
-        <div class="card">
-          <div class="card-title">Top zonas — facturación</div>
-          <div id="zonas-bars"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Top marcas</div>
-          <div id="marcas-bars"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- CLIENTES -->
-    <div class="page" id="page-clientes">
-      <div class="conn-card">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <span style="font-size:14px;font-weight:600">Google Sheets</span>
-          <span class="conn-status conn-err" id="cl-status">✗ Sin conectar</span>
-        </div>
-        <button class="btn btn-primary" onclick="conectarClientes()">Cargar clientes</button>
-        <div style="font-size:11px;color:var(--gris-dark);margin-top:8px">📊 Lee directo de Google Sheets — sin token, gratis</div>
-      </div>
-
-      <div id="cl-panel" style="display:none">
-        <div class="metrics-grid" id="cl-metrics"></div>
-        <div class="card">
-          <div class="filtros">
-            <div class="filtro-group">
-              <label>Zona</label>
-              <select id="cl-zona" onchange="clFiltrar()">
-                <option value="todas">Todas</option>
-                <option value="local">Radio 15 km</option>
-                <option value="fuera">Fuera del radio</option>
-              </select>
-            </div>
-            <div class="filtro-group">
-              <label>Localidad</label>
-              <select id="cl-localidad" onchange="clFiltrar()">
-                <option value="">Todas</option>
-              </select>
-            </div>
-            <div class="filtro-group">
-              <label>Teléfono</label>
-              <select id="cl-tel" onchange="clFiltrar()">
-                <option value="todos">Todos</option>
-                <option value="contel">Con teléfono</option>
-              </select>
-            </div>
-            <div class="filtro-group">
-              <label>Ordenar</label>
-              <select id="cl-orden" onchange="clFiltrar()">
-                <option value="nombre">Nombre</option>
-                <option value="localidad">Localidad</option>
-              </select>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-            <span style="font-size:14px;font-weight:600" id="cl-title">Clientes</span>
-            <div class="btn-row">
-              <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500" id="cl-count">0</span>
-              <button class="btn" onclick="clExportar()">⬇ CSV</button>
-              <button class="btn btn-primary" onclick="toggleSorteoMsg()">👕 Mensaje sorteo</button>
-            </div>
-          </div>
-          <div id="sorteo-msg-panel" style="display:none;margin-bottom:14px">
-            <div class="msg-template" id="sorteo-msg-text">Hola [Nombre] 👋
-¿Cómo está tu compañero peludo?
-
-Te cuento que estamos sorteando 20 camisetas de la Selección Argentina para perros — 11 de junio a las 22hs 🇦🇷⚽
-
-Para participar entrá a nuestro Instagram @wankunclub, seguinos y comentá con el talle y raza de tu perro.
-
-¡Mucha suerte!</div>
-            <button class="btn btn-primary" onclick="copiarMsg()">📋 Copiar mensaje</button>
-          </div>
-          <div class="table-wrap">
-            <div class="table-head"><span>Nombre</span><span>Localidad</span><span>Teléfono</span><span>Artículo</span><span>WhatsApp</span></div>
-            <div class="table-body" id="cl-table"><div style="padding:30px;text-align:center;color:var(--gris-dark);font-size:13px">Conectá Airtable para ver los clientes</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- MARKETING -->
-    <div class="page" id="page-marketing">
-      <div class="card">
-        <div class="card-title">Agente de marketing — planificación semanal</div>
-        <div class="chat-wrap">
-          <div class="chat-msgs" id="mkt-msgs">
-            <div class="msg agent">
-              <div class="msg-av">WC</div>
-              <div class="msg-bubble">Hola. Soy el agente de marketing de Wankun Club.<br><br>Mi trabajo es ayudarte a planificar cada semana para crecer dentro del radio de 15 km, manteniendo el objetivo de +15% mensual.<br><br><strong>¿Cómo estuvo esta semana?</strong> Contame brevemente.</div>
-            </div>
-          </div>
-          <div class="chat-input-area">
-            <textarea id="mkt-input" placeholder="Contame cómo estuvo la semana..." onkeydown="mktKey(event)" oninput="mktResize(this)"></textarea>
-            <button class="btn btn-primary" onclick="mktSend()" style="height:40px;padding:0 14px">↑</button>
-          </div>
-        </div>
-        <div class="quick-grid" style="margin-top:12px">
-          <button class="quick-btn" onclick="mktQuick('Quiero planificar la semana que viene')">Planificar semana ↗</button>
-          <button class="quick-btn" onclick="mktQuick('¿Qué publico en Instagram esta semana para captar clientes nuevos de la zona?')">Qué publicar en Instagram ↗</button>
-          <button class="quick-btn" onclick="mktQuick('Dame una estrategia de WhatsApp para reactivar clientes que no compran hace más de 30 días')">Reactivar clientes por WA ↗</button>
-          <button class="quick-btn" onclick="mktQuick('Estamos en $18.5M en mayo. ¿Qué necesitamos hacer esta semana para cerrar el mes arriba del objetivo?')">Cerrar mayo al objetivo ↗</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- SORTEO -->
-    <div class="page" id="page-sorteo">
-      <div class="metrics-grid">
-        <div class="metric"><div class="metric-label">Camisetas en sorteo</div><div class="metric-value">20</div><div class="metric-delta delta-neutral">varios talles</div></div>
-        <div class="metric"><div class="metric-label">Fecha del sorteo</div><div class="metric-value">11 Jun</div><div class="metric-delta delta-neutral">a las 22hs</div></div>
-        <div class="metric"><div class="metric-label">Likes publicación</div><div class="metric-value">29</div><div class="metric-delta delta-up">↑ 5 días</div></div>
-        <div class="metric"><div class="metric-label">Comentarios</div><div class="metric-value">49</div><div class="metric-delta delta-up">↑ alta participación</div></div>
-      </div>
-      <div class="card-grid">
-        <div class="card">
-          <div class="card-title">Mensaje para clientes locales</div>
-          <div class="msg-template">Hola [Nombre] 👋
-¿Cómo está tu compañero peludo?
-
-Te cuento que estamos sorteando 20 camisetas de la Selección Argentina para perros — 11 de junio a las 22hs 🇦🇷⚽
-
-Para participar entrá a nuestro Instagram @wankunclub, seguinos y comentá con el talle y raza de tu perro.
-
-¡Mucha suerte!</div>
-          <button class="btn btn-primary" onclick="copiarSorteoMsg()">📋 Copiar mensaje</button>
-        </div>
-        <div class="card">
-          <div class="card-title">Checklist del sorteo</div>
-          <ul class="checklist">
-            <li class="check-item"><div class="check-dot dot-ok">✓</div><span>Publicación creada en Instagram <span class="check-tag tag-ok">Hecho</span></span></li>
-            <li class="check-item"><div class="check-dot dot-ok">✓</div><span>Mecánica clara: seguir + like + comentar talle/raza <span class="check-tag tag-ok">Hecho</span></span></li>
-            <li class="check-item"><div class="check-dot dot-bad">!</div><span>Mandar mensaje a 56 clientes locales por WhatsApp <span class="check-tag tag-bad">Urgente</span></span></li>
-            <li class="check-item"><div class="check-dot dot-bad">!</div><span>Promocionar publicación segmentada a zona norte GBA <span class="check-tag tag-bad">Pendiente</span></span></li>
-            <li class="check-item"><div class="check-dot dot-warn">~</div><span>Agregar en copy "solo zona norte GBA" para filtrar locales <span class="check-tag tag-warn">Recomendado</span></span></li>
-            <li class="check-item"><div class="check-dot dot-warn">~</div><span>Story de recordatorio 3 días antes del sorteo (8 Jun) <span class="check-tag tag-warn">Programar</span></span></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- ROADMAP -->
-    <div class="page" id="page-roadmap">
-      <div class="card">
-        <div class="card-title">Roadmap — consolidación 15 km (3 años)</div>
-        <div class="rm-list">
-          <div class="rm-item"><div class="rm-num rm-done">1</div><div><div class="rm-text">Dashboard de ventas y métricas</div><div class="rm-sub">Completado — $106.3M analizados, por mes, zona y marca</div></div></div>
-          <div class="rm-item"><div class="rm-num rm-done">2</div><div><div class="rm-text">Base de clientes conectada a Airtable</div><div class="rm-sub">Completado — 480 registros, 56 locales identificados con teléfono</div></div></div>
-          <div class="rm-item"><div class="rm-num rm-done">3</div><div><div class="rm-text">Agente de marketing semanal</div><div class="rm-sub">Completado — planificación por Instagram, WhatsApp y Google Maps</div></div></div>
-          <div class="rm-item"><div class="rm-num rm-done">4</div><div><div class="rm-text">Panel de control unificado</div><div class="rm-sub">Completado — este archivo</div></div></div>
-          <div class="rm-item"><div class="rm-num rm-next">5</div><div><div class="rm-text">Campaña sorteo mundialista a clientes locales</div><div class="rm-sub">Esta semana — 56 clientes por WhatsApp + promoción en Instagram</div></div></div>
-          <div class="rm-item"><div class="rm-num rm-next">6</div><div><div class="rm-text">Agente de ventas con alertas de inactividad</div><div class="rm-sub">Próximas 2 semanas — monitoreo diario + proyección mensual</div></div></div>
-          <div class="rm-item"><div class="rm-num rm-future">7</div><div><div class="rm-text">Sistema de contenido semanal para Instagram</div><div class="rm-sub">Mes 2 — copies, captions y guiones de Reels automatizados</div></div></div>
-          <div class="rm-item"><div class="rm-num rm-future">8</div><div><div class="rm-text">Reporte semanal automático para Nacho y Santino</div><div class="rm-sub">Mes 2 — resumen ejecutivo cada lunes</div></div></div>
-          <div class="rm-item"><div class="rm-num rm-future">9</div><div><div class="rm-text">Facturación zona local al 65% del total</div><div class="rm-sub">Objetivo 3 años — de 54% actual → 65-70%</div></div></div>
-        </div>
-      </div>
-    </div>
-
-  <!-- AGENTE VENTAS -->
-    <div class="page" id="page-agente-ventas">
-      <div class="conn-card" id="av-conn-card">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <span style="font-size:14px;font-weight:600">Google Sheets</span>
-          <span class="conn-status conn-err" id="av-status">✗ Sin conectar</span>
-        </div>
-        <button class="btn btn-primary" onclick="avConectar()">Cargar datos</button>
-        <div style="font-size:11px;color:var(--gris-dark);margin-top:8px">📊 Lee directo de Google Sheets — sin token, gratis</div>
-      </div>
-
-      <div id="av-panel" style="display:none">
-        <div class="metrics-grid" id="av-metrics"></div>
-
-        <div class="card">
-          <div class="card-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Clientes sin comprar hace más de 45 días
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-            <div class="filtros" style="margin-bottom:0">
-              <div class="filtro-group">
-                <label>Zona</label>
-                <select id="av-zona" onchange="avFiltrar()">
-                  <option value="todas">Todas</option>
-                  <option value="local">Radio 15 km</option>
-                  <option value="fuera">Fuera del radio</option>
-                </select>
-              </div>
-              <div class="filtro-group">
-                <label>Días sin comprar</label>
-                <select id="av-dias" onchange="avFiltrar()">
-                  <option value="45">+45 días</option>
-                  <option value="30">+30 días</option>
-                  <option value="60">+60 días</option>
-                  <option value="90">+90 días</option>
-                </select>
-              </div>
-              <div class="filtro-group">
-                <label>Ordenar por</label>
-                <select id="av-orden" onchange="avFiltrar()">
-                  <option value="dias">Más días inactivo</option>
-                  <option value="nombre">Nombre</option>
-                </select>
-              </div>
-            </div>
-            <div class="btn-row">
-              <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#ffe5e5;color:#c0392b;font-weight:500" id="av-count">0 clientes</span>
-              <button class="btn" onclick="avExportar()">⬇ CSV</button>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <div class="table-head" style="grid-template-columns:1fr 110px 110px 80px 90px 80px">
-              <span>Cliente</span><span>Zona</span><span>Teléfono</span><span>Última compra</span><span>Días inactivo</span><span>WhatsApp</span>
-            </div>
-            <div class="table-body" id="av-table" style="max-height:420px"></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            Proyección del mes
-          </div>
-          <div class="metrics-grid" id="av-proyeccion"></div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<script>
-const VERDE='#2d6a4f';const VERDE_CL='#74c69d';const AZUL='#457b9d';
-const CSV_VENTAS='https://docs.google.com/spreadsheets/d/e/2PACX-1vRb5vGvPSTZPzMTSmupYCGPKVX7gweZmwmkT-ZYsgosN7xkhZMSUwz8gdOtzS3JsHx-1XWlJ4XsgVS4/pub?gid=1445300364&single=true&output=csv';
-const CSV_FLEX='https://docs.google.com/spreadsheets/d/e/2PACX-1vRb5vGvPSTZPzMTSmupYCGPKVX7gweZmwmkT-ZYsgosN7xkhZMSUwz8gdOtzS3JsHx-1XWlJ4XsgVS4/pub?gid=1280177385&single=true&output=csv';
-
-function parseCSV(text){
-  const lines=text.trim().split('\n');
-  // Find header row (first row with actual content)
-  let headerIdx=0;
-  for(let i=0;i<lines.length;i++){
-    const cols=lines[i].split(',').map(c=>c.replace(/^"|"$/g,'').trim());
-    if(cols.filter(c=>c).length>2){headerIdx=i;break;}
-  }
-  const headers=lines[headerIdx].split(',').map(c=>c.replace(/^"|"$/g,'').trim());
-  const rows=[];
-  for(let i=headerIdx+1;i<lines.length;i++){
-    if(!lines[i].trim())continue;
-    // Handle quoted fields with commas
-    const vals=[];
-    let cur='',inQ=false;
-    for(const ch of lines[i]){
-      if(ch==='"')inQ=!inQ;
-      else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}
-      else cur+=ch;
-    }
-    vals.push(cur.trim());
-    const obj={};
-    headers.forEach((h,i)=>{obj[h]=vals[i]||'';});
-    rows.push(obj);
-  }
-  return rows;
-}
-
-async function fetchCSV(url){
-  const res=await fetch(url);
-  if(!res.ok) throw new Error('Error leyendo CSV');
-  const text=await res.text();
-  return parseCSV(text);
-}
-
-async function fetchGSheetRaw(sheetName){
-  const url=sheetName==='Ventas'?CSV_VENTAS:CSV_FLEX;
-  return await fetchCSV(url);
-}
-
-async function fetchGoogleSheets(){
-  const url=`https://docs.google.com/spreadsheets/d/${GS_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(GS_SHEET)}`;
-  const res=await fetch(url);
-  if(!res.ok) throw new Error('Error leyendo Google Sheets');
-  const text=await res.text();
-  // Strip Google's JSONP wrapper
-  const json=JSON.parse(text.substring(text.indexOf('(')+ 1,text.lastIndexOf(')')));
-  const cols=json.table.cols.map(c=>c.label);
-  const rows=json.table.rows.map(r=>{
-    const obj={};
-    r.c.forEach((cell,i)=>{
-      obj[cols[i]]=cell?cell.v:null;
-    });
-    return obj;
-  });
-  return rows;
-}
-
-async function cargarDesdeSheetsYActualizar(){
-  try{
-    const rows=await fetchGoogleSheets();
-    // Agrupar por mes
-    const porMes={};
-    const zonasMapa={},marcasMapa={};
-    let totalFac=0;
-    rows.forEach(r=>{
-      // Fecha
-      let fecha=null;
-      const fechaVal=r['FECHA']||r['Fecha']||r['fecha'];
-      if(fechaVal){
-        if(typeof fechaVal==='string') fecha=new Date(fechaVal);
-        else if(typeof fechaVal==='number') fecha=new Date(Math.round((fechaVal-25569)*86400*1000));
-        else if(fechaVal.constructor&&fechaVal.constructor.name==='Date') fecha=fechaVal;
-      }
-      // Facturación
-      let fac=0;
-      const facVal=r['Facturación']||r['FACTURACION']||r['facturacion']||0;
-      fac=typeof facVal==='number'?facVal:parseFloat((facVal||'').toString().replace(/[^0-9.]/g,''))||0;
-      if(!fecha||isNaN(fecha)||!fac) return;
-      totalFac+=fac;
-      const key=fecha.getFullYear()+'-'+(fecha.getMonth()+1).toString().padStart(2,'0');
-      porMes[key]=(porMes[key]||0)+fac;
-      const zona=r['Barrio/Localidad']||r['BARRIO/LOCALIDAD']||'';
-      const marca=r['Marca']||r['MARCA']||'';
-      if(zona) zonasMapa[zona]=(zonasMapa[zona]||0)+fac;
-      if(marca&&marca!=='Vacía') marcasMapa[marca]=(marcasMapa[marca]||0)+fac;
-    });
-    const keys=Object.keys(porMes).sort();
-    if(keys.length<2) return;
-    const mesesNombres=keys.map(k=>{
-      const [y,m]=k.split('-');
-      return new Date(parseInt(y),parseInt(m)-1,1).toLocaleDateString('es-AR',{month:'short'}).replace('.','');
-    });
-    const facturas=keys.map(k=>porMes[k]);
-    FACTURA_LIVE=facturas;
-    MESES_LIVE=mesesNombres;
-    const mesActual=facturas[facturas.length-1];
-    // Actualizar métricas inicio
-    const metEl=document.querySelector('#page-inicio .metrics-grid');
-    if(metEl){
-      const cards=metEl.querySelectorAll('.metric');
-      if(cards[0]) cards[0].querySelector('.metric-value').textContent='$'+(totalFac/1e6).toFixed(1)+'M';
-      if(cards[1]) cards[1].querySelector('.metric-value').textContent='$'+(mesActual/1e6).toFixed(1)+'M';
-    }
-    // Actualizar métricas ventas
-    const vEl=document.querySelector('#page-ventas .metrics-grid');
-    if(vEl){
-      const cards=vEl.querySelectorAll('.metric');
-      if(cards[0]){
-        const maxMes=Math.max(...facturas);
-        const maxIdx=facturas.indexOf(maxMes);
-        cards[0].querySelector('.metric-value').textContent=mesesNombres[maxIdx];
-        cards[0].querySelector('.metric-delta').textContent='$'+(maxMes/1e6).toFixed(1)+'M';
-      }
-    }
-    renderBars('bar-chart-inicio',facturas,mesesNombres);
-    renderBars('bar-chart-ventas',facturas,mesesNombres);
-    const topZonas=Object.fromEntries(Object.entries(zonasMapa).sort((a,b)=>b[1]-a[1]).slice(0,8));
-    const topMarcas=Object.fromEntries(Object.entries(marcasMapa).sort((a,b)=>b[1]-a[1]).slice(0,8));
-    renderBarsSmall('zonas-bars',topZonas,VERDE);
-    renderBarsSmall('marcas-bars',topMarcas,AZUL);
-    console.log('Sheets cargado: '+rows.length+' filas, $'+(totalFac/1e6).toFixed(1)+'M total');
-  }catch(e){
-    console.log('Error Google Sheets:',e);
-  }
-}
-let FACTURA_LIVE = [4351700,7950760,8804030,9844900,9661745,11334800,16575600,19314000,18477350];
-let MESES_LIVE = ['Sep','Oct','Nov','Dic','Ene','Feb','Mar','Abr','May'];
-
-function fmt(n){return'$'+(n/1e6).toFixed(1)+'M'}
-
-function renderBars(containerId, factura, meses){
-  const el=document.getElementById(containerId);
-  if(!el)return;
-  const data = factura || FACTURA_LIVE;
-  const labels = meses || MESES_LIVE;
-  const maxF = Math.max(...data);
-  el.innerHTML=labels.map((m,i)=>{
-    const h=Math.round((data[i]/maxF)*160);
-    const isLast = i === data.length-1;
-    const isPrev = i === data.length-2;
-    const color=isPrev?VERDE:isLast?AZUL:VERDE_CL;
-    return`<div class="bar-wrap">
-      <div class="bar-val">${fmt(data[i])}</div>
-      <div class="bar" style="height:${h}px;background:${color}" title="${m}: ${fmt(data[i])}"></div>
-      <div class="bar-label">${m}</div>
-    </div>`;
-  }).join('');
-}
-
-async function cargarVentasLive(){
-  // Solo si ya hay token conectado
-  if(!avToken) return;
-  try {
-    const recs = await avFetch('tblMVFDqCcHGWSoNF');
-    // Agrupar por mes
-    const porMes = {};
-    recs.forEach(r => {
-      const fechaStr = r.fields['FECHA']||r.fields['Fecha']||'';
-      const facStr = r.fields['Facturación']||0;
-      const fac = typeof facStr === 'number' ? facStr : parseFloat(facStr.toString().replace(/[^0-9.]/g,''))||0;
-      if(!fechaStr || !fac) return;
-      const f = new Date(fechaStr);
-      if(isNaN(f)) return;
-      const key = f.getFullYear()+'-'+(f.getMonth()+1).toString().padStart(2,'0');
-      porMes[key] = (porMes[key]||0) + fac;
-    });
-
-    // Ordenar y construir arrays
-    const keys = Object.keys(porMes).sort();
-    if(keys.length < 2) return;
-
-    const mesesNombres = keys.map(k => {
-      const [y,m] = k.split('-');
-      const d = new Date(parseInt(y), parseInt(m)-1, 1);
-      return d.toLocaleDateString('es-AR',{month:'short'}).replace('.','');
-    });
-    const facturas = keys.map(k => porMes[k]);
-    const total = facturas.reduce((a,b)=>a+b,0);
-    const mesActual = facturas[facturas.length-1];
-
-    FACTURA_LIVE = facturas;
-    MESES_LIVE = mesesNombres;
-
-    // Actualizar métricas del inicio
-    const metricasEl = document.querySelector('#page-inicio .metrics-grid');
-    if(metricasEl) {
-      const cards = metricasEl.querySelectorAll('.metric');
-      if(cards[0]) { cards[0].querySelector('.metric-value').textContent = '$'+( total/1e6).toFixed(1)+'M'; }
-      if(cards[1]) { 
-        cards[1].querySelector('.metric-value').textContent = '$'+(mesActual/1e6).toFixed(1)+'M';
-      }
-    }
-
-    // Actualizar métricas de ventas
-    const ventasMetEl = document.querySelector('#page-ventas .metrics-grid');
-    if(ventasMetEl) {
-      const cards = ventasMetEl.querySelectorAll('.metric');
-      if(cards[0]) {
-        const maxMes = Math.max(...facturas);
-        const maxIdx = facturas.indexOf(maxMes);
-        cards[0].querySelector('.metric-value').textContent = mesesNombres[maxIdx];
-        cards[0].querySelector('.metric-delta').textContent = '$'+(maxMes/1e6).toFixed(1)+'M';
-      }
-    }
-
-    // Re-renderizar gráficos
-    renderBars('bar-chart-inicio', facturas, mesesNombres);
-    renderBars('bar-chart-ventas', facturas, mesesNombres);
-
-    // Actualizar zonas y marcas
-    const zonasMapa={}, marcasMapa={};
-    recs.forEach(r => {
-      const zona = r.fields['Barrio/Localidad']||'';
-      const marca = r.fields['Marca']||'';
-      const facStr = r.fields['Facturación']||0;
-      const fac = typeof facStr === 'number' ? facStr : parseFloat(facStr.toString().replace(/[^0-9.]/g,''))||0;
-      if(zona && fac) zonasMapa[zona]=(zonasMapa[zona]||0)+fac;
-      if(marca && marca!=='Vacía' && fac) marcasMapa[marca]=(marcasMapa[marca]||0)+fac;
-    });
-
-    // Top 8 zonas y marcas
-    const topZonas = Object.entries(zonasMapa).sort((a,b)=>b[1]-a[1]).slice(0,8);
-    const topMarcas = Object.entries(marcasMapa).sort((a,b)=>b[1]-a[1]).slice(0,8);
-    const zonasObj = Object.fromEntries(topZonas);
-    const marcasObj = Object.fromEntries(topMarcas);
-    renderBarsSmall('zonas-bars', zonasObj, VERDE);
-    renderBarsSmall('marcas-bars', marcasObj, AZUL);
-
-  } catch(e) {
-    console.log('Error cargando ventas live:', e);
-  }
-}
-
-function renderBarsSmall(containerId,data,color){
-  const el=document.getElementById(containerId);
-  if(!el)return;
-  const max=Math.max(...Object.values(data));
-  el.innerHTML=Object.entries(data).map(([k,v])=>{
-    const pct=Math.round(v/max*100);
-    return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px">
-      <span style="min-width:120px;color:#6c757d;text-align:right">${k}</span>
-      <div style="flex:1;background:#f0f4f0;border-radius:4px;height:20px;overflow:hidden">
-        <div style="width:${pct}%;background:${color};height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:600;color:#fff">${fmt(v)}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-const ZONAS={'CABA':10906200,'Pilar':7197200,'Escobar':5387500,'Manuel Alberti':3889000,'Del Viso':3334600,'Sheraton Pilar':3210000,'Maschwitz':3002700,'Tortuguitas':2140100};
-const MARCAS={'Royal Canin':69947570,'Pro plan':4479100,'Excellent':4305435,'Old prince':3643730,'Eukanuba':2832750,'Mon ami':2475800,'Optimus':2091000};
-
-function irA(pagina){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+pagina).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>{
-    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+pagina+"'"))n.classList.add('active');
-  });
-  const titles={inicio:'Inicio',ventas:'Ventas',clientes:'Clientes',marketing:'Agente Marketing',sorteo:'Sorteo Mundial',roadmap:'Roadmap'};
-  document.getElementById('page-title').textContent=titles[pagina]||pagina;
-  if(pagina==='ventas'){renderBars('bar-chart-ventas',FACTURA_LIVE,MESES_LIVE);renderBarsSmall('zonas-bars',ZONAS,VERDE);renderBarsSmall('marcas-bars',MARCAS,AZUL);cargarDesdeSheetsYActualizar();
-// Auto-cargar clientes
-setTimeout(()=>conectarClientes(), 1000);
-setTimeout(()=>avConectar(), 1500);}
-}
-
-document.getElementById('fecha-hoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-renderBars('bar-chart-inicio', FACTURA_LIVE, MESES_LIVE);
-// Cargar Google Sheets automáticamente al abrir
-cargarDesdeSheetsYActualizar();
-
-const ZONAS_LOCAL=['pilar','del viso','escobar','maschwitz','maschwitz p','maschwitz privado','maschwits','maschwits privado','maschwits p','maschwitch','maschwitz priivado','benavidez','tigre','nordelta','villanueva','tortuguitas','manuel alberti','pilara','pilar del este','pilar profundo','la montura','recodo','el recodo','roble joven','highlands','altos del barranco','las liebres','ayres','azurra','puertos','galapagos','galápagos','caamaño','pacheco','pachecho','bermudas','bermuda','olivos gold','olivos golf','la lomada','canton','el cantón','de vicenzo','sausalito','montura','smo','santa maria','san matías','mapuche','martin dale','haras de santa maría','haras de santa maria','sheraton','sheraton pilar','grand bourg','gran bourg','argentino golf'];
-function esLocal(l){return ZONAS_LOCAL.includes((l||'').trim().toLowerCase())}
-
-let clData=[],clFiltered=[],clToken='';
-const BASE='appjbyYBMtU1GUTuu',TABLE='tblmJVO8hN2eMdHUU';
-
-async function conectarClientes(){
-  clToken=document.getElementById('cl-token').value.trim();
-  if(clToken) localStorage.setItem('wk_token',clToken);
-  if(!clToken)return;
-  const st=document.getElementById('cl-status');
-  st.className='conn-status conn-loading';st.textContent='Conectando...';
-  try{
-    clData=await clFetch();
-    st.className='conn-status conn-ok';st.textContent='✓ '+clData.length+' registros';
-    document.getElementById('cl-panel').style.display='block';
-    clPoblarLocs();clMetricas();clFiltrar();
-  }catch(e){st.className='conn-status conn-err';st.textContent='✗ '+e.message;}
-}
-
-async function clFetch(off){
-  let url=`https://api.airtable.com/v0/${BASE}/${TABLE}?pageSize=100`;
-  if(off)url+='&offset='+off;
-  const r=await fetch(url,{headers:{Authorization:'Bearer '+clToken}});
-  if(!r.ok)throw new Error('Token inválido ('+r.status+')');
-  const d=await r.json();
-  const recs=d.records.map(r=>({nombre:r.fields['Nombre del comprador']||'',localidad:r.fields['Localidad']||'',telefono:(r.fields['Teléfono']||'').toString(),articulo:r.fields['Artículo']||'',fecha:r.fields['Fecha de venta']||r.fields['Fecha']||''}));
-  if(d.offset){const more=await clFetch(d.offset);return[...recs,...more];}
-  return recs;
-}
-
-function clPoblarLocs(){
-  const locs=[...new Set(clData.map(c=>c.localidad).filter(Boolean))].sort();
-  const sel=document.getElementById('cl-localidad');
-  sel.innerHTML='<option value="">Todas</option>';
-  locs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;sel.appendChild(o);});
-}
-
-function clMetricas(){
-  const t=clData.length,loc=clData.filter(c=>esLocal(c.localidad)).length,tel=clData.filter(c=>c.telefono).length,lt=clData.filter(c=>esLocal(c.localidad)&&c.telefono).length;
-  document.getElementById('cl-metrics').innerHTML=`
-    <div class="metric"><div class="metric-label">Total registros</div><div class="metric-value">${t}</div></div>
-    <div class="metric"><div class="metric-label">Zona local</div><div class="metric-value">${loc}</div></div>
-    <div class="metric"><div class="metric-label">Con teléfono</div><div class="metric-value">${tel}</div></div>
-    <div class="metric"><div class="metric-label">Local + teléfono</div><div class="metric-value">${lt}</div></div>`;
-}
-
-function clFiltrar(){
-  const zona=document.getElementById('cl-zona').value;
-  const loc=document.getElementById('cl-localidad').value;
-  const tel=document.getElementById('cl-tel').value;
-  const ord=document.getElementById('cl-orden').value;
-  clFiltered=clData.filter(c=>{
-    if(zona==='local'&&!esLocal(c.localidad))return false;
-    if(zona==='fuera'&&esLocal(c.localidad))return false;
-    if(loc&&c.localidad!==loc)return false;
-    if(tel==='contel'&&!c.telefono)return false;
-    return true;
-  });
-  if(ord==='nombre')clFiltered.sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  else if(ord==='localidad')clFiltered.sort((a,b)=>(a.localidad||'').localeCompare(b.localidad||''));
-  document.getElementById('cl-count').textContent=clFiltered.length+' clientes';
-  const labels={todas:'Todos los clientes',local:'Clientes zona local (15 km)',fuera:'Clientes fuera del radio'};
-  document.getElementById('cl-title').textContent=labels[zona]||'Clientes';
-  const tb=document.getElementById('cl-table');
-  if(!clFiltered.length){tb.innerHTML='<div style="padding:30px;text-align:center;color:var(--gris-dark);font-size:13px">Sin resultados</div>';return;}
-  tb.innerHTML=clFiltered.map(c=>`
-    <div class="table-row">
-      <span style="font-weight:500">${c.nombre||'—'}</span>
-      <span>${c.localidad||'—'} <span class="${esLocal(c.localidad)?'local-tag':'fuera-tag'}">${esLocal(c.localidad)?'local':'fuera'}</span></span>
-      <span style="font-family:'DM Mono',monospace;font-size:12px">${c.telefono||'—'}</span>
-      <span style="font-size:12px;color:var(--gris-dark)">${c.articulo||'—'}</span>
-      ${c.telefono?`<a class="wa-link" href="${waLink(c.telefono,c.nombre)}" target="_blank">💬 WA</a>`:'<span></span>'}
-    </div>`).join('');
-}
-
-function waLink(tel,nombre){
-  const num=tel.toString().replace(/\D/g,'');
-  const full=num.startsWith('54')?num:'54'+num;
-  const msg=encodeURIComponent(`Hola ${nombre} 👋\n¿Cómo está tu compañero peludo?\n\nTe cuento que estamos sorteando 20 camisetas de la Selección Argentina para perros — 11 de junio a las 22hs 🇦🇷⚽\n\nPara participar entrá a nuestro Instagram @wankunclub, seguinos y comentá con el talle y raza de tu perro.\n\n¡Mucha suerte!`);
-  return`https://wa.me/${full}?text=${msg}`;
-}
-
-function toggleSorteoMsg(){const p=document.getElementById('sorteo-msg-panel');p.style.display=p.style.display==='none'?'block':'none';}
-function copiarMsg(){navigator.clipboard.writeText(document.getElementById('sorteo-msg-text').textContent).then(()=>{const b=event.target;const o=b.textContent;b.textContent='✓ Copiado';setTimeout(()=>b.textContent=o,2000);});}
-function copiarSorteoMsg(){const t="Hola [Nombre] 👋\n¿Cómo está tu compañero peludo?\n\nTe cuento que estamos sorteando 20 camisetas de la Selección Argentina para perros — 11 de junio a las 22hs 🇦🇷⚽\n\nPara participar entrá a nuestro Instagram @wankunclub, seguinos y comentá con el talle y raza de tu perro.\n\n¡Mucha suerte!";navigator.clipboard.writeText(t).then(()=>{const b=event.target;const o=b.textContent;b.textContent='✓ Copiado';setTimeout(()=>b.textContent=o,2000);});}
-
-function clExportar(){
-  const rows=[['Nombre','Localidad','Teléfono','Artículo','Zona'],...clFiltered.map(c=>[c.nombre,c.localidad,c.telefono,c.articulo,esLocal(c.localidad)?'Local':'Fuera'])];
-  const csv=rows.map(r=>r.map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='clientes_wankun.csv';a.click();
-  URL.revokeObjectURL(url);
-}
-
-const MKT_SYSTEM=`Sos el agente de marketing de Wankun Club, una pet shop especializada en alimento premium para mascotas, ubicada en Pilar, Buenos Aires, Argentina. Dueño: Nacho. También trabaja Santino y Naty (esposa de Nacho). Modelo: venta y entrega a domicilio. Facturación histórica Sep 2025-May 2026: $106.3M ARS. Crecimiento mensual objetivo: +15%. Mayo 2026 al 26/5: $18.5M, +15.4% vs abril. Facturación dentro del radio 15km: 54% del total. Objetivo 3 años: llegar al 65-70% local. Marca líder: Royal Canin (~66%). Ticket promedio: $106.000 ARS. Zonas clave: Pilar, Escobar, Manuel Alberti, Del Viso, Maschwitz, Tortuguitas, Nordelta, Benavidez, Tigre, Sheraton Pilar, Grand Bourg, Argentino Golf. Canales: Instagram (140 seguidores), WhatsApp, Google Maps. Campaña activa: sorteo 20 camisetas selección argentina, se sortea 11 de junio 22hs. Respondés en español rioplatense, sos directo y práctico, orientado a resultados.`;
-
-let mktHistory=[];
-
-async function mktSend(){
-  const inp=document.getElementById('mkt-input');
-  const txt=inp.value.trim();if(!txt)return;
-  inp.value='';inp.style.height='40px';
-  mktAdd('user',txt);
-  mktTyping(true);
-  mktHistory.push({role:'user',content:txt});
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:MKT_SYSTEM,messages:mktHistory})});
-    const data=await res.json();
-    const reply=data.content?.[0]?.text||'Error de conexión.';
-    mktHistory.push({role:'assistant',content:reply});
-    mktTyping(false);mktAdd('agent',reply);
-  }catch(e){mktTyping(false);mktAdd('agent','Error de conexión. Intentá de nuevo.');}
-}
-
-function mktAdd(role,text){
-  const msgs=document.getElementById('mkt-msgs');
-  const div=document.createElement('div');div.className='msg '+role;
-  const av=document.createElement('div');av.className='msg-av';av.textContent=role==='agent'?'WC':'N';
-  const bubble=document.createElement('div');bubble.className='msg-bubble';
-  bubble.innerHTML=text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-  div.appendChild(av);div.appendChild(bubble);msgs.appendChild(div);
-  msgs.scrollTop=msgs.scrollHeight;
-}
-
-function mktTyping(show){
-  document.getElementById('mkt-typing')&&document.getElementById('mkt-typing').remove();
-  if(!show)return;
-  const msgs=document.getElementById('mkt-msgs');
-  const div=document.createElement('div');div.className='msg agent';div.id='mkt-typing';
-  div.innerHTML=`<div class="msg-av">WC</div><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
-  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
-}
-
-function mktQuick(txt){document.getElementById('mkt-input').value=txt;mktSend();}
-function mktKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();mktSend();}}
-function mktResize(el){el.style.height='40px';el.style.height=Math.min(el.scrollHeight,120)+'px';}
-
-// ===== AGENTE DE VENTAS =====
-const AV_BASE='appjbyYBMtU1GUTuu';
-const AV_TABLE_ML='tblmJVO8hN2eMdHUU'; // Mercado Libre
-const AV_TABLE_DIRECTAS='tblMVFDqCcHGWSoNF'; // Ventas directas
-
-let avToken='', avData=[], avFiltered=[];
-
-const ZONAS_LOCAL_AV=['pilar','del viso','escobar','maschwitz','maschwitz p','maschwitz privado','maschwits','maschwits privado','maschwits p','maschwitch','maschwitz priivado','benavidez','tigre','nordelta','villanueva','tortuguitas','manuel alberti','pilara','pilar del este','pilar profundo','la montura','recodo','el recodo','roble joven','highlands','altos del barranco','las liebres','ayres','azurra','puertos','galapagos','galápagos','caamaño','pacheco','pachecho','bermudas','bermuda','olivos gold','olivos golf','la lomada','canton','el cantón','de vicenzo','sausalito','montura','smo','santa maria','san matías','mapuche','martin dale','haras de santa maría','haras de santa maria','sheraton','sheraton pilar','grand bourg','gran bourg','argentino golf'];
-function avEsLocal(l){return ZONAS_LOCAL_AV.includes((l||'').trim().toLowerCase())}
-
-async function avConectar(){
-  avToken=document.getElementById('av-token').value.trim();
-  if(avToken) localStorage.setItem('wk_token',avToken);
-  if(!avToken)return;
-  const st=document.getElementById('av-status');
-  st.className='conn-status conn-loading';st.textContent='Conectando...';
-  try{
-    const [ml, directas]=await Promise.all([avFetch(AV_TABLE_ML), avFetch(AV_TABLE_DIRECTAS)]);
-    // Procesar ML
-    const mlProcesado=ml.map(r=>({
-      nombre:r.fields['Nombre del comprador']||'',
-      localidad:r.fields['Localidad']||'',
-      telefono:(r.fields['Teléfono']||'').toString(),
-      fecha:r.fields['Fecha de venta']||r.fields['Fecha']||'',
-      fuente:'Mercado Libre'
-    }));
-    // Procesar directas
-    const dirProcesado=directas.map(r=>({
-      nombre:r.fields['CLIENTE']||r.fields['Nombre del comprador']||'',
-      localidad:r.fields['Barrio/Localidad']||r.fields['Localidad']||'',
-      telefono:(r.fields['Teléfono']||'').toString(),
-      fecha:r.fields['FECHA']||r.fields['Fecha']||'',
-      fuente:'Directa'
-    }));
-    const todos=[...mlProcesado,...dirProcesado].filter(r=>r.nombre&&r.fecha);
-    // Agrupar por cliente — última compra
-    const mapa={};
-    todos.forEach(r=>{
-      const key=r.nombre.trim().toLowerCase();
-      const fechaR=new Date(r.fecha);
-      if(!isNaN(fechaR)){
-        if(!mapa[key]||fechaR>new Date(mapa[key].fecha)){
-          mapa[key]={nombre:r.nombre,localidad:r.localidad,telefono:r.telefono,fecha:r.fecha,fuente:r.fuente};
-        }
-      }
-    });
-    avData=Object.values(mapa);
-    st.className='conn-status conn-ok';st.textContent='✓ '+avData.length+' clientes únicos';
-    document.getElementById('av-panel').style.display='block';
-    avMetricas();avFiltrar();avProyeccion();cargarVentasLive();
-  }catch(e){st.className='conn-status conn-err';st.textContent='✗ '+e.message;}
-}
-
-async function avFetch(tableId, offset){
-  let url=`https://api.airtable.com/v0/${AV_BASE}/${tableId}?pageSize=100`;
-  if(offset)url+='&offset='+offset;
-  const r=await fetch(url,{headers:{Authorization:'Bearer '+avToken}});
-  if(!r.ok)throw new Error('Token inválido ('+r.status+')');
-  const d=await r.json();
-  const recs=d.records;
-  if(d.offset){const more=await avFetch(tableId,d.offset);return[...recs,...more];}
-  return recs;
-}
-
-function avDiasInactivo(fecha){
-  if(!fecha)return 9999;
-  const d=new Date(fecha);
-  if(isNaN(d))return 9999;
-  return Math.floor((new Date()-d)/(1000*60*60*24));
-}
-
-function avMetricas(){
-  const dias45=avData.filter(c=>avDiasInactivo(c.fecha)>=45).length;
-  const dias30=avData.filter(c=>avDiasInactivo(c.fecha)>=30).length;
-  const local45=avData.filter(c=>avDiasInactivo(c.fecha)>=45&&avEsLocal(c.localidad)).length;
-  const activos=avData.filter(c=>avDiasInactivo(c.fecha)<30).length;
-  document.getElementById('av-metrics').innerHTML=`
-    <div class="metric"><div class="metric-label">Clientes únicos</div><div class="metric-value">${avData.length}</div></div>
-    <div class="metric"><div class="metric-label">Sin comprar +45 días</div><div class="metric-value" style="color:#c0392b">${dias45}</div><div class="metric-delta" style="color:#c0392b">requieren seguimiento</div></div>
-    <div class="metric"><div class="metric-label">Sin comprar +30 días</div><div class="metric-value" style="color:#856404">${dias30}</div></div>
-    <div class="metric"><div class="metric-label">Locales inactivos +45d</div><div class="metric-value" style="color:#c0392b">${local45}</div></div>
-    <div class="metric"><div class="metric-label">Activos (últimos 30d)</div><div class="metric-value" style="color:var(--verde)">${activos}</div></div>`;
-}
-
-function avFiltrar(){
-  const zona=document.getElementById('av-zona').value;
-  const dias=parseInt(document.getElementById('av-dias').value);
-  const orden=document.getElementById('av-orden').value;
-  avFiltered=avData.filter(c=>{
-    if(avDiasInactivo(c.fecha)<dias)return false;
-    if(zona==='local'&&!avEsLocal(c.localidad))return false;
-    if(zona==='fuera'&&avEsLocal(c.localidad))return false;
-    return true;
-  });
-  if(orden==='dias')avFiltered.sort((a,b)=>avDiasInactivo(b.fecha)-avDiasInactivo(a.fecha));
-  else avFiltered.sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  document.getElementById('av-count').textContent=avFiltered.length+' clientes';
-  const tb=document.getElementById('av-table');
-  if(!avFiltered.length){tb.innerHTML='<div style="padding:30px;text-align:center;color:var(--gris-dark);font-size:13px">No hay clientes inactivos con esos filtros</div>';return;}
-  tb.innerHTML=avFiltered.map(c=>{
-    const d=avDiasInactivo(c.fecha);
-    const color=d>=90?'#c0392b':d>=60?'#856404':'#5f5e5a';
-    const fechaFmt=c.fecha?new Date(c.fecha).toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'2-digit'}):'—';
-    return`<div class="table-row" style="grid-template-columns:1fr 110px 110px 80px 90px 80px">
-      <span style="font-weight:500">${c.nombre||'—'}</span>
-      <span>${c.localidad||'—'} <span class="${avEsLocal(c.localidad)?'local-tag':'fuera-tag'}">${avEsLocal(c.localidad)?'local':'fuera'}</span></span>
-      <span style="font-family:'DM Mono',monospace;font-size:12px">${c.telefono||'—'}</span>
-      <span style="font-size:12px">${fechaFmt}</span>
-      <span style="font-weight:600;color:${color}">${d} días</span>
-      ${c.telefono?`<a class="wa-link" href="${avWaLink(c.telefono,c.nombre,d)}" target="_blank">💬 WA</a>`:'<span></span>'}
-    </div>`;
-  }).join('');
-}
-
-function avWaLink(tel,nombre,dias){
-  const num=tel.toString().replace(/\D/g,'');
-  const full=num.startsWith('54')?num:'54'+num;
-  const msg=encodeURIComponent(`Hola ${nombre} 👋\n¿Cómo está tu compañero peludo?\n\nHace un tiempo que no sabemos de vos y queríamos saludarte. ¿Necesitás reponer el alimento? Tenemos stock completo y hacemos envío a tu zona.\n\nCualquier cosa escribinos, estamos para ayudarte 🐾\n\nWankun Club`);
-  return`https://wa.me/${full}?text=${msg}`;
-}
-
-async function avProyeccion(){
-  const hoy=new Date();
-  const diaDelMes=hoy.getDate();
-  const diasEnMes=new Date(hoy.getFullYear(),hoy.getMonth()+1,0).getDate();
-  const mesActual=hoy.getMonth(); // 0-indexed
-  const anioActual=hoy.getFullYear();
-
-  // Calcular facturación del mes actual desde ambas tablas
-  let facturaMesActual=0;
-  try {
-    // Sumar de ventas directas (Ventas 2)
-    const directas = avData.filter(c => {
-      const f = new Date(c.fecha);
-      return !isNaN(f) && f.getMonth()===mesActual && f.getFullYear()===anioActual;
-    });
-    // También traer facturación de ventas directas
-    const recs = await avFetch('tblMVFDqCcHGWSoNF');
-    recs.forEach(r => {
-      const fechaStr = r.fields['FECHA']||r.fields['Fecha']||'';
-      const fac = parseFloat((r.fields['Facturación']||'0').toString().replace(/[^0-9.]/g,''));
-      if(fechaStr && fac) {
-        const f = new Date(fechaStr);
-        if(!isNaN(f) && f.getMonth()===mesActual && f.getFullYear()===anioActual) {
-          facturaMesActual += fac;
-        }
-      }
-    });
-  } catch(e) { facturaMesActual = 18477350; }
-
-  if(facturaMesActual === 0) facturaMesActual = 18477350;
-
-  const proyeccion=Math.round(facturaMesActual/diaDelMes*diasEnMes);
-  const objetivo=Math.round(19314000*1.15);
-  const diff=proyeccion-objetivo;
-  const pct=Math.round((proyeccion/objetivo-1)*100);
-  document.getElementById('av-proyeccion').innerHTML=`
-    <div class="metric"><div class="metric-label">Día del mes</div><div class="metric-value">${diaDelMes}/${diasEnMes}</div></div>
-    <div class="metric"><div class="metric-label">Facturado hasta hoy</div><div class="metric-value">$${(facturaMesActual/1e6).toFixed(1)}M</div></div>
-    <div class="metric"><div class="metric-label">Proyección de cierre</div><div class="metric-value" style="color:var(--verde)">$${(proyeccion/1e6).toFixed(1)}M</div></div>
-    <div class="metric"><div class="metric-label">Objetivo mes (+15%)</div><div class="metric-value">$${(objetivo/1e6).toFixed(1)}M</div></div>
-    <div class="metric"><div class="metric-label">Diferencia</div><div class="metric-value" style="color:${diff>=0?'var(--verde)':'#c0392b'}">${diff>=0?'+':''}$${(Math.abs(diff)/1e6).toFixed(1)}M</div><div class="metric-delta" style="color:${diff>=0?'var(--verde)':'#c0392b'}">${diff>=0?'↑ arriba del objetivo':'↓ debajo del objetivo'} (${pct>0?'+':''}${pct}%)</div></div>`;
-}
-
-function avExportar(){
-  const rows=[['Cliente','Localidad','Zona','Teléfono','Última compra','Días inactivo'],...avFiltered.map(c=>[c.nombre,c.localidad,avEsLocal(c.localidad)?'Local':'Fuera',c.telefono,c.fecha,avDiasInactivo(c.fecha)])];
-  const csv=rows.map(r=>r.map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='clientes_inactivos_wankun.csv';a.click();
-  URL.revokeObjectURL(url);
-}
-
-// Auto-cargar token guardado
-window.addEventListener('DOMContentLoaded', function(){
-  const saved = localStorage.getItem('wk_token');
-  if(saved){
-    const inputs = ['cl-token','av-token'];
-    inputs.forEach(id => { const el=document.getElementById(id); if(el) el.value=saved; });
-    // Auto-conectar silenciosamente si hay token guardado
-    setTimeout(()=>{ 
-      if(document.getElementById('cl-token')) conectarClientes();
-    }, 300);
-    setTimeout(()=>{
-      if(document.getElementById('av-token')) avConectar();
-    }, 600);
-  }
-});
-</script>
-</body>
-</html>
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,FECHA,CLIENTE,Domicilio,Barrio/Localidad,Marca,producto,kg, Facturación,Estado
+,1-sept-25,edu eguaburo,,highlands,Royal Canin,medium adulto,8," $  60.700,00 ",Pago
+,2-sept-25,edu eguaburo,,highlands,Royal Canin,dachs adulto,3," $  63.000,00 ",Pago
+,2-sept-25,valeria,,highlands,Vacía,giant junio,15," $  105.900,00 ",Pago
+,2-sept-25,manu mangione,,roble joven,Vacía,maxi adult,15," $  95.000,00 ",Pago
+,3-sept-25,Hector,,maschwitz p,Vacía,maxi puppy,15," $  105.000,00 ",Pago
+,4-sept-25,flor,,recodo,Eukanuba,fit body med adult,15," $  63.000,00 ",Pago
+,4-sept-25,Paula,,maschwitz p,Vacía,medium puppy,15," $  57.600,00 ",Pago
+,5-sept-25,rodri,,caba,Vacía,GC weight control,12," $  123.000,00 ",Pago
+,5-sept-25,patricio,,escobar,Vacía,puppy small,8," $  62.100,00 ",Pago
+,5-sept-25,patricio,,escobar,Vacía,adult small,8," $  56.200,00 ",Pago
+,5-sept-25,DAMIAN PERRONE,,SAUSALITO,Royal Canin,medium adulto,8," $  63.900,00 ",Pago
+,7-sept-25,laura,,tortuguitas,Vacía,adulto WC,15," $  47.500,00 ",Pago
+,7-sept-25,laura,,tortuguitas,Vacía,Gato Adulto,8," $  31.500,00 ",Pago
+,8-sept-25,sabrina,,pachecho,Vacía,satiety,15," $  113.000,00 ",Pago
+,8-sept-25,loly costa,,ayres,Vacía,castrado,2," $  23.000,00 ",Pago
+,9-sept-25,poli,,montura,Excellent,gatito,2," $  10.000,00 ",Pago
+,9-sept-25,mirianm,,maschwitz p,Vacía,maxi adulto,15," $  95.000,00 ",Pago
+,10-sept-25,maty,,san martin,Vacía,gato castrado,8," $  53.300,00 ",Pago
+,10-sept-25,clifo,,roble joven,Eukanuba,fit large,15," $  63.300,00 ",Pago
+,10-sept-25,maxi amaireti,,recodo,Vacía,ageing +12,3," $  34.500,00 ",Pago
+,10-sept-25,marcos,,la montura,Pro plan,medium adulto,15," $  85.600,00 ",Pago
+,11-sept-25,lulo,,,Royal Canin,maxi adulto ,15," $  95.000,00 ",Pago
+,11-sept-25,lulo,,,Royal Canin,giant junior ,15," $  113.300,00 ",Pago
+,11-sept-25,lulo,,,Club performance,adulto WC,15," $  64.800,00 ",Pago
+,11-sept-25,lulo,,,Club performance,junior ,15," $  69.900,00 ",Pago
+,11-sept-25,lulo,,,Royal Canin,mini adult +8,3," $  34.100,00 ",Pago
+,11-sept-25,lulo,,,Vacía,urinary care ,2," $  25.700,00 ",Pago
+,11-sept-25,Facundo,,altos del barranco,Vacía,maxi adulto,15," $  95.000,00 ",Pago
+,11-sept-25,flauta,,recodo,Royal Canin,mini adult  ,3," $  31.000,00 ",Pago
+,11-sept-25,max ,,caamaño,Royal Canin,maxi adulto,15," $  95.000,00 ",Pago
+,11-sept-25,carolina amiga cris,,olivos,Vacía,castrado,15," $  63.300,00 ",Pago
+,11-sept-25,coco,,escobar,Royal Canin,labrador,12," $  84.000,00 ",Pago
+,11-sept-25,vete,,,R Puppies,perfume,," $  15.000,00 ",Pago
+,11-sept-25,marcos,,la montura,Vacía,mediano adulto,15," $  57.900,00 ",Pago
+,11-sept-25,marcos,,la montura,Vacía,gato castrado,3," $  48.900,00 ",Pago
+,11-sept-25,marcos ,,la montura,Vacía,mini adult ,8," $  66.000,00 ",Pago
+,11-sept-25,dany,,,Vacía,kitten,8," $  94.900,00 ",Pago
+,12-sept-25,marcos,,la montura,Vacía,mediano adulto,15," $  57.900,00 ",Pago
+,12-sept-25,Maria Juliana,,Escobar,Vacía,adulto WC,20," $  50.800,00 ",Pago
+,12-sept-25,MARCOS,,,Excellent,GATO,3," $  23.800,00 ",Pago
+,13-sept-25,MARCOS,,,Excellent,GATO,3," $  23.800,00 ",Pago
+,13-sept-25,eli,,la montura,Vacía,perro ,8," $  37.000,00 ",Pago
+,14-sept-25,massi,,,Vacía,medium adulto,15," $  99.000,00 ",Pago
+,15-sept-25,fren,,caba,Vacía,maxi adulto,15," $  95.000,00 ",Pago
+,15-sept-25,nicolas,,pilar del este,Vacía,mediano adulto,15," $  99.000,00 ",Pago
+,15-sept-25,eugenia,,tortuguitas,Vacía,,42," $  146.000,00 ",Pago
+,16-sept-25,ana,,maschwitz p,Vacía,mini adult,8," $  66.000,00 ",Pago
+,16-sept-25,ana,,maschwitz p,Vacía,boxer,12," $  84.000,00 ",Pago
+,16-sept-25,marcos,,,Vacía,adulto large,15," $  85.600,00 ",Pago
+,17-sept-25,lucho,,recodo,Fit,,2," $  23.600,00 ",Pago
+,17-sept-25,lucho,,recodo,Royal Canin,mini adult,3," $  34.000,00 ",Pago
+,17-sept-25,isabel,,olivos gold,Vacía,mini puppy,6," $  68.000,00 ",Pago
+,17-sept-25,Teve,,la montura,Vacía,maxi adult,15," $  95.000,00 ",Pago
+,17-sept-25,lulo,,,Excellent,gato adulto,3," $  23.800,00 ",Pago
+,17-sept-25,lulo,,,Vacía,maxi adult,15," $  95.000,00 ",Pago
+,19-sept-25,Jimena ,,Las Liebres,Club performance,Weight control,15, $  -   ,Pago
+,23-sept-25,jose maria rodriguez,,pilar del este,Vacía,optimus perro adulto,20," $  51.000,00 ",Pago
+,23-sept-25,Natalia Pinto,,Las Liebres,Vacía,medium adulto,15," $  102.000,00 ",Pago
+,24-sept-25,Ale Suarez Tutti,,Ayres,Vacía,Adult large,15," $  86.500,00 ",Pago
+,25-sept-25,connie,,ayres,Vacía,mini adulto ´8,3," $  34.000,00 ",Pago
+,25-sept-25,connie,,ayres,Vacía,fit,3," $  40.700,00 ",Pago
+,30-sept-25,myriam,,caba,Vacía,giant puppy,30," $  226.300,00 ",Pago
+,30-sept-25,sol moreno,,el recodo,Vacía,mini adulto ´8,3," $  34.000,00 ",Pago
+,30-sept-25,rochi beach,,villanueva,Vacía,medium puppy,15," $  104.000,00 ",Pago
+,3-oct-25,Fernando,,Villa Rosa,Royal Canin,kitten,8," $  94.900,00 ",Pago
+,3-oct-25,patricio duimicch,,maschwitch,Vacía,adulto small,8," $  55.700,00 ",Pago
+,3-oct-25,juan chioso,,smo,Royal Canin,persian,2," $  29.600,00 ",Pago
+,3-oct-25,juan chioso,,smo,Royal Canin,mini adult,3," $  34.000,00 ",Pago
+,3-oct-25,eugenia,,el lucero,Royal Canin,renal ,2," $  32.100,00 ",Pago
+,4-oct-25,paula etchmendy,,maschwits privado,Excellent,medium puppy ,15," $  57.600,00 ",Pago
+,7-oct-25,coco,,maschwitch,Royal Canin,golde ,12," $  91.000,00 ",Pago
+,7-oct-25,LOLLY,,tortuguitas,Excellent,medium adult,15," $  57.200,00 ",Pago
+,7-oct-25,lolly,,tortuguitas,Excellent,medium adult,15," $  57.200,00 ",Pago
+,8-oct-25,lolly,,tortuguitas,Royal Canin,mobility,10," $  101.800,00 ",Pago
+,8-oct-25,lolly,,tortuguitas,Old prince,cachorro eq,15," $  42.900,00 ",Pago
+,8-oct-25,Ana Sazarolli,,benavidez,Royal Canin,medium adult,8," $  64.000,00 ",Pago
+,8-oct-25,maximiliano gianinni,,villa rosa,Royal Canin,maxi adulto,15," $  95.000,00 ",Pago
+,9-oct-25,laura,,smo,Club performance,gato adulto,8," $  55.000,00 ",Pago
+,9-oct-25,Romi Mendez,,tortiguitas,Vacía,adulto castrado,15," $  75.100,00 ",Pago
+,9-oct-25,eduardo martin,,pilar ,Royal Canin,maxi adulto,15," $  95.000,00 ",Pago
+,9-oct-25,tomas prado,,ayres,Royal Canin,medium weight,3," $  36.500,00 ",Pago
+,9-oct-25,lourdes garcia,,pilar,Eukanuba,senior small,3," $  21.500,00 ",Pago
+,9-oct-25,agustin romano,,pilar,Royal Canin,gastro,10," $  87.000,00 ",Pago
+,9-oct-25,mario corzo,,Villanueva,Royal Canin,maxi adulto,15," $  95.000,00 ",Pago
+,9-oct-25,manu mangione,,roble joven ,Royal Canin,maxi adulto,15," $  90.000,00 ",Pago
+,9-oct-25,fer caprara,,las liebres,Excellent,kitten,8," $  58.000,00 ",Pago
+,10-oct-25,emilio perot,,benavidez,Vacía,maxi adulto,30," $  190.000,00 ",Pago
+,11-oct-25,julia ,,del viso,Old prince,adult eq,15," $  47.500,00 ",Pago
+,13-oct-25,lulo,,,Old prince,cordero mediano,15," $  52.700,00 ",Pago
+,13-oct-25,lulo,, ,Vacía,,," $  16.800,00 ",Pago
+,13-oct-25,norma,,Sheraton,Royal Canin,maxi adulto,45," $  285.000,00 ",Pago
+,13-oct-25,norma,,Sheraton,Royal Canin,maxi puppy,15," $  105.000,00 ",Pago
+,13-oct-25,lucho,,recodo,Royal Canin,mini adult,3," $  34.000,00 ",Pago
+,13-oct-25,lucho,,recodo,Royal Canin,fit,2," $  25.400,00 ",Pago
+,13-oct-25,daiana,,bermudas,Royal Canin,maxi puppy,15," $  105.000,00 ",Pago
+,13-oct-25,Vale,,del viso,Eukanuba,puppy lamb,15," $  64.800,00 ",Pago
+,13-oct-25,Bruno,,pacheco,Optimus,Adulto,20," $  56.200,00 ",Pago
+,13-oct-25,flor,,la montura,Vacía,gato castrado,2," $  23.500,00 ",Pago
+,13-oct-25,gisell,,villanueva,Royal Canin,maxi adulto,15," $  95.000,00 ",Pago
+,14-oct-25,jose maria ,,pilar del este,Optimus,perro adulto,20," $  56.200,00 ",Pago
+,14-oct-25,jose maria olivieri,,galapagos,Old prince,novel senior,30," $  123.400,00 ",Pago
+,14-oct-25,santi,,,Vacía,gastro felino,2," $  37.700,00 ",Pago
+,14-oct-25,santi,,,Excellent,gato adulto,3," $  25.400,00 ",Pago
+,15-oct-25,marcos,,,Old prince,novel mediano,15," $  56.900,00 ",Pago
+,15-oct-25,marcos,,,Old prince,novel small,15," $  64.600,00 ",Pago
+,15-oct-25,marcos,,,Vacía,large breed,15," $  93.300,00 ",Pago
+,15-oct-25,marcos,,,Eukanuba,puppy medium,15," $  70.900,00 ",Pago
+,15-oct-25,marcos,,,Eukanuba,senior medium,15," $  74.100,00 ",Pago
+,15-oct-25,lulo,,,Royal Canin,fit,2," $  25.400,00 ",Pago
+,15-oct-25,rosemarie,,pilara,Pro plan,adult large,15," $  93.300,00 ",Pago
+,15-oct-25,Tatiana Maryutina,,mapuche,Royal Canin,Urinary s/o,8," $  104.000,00 ",Pago
+,17-oct-25,lulo,,,Club performance,junior ,45," $  207.480,00 ",Pago
+,17-oct-25,lulo,,,Old prince,cordero mediano,15," $  56.900,00 ",Pago
+,17-oct-25,lulo,,,Royal Canin,kitten,2," $  29.000,00 ",Pago
+,17-oct-25,lulo,,,Royal Canin,junior giant,15," $  118.000,00 ",Pago
+,17-oct-25,lulo,,,Excellent,gato adulto,8," $  52.800,00 ",Pago
+,17-oct-25,juan ,,de vicenzo,Royal Canin,maxi puppy,15," $  105.000,00 ",Pago
+,18-oct-25,myriam,,maschwits,Royal Canin,maxi adulto,15," $  95.000,00 ",Pago
+,18-oct-25,facu,,tortuguitas,Royal Canin,maxi adulto,15," $  95.000,00 ",Pago
+,18-oct-25,isabel ladner,,olivos golf,Royal Canin,mini puppy,6," $  68.000,00 ",Pago
+,18-oct-25,lulo,,,Excellent,gato adulto,8," $  52.800,00 ",Pago
+,18-oct-25,maria laura ,,tortuguitas,Old prince,weight control,15," $  53.500,00 ",Pago
+,18-oct-25,mariano ,,azurra,Vacía,fit,8," $  98.700,00 ",Pago
+,21-oct-25,patricio duimicch,,maschwitz,Vacía,adulto small,8," $  58.000,00 ",Pago
+,21-oct-25,patricio duimicch,,maschwitz,Vacía,cachorro small,8," $  67.800,00 ",Pago
+,21-oct-25,eduardo eguaburo,,highlands,Royal Canin,dachshund,6," $  69.600,00 ",Pago
+,21-oct-25,eduardo eguaburo,,highlands,Royal Canin,medium adult,8," $  70.400,00 ",Pago
+,21-oct-25,Ana  ,,maschwitz,Royal Canin,boxer ,12," $  93.600,00 ",Pago
+,21-oct-25,Ignacio,,Pilar,Eukanuba,Adult lam,15," $  64.500,00 ",Pago
+,21-oct-25,Diego,,Gran Bourg,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,22-oct-25,Luciana Baglione,,Benavidez,Royal Canin,Mobility LD,30," $  278.000,00 ",Pago
+,22-oct-25,Max ,,Caamaño,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,22-oct-25,Anita,,Pilar Profundo,Royal Canin,renal,10," $  92.800,00 ",Pago
+,22-oct-25,Steve,,La Montura,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,22-oct-25,Laura Lacasa,,lagartos,Royal Canin,Maxi adulto,15," $  95.000,00 ",Pago
+,24-oct-25,Balague,,Puertos,Vacía,maxi puppy,15," $  102.700,00 ",Pago
+,24-oct-25,Balague,,Puertos,Royal Canin,hypoallergenico,2," $  31.300,00 ",Pago
+,24-oct-25,Balague,,Puertos ,Golocan,,," $  8.500,00 ",Pago
+,24-oct-25,Flor,,Recodo,Club performance,Weight Control,15," $  67.500,00 ",Pago
+,24-oct-25,Emilio SEna,,CABA,Vacía,medium Puppy,15," $  102.700,00 ",Pago
+,24-oct-25,Pio,,pio,Vacía,Gato Adulto,8," $  87.500,00 ",Pago
+,24-oct-25,Lulo,,,Vacía,Mediano ,15," $  69.120,00 ",Pago
+,24-oct-25,JAVERI PRIETO,,,Balance,MEDIANO ,20," $  58.000,00 ",Pago
+,27-oct-25,norma,,Sheraton Pilar,Royal Canin,Maxi Adulto,45," $  285.000,00 ",Pago
+,27-oct-25,Norma,,Sheraton Pilar,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,27-oct-25,Myriam,,CABA,Royal Canin,Giant Puppy,15," $  113.300,00 ",Pago
+,27-oct-25,Marcos,,,Vacía,Medium Adult,15," $  93.300,00 ",Pago
+,27-oct-25,Loly Costa,,Ayres,Vacía,Gato Castrado,2," $  23.500,00 ",Pago
+,27-oct-25,Bruno,,Pacheco,Optimus,Perro Adulto,20," $  56.200,00 ",Pago
+,27-oct-25,Denise,,Del Viso,Royal Canin,Maxi Adult,15," $  95.000,00 ",Pago
+,28-oct-25,Fren ,,Caba,Royal Canin,Maxi Adult,15," $  95.000,00 ",Pago
+,28-oct-25,Silvina,,caamaño,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,28-oct-25,Clifo,,Roble Joven,Eukanuba,Fit Body large,15," $  79.200,00 ",Pago
+,28-oct-25,mati lopez,,san martin,Royal Canin,recovery,," $  71.500,00 ",Pago
+,29-oct-25,Juliana,,Puertos,Optimus,Perro Adulto,20," $  56.200,00 ",Pago
+,29-oct-25,Marcelo Giorlando,,Fonavi,Royal Canin,Gato Urinary s/o,8," $  104.000,00 ",Pago
+,29-oct-25,Fede Roldan,,La Montura,Royal Canin,Daschshund,3," $  34.800,00 ",Pago
+,30-oct-25,Natalia Pesci,,Villa Olivos,Mon ami,Cordero,12," $  58.700,00 ",Pago
+,30-oct-25,lulo,,,Vacía,,," $  44.000,00 ",Pago
+,30-oct-25,maria Ileana,,San isidro labrador,Royal Canin,maxi adulto,15," $  95.000,00 ",Pago
+,30-oct-25,maria Ileana,,San isidro labrador,Excellent,gato adulto,8," $  50.160,00 ",Pago
+,30-oct-25,Lean Delia,,La Montura ,Optimus,perro adulto,20," $  50.000,00 ",Pago
+,31-oct-25,Gustavo,,CABA,Club performance,Weight control,15," $  67.500,00 ",Pago
+,31-oct-25,Marina Ileana,,San isidro labrador,Eukanuba,puppy Lamb,15," $  67.500,00 ",Pago
+,31-oct-25,Tony,, ,Optimus,perro adulto,20," $  56.500,00 ",Pago
+,31-oct-25,xx,,xx,Vacía,xx,0," $  48.000,00 ",Pago
+,1-nov-25,CArolina,,Bermuda,Nutrique,medium +7,12," $  87.900,00 ",Pago
+,1-nov-25,Paula Etchendy,,Maschwits P.,Excellent,Medium Puppy,15," $  63.000,00 ",Pago
+,3-nov-25,lulo,,,Royal Canin,maxi adulto,15," $  105.000,00 ",Pago
+,3-nov-25,Meli,,La Montura,Eukanuba,Medium Breed,15," $  70.600,00 ",Pago
+,3-nov-25,Mica,,Del Viso,Old prince,Adulto Mediano,15," $  39.330,00 ",Pago
+,3-nov-25,Mica ,,Del viso ,Vacía,,," $  49.000,00 ",Pago
+,3-nov-25,Fernando Lorenzo,,Dique Lujan,Royal Canin,maxi puppy,15," $  105.000,00 ",Pago
+,3-nov-25,Lulo,,,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,3-nov-25,Santi,,,Royal Canin,Mini Weight Care,3," $  37.400,00 ",Pago
+,4-nov-25,Diego,,Grand Bourg,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,4-nov-25,coco,,maschwitz,Royal Canin,Labrador ,12," $  93.600,00 ",Pago
+,4-nov-25,Ana Maria Sazarolli,,Benavidez,Royal Canin,Medium adulto,8," $  70.400,00 ",Pago
+,4-nov-25,Nestor,,maschwitz Privado,Royal Canin,Maxi adulto,15," $  105.000,00 ",Pago
+,5-nov-25,sol,,el recodo,Royal Canin,mini adult +8,3," $  36.400,00 ",Pago
+,5-nov-25,Nicolas,,Pilar del ESte,Royal Canin,Medium adulto,15," $  110.000,00 ",Pago
+,5-nov-25,Nicolas,,Pilar del ESte,Excellent,Gato Adulto,8," $  52.800,00 ",Pago
+,5-nov-25,Nicolas,,Pilar del ESte,Bio,desparasitario,," $  21.000,00 ",Pago
+,5-nov-25,Nicolas,,pilar del ESte,Cidar,Gato Adulto,," $  19.500,00 ",Pago
+,5-nov-25,Nicolas,,pilar del ESte,Cristal Cat,piedras gato,," $  14.000,00 ",Pago
+,6-nov-25,Lulo,,,Excellent,Gato Adulto,3," $  25.400,00 ",Pago
+,6-nov-25,lulo,,,Excellent,Gato Adulto,8," $  52.800,00 ",Pago
+,6-nov-25,lulo,,,Royal Canin,gato urinary s/o,2," $  30.400,00 ",Pago
+,6-nov-25,lulo,,,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,6-nov-25,Marcos,,,Excellent,Gato Adulto,8," $  52.800,00 ",Pago
+,6-nov-25,EM,,Escobar,Vacía,puppy Grande,15," $  99.200,00 ",Pago
+,6-nov-25,Em,,Escobar,Vacía,Adulto Mediano,15," $  90.200,00 ",Pago
+,6-nov-25,Fer Caprara,,Las Liebres,Excellent,Gato Adulto,8," $  52.800,00 ",Pago
+,6-nov-25,Natalia Lucente ,,Maschwitz Privado,Royal Canin,Medium Weight CAre,10," $  87.000,00 ",Pago
+,6-nov-25,Bielsa,,Galapagos,Nutrique,Mini toy ,8," $  68.900,00 ",Pago
+,7-nov-25,Diego Shuberoff,,Roble Joven,Eukanuba,Medium Breed,15," $  70.600,00 ",Pago
+,7-nov-25,Juan ch.,,Santa Maria,Royal Canin,persian ,2," $  30.200,00 ",Pago
+,7-nov-25,Emilio Sena ,,CABA,Vacía,Medium Puppy,15," $  70.000,00 ",Pago
+,7-nov-25,Emilio Sena ,,caBA,Vacía,FLURA MAX,," $  28.000,00 ",Pago
+,7-nov-25,Lulo,,,Royal Canin,Medium Adulto,3," $  35.000,00 ",Pago
+,10-nov-25,Norma,,Sheraton,Royal Canin,Maxi Adulto,30," $  190.000,00 ",Pago
+,10-nov-25,Norma,,sheraton,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,10-nov-25,Sandra Cuevas,,Aranzazu,Vacía,Gastroenteric ,8," $  58.500,00 ",Pago
+,10-nov-25,Maria Laura,,San Matias,Royal Canin,Mini Adult,"7,5"," $  74.100,00 ",Pago
+,10-nov-25,Maria Laura,,San Matias,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,10-nov-25,Andy,,Recodo,Nutrique,toy & mini Youn,3," $  28.300,00 ",Pago
+,10-nov-25,Marcos,,,Optimus,perro adulto,20," $  56.200,00 ",Pago
+,10-nov-25,Marcos,,,Optimus,gato adulto,8," $  42.500,00 ",Pago
+,10-nov-25,Edu,,Highland,Royal Canin,Duchshand,6," $  69.600,00 ",Pago
+,10-nov-25,Edu,,Highland,Royal Canin,Medium Adulto,8," $  70.400,00 ",Pago
+,11-nov-25,Eduardo Martin,,Pilar ,Royal Canin,Maxi adulto,15," $  95.000,00 ",Pago
+,11-nov-25,Valeria,,Del Viso,Mon ami,Cordero,12," $  58.700,00 ",Pago
+,11-nov-25,Jose Maria Rodriguez ,,Pilar de Este,Optimus,perro adulto,20," $  56.200,00 ",Pago
+,11-nov-25,Maria Laura,,San Matias,Royal Canin,Mini Adulto,8," $  74.100,00 ",Pago
+,11-nov-25,Tomas,,Manuel Alberti,Old prince,Cordero,15," $  56.900,00 ",Pago
+,11-nov-25,lulo,,,Royal Canin,mini adulto +8,3," $  36.700,00 ",Pago
+,11-nov-25,lulo,,,Optimus,cordero,20," $  56.600,00 ",Pago
+,11-nov-25,Silvina,,Caamaño,Club performance,Weight Control,15," $  67.500,00 ",Pago
+,11-nov-25,Valeria,,Highlands,Royal Canin,Giant Junior,15," $  118.000,00 ",Pago
+,11-nov-25,Mario Corzo,,Canton,Royal Canin,Maxi adulto,15," $  95.000,00 ",Pago
+,11-nov-25,Iaco,,Recodo,Royal Canin,Maxi adulto,15," $  95.000,00 ",Pago
+,11-nov-25,Iaco,,Recodo,Vacía,DEsparasitario,," $  28.000,00 ",Pago
+,11-nov-25,Tomas,,Haras de Santa Maria,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,11-nov-25,Tomas,,Haras de Santa Maria,Prof vet,perro adulto,20," $  45.000,00 ",Pago
+,13-nov-25,Rodri,,Caba,Royal Canin,Gato WC,12," $  128.000,00 ",Pago
+,13-nov-25,BRUNO,,PACHECO,Optimus,PERRO ADULTO,20," $  56.500,00 ",Pago
+,13-nov-25,BRUNO,,pacHECO,Optimus,gato adulto,"7,5"," $  42.500,00 ",Pago
+,13-nov-25,Jimena,,,Vacía,Artrin,," $  29.000,00 ",Pago
+,14-nov-25,myriam,,CABA,Royal Canin,Giant Puppy,15," $  113.300,00 ",Pago
+,14-nov-25,DAiana,,Bermudas,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,14-nov-25,Esmeralda,,Lagartos,Old prince,Novel Cachorro,15," $  64.600,00 ",Pago
+,14-nov-25,Fernanda,,Nordelta,Royal Canin,maxi adulto,15," $  95.000,00 ",Pago
+,14-nov-25,Fernanda,,Nordelta,Royal Canin,Diabetic,10," $  99.600,00 ",Pago
+,14-nov-25,lulo,,,Vacía,adulto mediano,15," $  70.100,00 ",Pago
+,14-nov-25,lulo,,,Royal Canin,Maxi Puppy,3," $  35.400,00 ",Pago
+,14-nov-25,Connie,,Ayres,Royal Canin,Fit ,3," $  42.200,00 ",Pago
+,15-nov-25,Geraldine,,Argentino,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,17-nov-25,Diego,,Grand Bourg,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,17-nov-25,Yanina,,Pilar,Excellent,Medium Puppy,30," $  126.000,00 ",Pago
+,17-nov-25,Franco,,Dique Lujan,Vacía,Mediano Adulto,15," $  70.000,00 ",Pago
+,17-nov-25,marcos,,,Excellent,mediano adulto,15," $  57.200,00 ",Pago
+,17-nov-25,lulo,,,Royal Canin,maxi adulto ,15," $  95.000,00 ",Pago
+,18-nov-25,Leonardo,,Pilar del Este,Royal Canin,Gastrointestinal,10," $  90.400,00 ",Pago
+,19-nov-25,Tata,,Las Liebres,Royal Canin,mini adulto,15," $  116.000,00 ",Pago
+,19-nov-25,Agustin romano,,Pilar  ,Royal Canin,Gastrointestinal,10," $  90.400,00 ",Pago
+,19-nov-25,Agustin romano,,Pilar ,Royal Canin,Fit ,8," $  89.000,00 ",Pago
+,19-nov-25,Agustin romano,,Pilar,Vacía,bit trio,," $  39.000,00 ",Pago
+,19-nov-25,Comander,,recodo,Mon ami,razas pequeñas y m,6," $  63.000,00 ",Pago
+,20-nov-25,isabel ladner,,olivos,Royal Canin,Mini Puppy,9," $  103.800,00 ",Pago
+,20-nov-25,Rosemarie,,Pilara,Vacía,adulto mediano,15," $  93.300,00 ",Pago
+,20-nov-25,Lucho,,Recodo,Royal Canin,mini adulto,3," $  34.600,00 ",Pago
+,20-nov-25,Lucho,,Recodo,Royal Canin,Fit ,2," $  25.400,00 ",Pago
+,20-nov-25,Noelia,,La Montura,Royal Canin,Mini Adult,3," $  34.600,00 ",Pago
+,20-nov-25,Steve,,La Montura,Royal Canin,maxi adulto,15," $  95.000,00 ",Pago
+,21-nov-25,lulo,,,Royal Canin,Giant Adult,15," $  118.000,00 ",Pago
+,21-nov-25,lulo,,,Club performance,adulto mediano,15," $  67.500,00 ",Pago
+,21-nov-25,Franco,,dique lujan,Prof vet,bajas calorias,15," $  50.000,00 ",Pago
+,21-nov-25,Athi Sfeir,,Olivos,Vacía,perro mediano,15," $  70.100,00 ",Pago
+,24-nov-25,Norma,,sheraton,Royal Canin,Maxi Adulto,45," $  285.000,00 ",Pago
+,24-nov-25,Norma,,Sheraton,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,24-nov-25,Julia,,Del viso,Old prince,adulto mediano,15," $  41.100,00 ",Pago
+,24-nov-25,Jimena ,,Las liebres,Club performance,Weight Control,15," $  67.500,00 ",Pago
+,25-nov-25,Facundo Grecco,,Tortuguitas,Royal Canin,maxi Adulto,15," $  95.000,00 ",Pago
+,25-nov-25,Balaguel,,El canton,Vacía,Maxi Puppy,15," $  102.700,00 ",Pago
+,25-nov-25,Bruno,,Pachecho,Optimus,Perro Adulto,20," $  56.600,00 ",Pago
+,25-nov-25,Paula Schacht,,Tortuguitas,Royal Canin,Hepatic,10," $  101.600,00 ",Pago
+,25-nov-25,SAnti,,,Royal Canin,Mini Weight Care,3," $  37.400,00 ",Pago
+,25-nov-25,SAnti,,,Royal Canin,Gastro gato,2," $  37.700,00 ",Pago
+,25-nov-25,Santi,,,Old prince,Novel Mediano,15," $  56.900,00 ",Pago
+,26-nov-25,Marcos,,,Excellent,gato adulto,8," $  52.800,00 ",Pago
+,26-nov-25,Ignacio,,Pilar,Eukanuba,Senior ,15," $  73.800,00 ",Pago
+,26-nov-25,Max,,Caamaño,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,26-nov-25,Lulo,,,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,26-nov-25,lulo,,,Royal Canin,Medium Adulto +7,15," $  119.000,00 ",Pago
+,26-nov-25,Gustavo,,La Lomada ,Royal Canin,Mini Adult  ,8," $  70.400,00 ",Pago
+,26-nov-25,CArolina,,Bermudas,Mon ami,razas pequeñas y m,6," $  63.400,00 ",Pago
+,28-nov-25,Andres,,Recodo,Nutrique,Mini toy,8," $  87.100,00 ",Pago
+,28-nov-25,Juan,,De Vicenzo,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,28-nov-25,Emilio Sena,,CABA,Pro plan,Medium Puppy,15," $  102.700,00 ",Pago
+,28-nov-25,Fernando Lorenzo,,Villanueva,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,28-nov-25,Miriam,,,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,29-nov-25,Diego,,Gran Bourg,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,29-nov-25,Diego,,Gran Bourg,Excellent,Medium Puppy,15," $  63.300,00 ",Pago
+,1-dic-25,Silvina,,Caamaño,Eukanuba,Lamb Puppy,15," $  67.500,00 ",Pago
+,1-dic-25,Veronica,,El Recodo,Eukanuba,Adulto Small,3," $  20.600,00 ",Pago
+,2-dic-25,Miriam,,Maschwitz,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,2-dic-25,Lolly,,Ayres,Vacía,Gato Castrado,6," $  47.000,00 ",Pago
+,2-dic-25,Vale,,Del viso,Mon ami,Cordero,8," $  42.200,00 ",Pago
+,2-dic-25,Fernando,,Haras de Sta Maria,Royal Canin,Kitten ,8," $  98.600,00 ",Pago
+,2-dic-25,Fernando,,Haras de Sta Maria,Royal Canin,Mini Puppy,3," $  36.400,00 ",Pago
+,3-dic-25,Marcos,,,Pro plan,Adulto Large,15," $  93.300,00 ",Pago
+,3-dic-25,Geraldine,,Argentino Golf,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,3-dic-25,Geraldine,,Argentino Golf,Royal Canin,Medium Adult,15," $  111.000,00 ",Pago
+,3-dic-25,Geraldine,,Argentino Golf,Royal Canin,Medium Derma,10," $  70.300,00 ",Pago
+,3-dic-25,Geraldine,,Argentino Golf,Royal Canin,Mini Adult,3," $  33.200,00 ",Pago
+,3-dic-25,Paula Migura,,Argentino Golf,Mon ami,Pollo,12," $  53.000,00 ",Pago
+,3-dic-25,Rocio,,Villanueva,Royal Canin,Medium Puppy,15," $  118.000,00 ",Pago
+,4-dic-25,Jose Maria,,Pilar del Este ,Optimus,Perro Adulto,20," $  56.200,00 ",Pago
+,4-dic-25,Patricia,,Del viso,Vacía,Perro Adulto,," $  46.000,00 ",Pago
+,4-dic-25,Myriam,,CABA,Royal Canin,Giant Junio,30," $  236.000,00 ",Pago
+,4-dic-25,Lolly,,Tortuguitas,Excellent,Mediano Adulto,30," $  114.400,00 ",Pago
+,4-dic-25,Lolly,,Tortuguitas,Royal Canin,Mobilty,10," $  101.800,00 ",Pago
+,4-dic-25,Lolly,,Tortuguitas,Old prince,Cachorro Eq,15," $  42.900,00 ",Pago
+,4-dic-25,Paula Etchemdy,,Maschwitz Privado,Excellent,Medium Puppy,15," $  63.000,00 ",Pago
+,5-dic-25,Marina Ileana ,,San Isidro Labrador,Excellent,Gato Adulto,15," $  97.800,00 ",Pago
+,5-dic-25,Marina Ileana ,,San Isidro Labrador,Old prince,Adulto Eq,15," $  41.400,00 ",Pago
+,5-dic-25,Tony,,Del viso,Optimus,Perro Adulto,20," $  56.200,00 ",Pago
+,5-dic-25,Toby,,Del viso,Vacía,Mediano Adulto,15," $  70.100,00 ",Pago
+,5-dic-25,Juliana,,Escobar,Optimus,Perro Adulto,20," $  56.200,00 ",Pago
+,6-dic-25,Cristina,,Del viso,Prof vet,Perro Adulto,20," $  48.000,00 ",Pago
+,6-dic-25,Maria Laura,,Escobar,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,6-dic-25,Maria Laura,,Escobar,Royal Canin,Mini Adult,8," $  71.400,00 ",Pago
+,6-dic-25,Denise,,Del viso,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,6-dic-25,ana ,,Maschwitz,Royal Canin,Boxer,12," $  93.600,00 ",Pago
+,6-dic-25,ana ,,Maschwitz,Royal Canin,Mini Adult,8," $  74.100,00 ",Pago
+,9-dic-25,Sol Moreno,,El Recodo,Royal Canin,Mini Adult+8,3," $  36.700,00 ",Pago
+,9-dic-25,Norma,,Sheraton,Royal Canin,Maxi Adulto,45," $  285.000,00 ",Pago
+,9-dic-25,Norma,,Sheraton,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,9-dic-25,Juan Ch. ,,SMO,Royal Canin,Persian,2," $  30.000,00 ",Pago
+,9-dic-25,EM,,Escobar,Pro plan,Large Puppy,15," $  102.700,00 ",Pago
+,9-dic-25,Pedro,,Pilara,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,9-dic-25,Marcos,,,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,10-dic-25,Lourdes,,Pilar,Eukanuba,Senior Small,6," $  43.400,00 ",Pago
+,10-dic-25,Denise,,Del Viso,Excellent,Gato Adulto,3," $  25.400,00 ",Pago
+,10-dic-25,Lucia Fernandez,,Villa Olivos,Vacía,Perro adulto,15," $  70.100,00 ",Pago
+,10-dic-25,Patricio,,Maschwitz,Vacía,,," $  99.000,00 ",Pago
+,11-dic-25,Laura Lacas,,Lagartos,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,11-dic-25,Franco,,Dique Lujan,Vacía,Perro Adulto,15," $  70.100,00 ",Pago
+,12-dic-25,Gustavo Vilella,,CABA,Royal Canin,hypo Adulto,10," $  107.500,00 ",Pago
+,12-dic-25,Tomas,,Haras de Sta Maria,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,12-dic-25,Lulo,,,Old prince,Mediano Adulto,15," $  56.900,00 ",Pago
+,12-dic-25,Natalia Pinto,,Las Liebres,Royal Canin,Medium Adult,15," $  111.000,00 ",Pago
+,13-dic-25,Tatiana,,Mapuche,Nutrique,Gato Sterelized,8," $  98.000,00 ",Pago
+,13-dic-25,Jose Maria,,Galapagos,Old prince,Cordero Mediano,15," $  56.900,00 ",Pago
+,13-dic-25,Silvina,,Caamaño,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,15-dic-25,Edu,,Highlands,Royal Canin,Dachsund,6," $  69.600,00 ",Pago
+,15-dic-25,Edu,,Highlands,Royal Canin,Medium Adult,8," $  140.800,00 ",Pago
+,15-dic-25,Meli,,la montura ,Eukanuba,Medium Breed,15," $  70.600,00 ",Pago
+,15-dic-25,Laura  ,,Tortuguitas,Old prince,Weight Control,15," $  53.500,00 ",Pago
+,15-dic-25,Laura,,Tortuguitas,Optimus,Gato Adulto,8," $  42.500,00 ",Pago
+,15-dic-25,Marcos,,,Old prince,Perro Adulto,15," $  41.400,00 ",Pago
+,15-dic-25,Flor,,El Recodo,Club performance,Weight Control,15," $  67.500,00 ",Pago
+,15-dic-25,Mariano,,Azurra,Royal Canin,Medium Adult,8," $  70.400,00 ",Pago
+,16-dic-25,lulo,,,Old prince,Cordero,15," $  56.900,00 ",Pago
+,16-dic-25,Lulo,,,Excellent,Gato Adulto,8," $  52.800,00 ",Pago
+,16-dic-25,Lulo,,,Vacía,,," $  39.200,00 ",Pago
+,16-dic-25,Lucia Fernandez,,Villa Olivos,Vacía,Mediano Adulto,15," $  70.100,00 ",Pago
+,16-dic-25,Silvina,,Caamaño,Club performance,Weight Control,15," $  76.500,00 ",Pago
+,16-dic-25,Paula Mihura,,Argentino Golf,Mon ami,Cordero,12," $  58.700,00 ",Pago
+,16-dic-25,Paula Mihura,,Argentino Golf,Mon ami,Pollo,12," $  52.900,00 ",Pago
+,16-dic-25,Pedro Salas,,El Recodo,Vacía,Gato Castrado,2," $  23.500,00 ",Pago
+,16-dic-25,Natalia  ,,El canton,Mon ami,Superfood pequeño,6," $  63.000,00 ",Pago
+,16-dic-25,Steve,,la montura ,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,17-dic-25,Bruno,,Pacheco,Optimus,Perro Adulto,40," $  112.400,00 ",Pago
+,18-dic-25,Bielsa,,Galapagos,Nutrique,mini adulto,8," $  87.400,00 ",Pago
+,18-dic-25,Bielsa,,Galapagos,Vacía,,," $  24.000,00 ",Pago
+,18-dic-25,Eduardo,,Pilar,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,18-dic-25,Juanita Zavaleta,,Argentino Golf,Prof vet,Cordero,30," $  102.000,00 ",Pago
+,19-dic-25,Mario Corzo,,Villanueva,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,19-dic-25,Flor,,la montura ,Vacía,Gato Castrado,2," $  23.500,00 ",Pago
+,19-dic-25,Emilio Sena,,CABA,Pro plan,Mediano Adulto,15," $  93.300,00 ",Pago
+,20-dic-25,Pechi,,El Lucero,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,20-dic-25,Celeste,,Del viso,Mon ami,Cordero,12," $  58.700,00 ",Pago
+,20-dic-25,Celeste,,Del viso,Fawna,Gato Adulto,3," $  31.900,00 ",Pago
+,22-dic-25,Norma,,Sheraton,Royal Canin,Maxi Adulto,45," $  285.000,00 ",Pago
+,22-dic-25,Norma,,Sheraton,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,22-dic-25,David,,Savio,Royal Canin,Gastro,10," $  90.400,00 ",Pago
+,22-dic-25,Fren,,CABA,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,22-dic-25,Marcos,,,Excellent,Kitten ,8," $  58.400,00 ",Pago
+,22-dic-25,Marcos,,,Old prince,Cordero,15," $  56.900,00 ",Pago
+,22-dic-25,Marcos ,,,Excellent,Gato Adulto,8," $  52.800,00 ",Pago
+,22-dic-25,Lulo,,,Excellent,Gato Adulto,3," $  25.400,00 ",Pago
+,22-dic-25,Lulo,,,Club performance,Perro Adulto,15," $  67.500,00 ",Pago
+,22-dic-25,Balague,,Escobar,Pro plan,Large Puppy,15," $  102.700,00 ",Pago
+,22-dic-25,Balague,,Escobar,Royal Canin,hypo Adulto,2," $  31.300,00 ",Pago
+,23-dic-25,Maxi Amairetti,,El Recodo,Royal Canin,Ageing +12,3," $  36.700,00 ",Pago
+,23-dic-25,Luis,,Boulogne,Royal Canin,Satiety,30," $  250.000,00 ",Pago
+,23-dic-25,Vale,,Highlands,Royal Canin,Giant Junio,15," $  118.000,00 ",Pago
+,24-dic-25,Lulo,,,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,26-dic-25,Nestor,,Maschwitz,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,26-dic-25,Coco,,Maschwitz,Mon ami,Superfood MYG,12," $  106.200,00 ",Pago
+,26-dic-25,mica,,Del viso,Old prince,Perro Adulto,15," $  41.400,00 ",Pago
+,27-dic-25,Nico,,Cabaña,Mon ami,Cordero,8," $  42.200,00 ",Pago
+,29-dic-25,Laura Sazzarolli,,Nordelta,Royal Canin,Medium Adult,8," $  70.400,00 ",Pago
+,29-dic-25,Laura Sazzarolli,,Nordelta,Vacía,,," $  20.000,00 ",Pago
+,29-dic-25,Franco,,Dique Lujan,Vacía,Perro Adulto,15," $  70.100,00 ",Pago
+,29-dic-25,Sandra Cuevas,,Villa Olivos,Pro plan,Gastro,8," $  63.800,00 ",Pago
+,30-dic-25,Jose Maria,,Pilar del Este ,Optimus,Perro Adulto,20," $  56.200,00 ",Pago
+,30-dic-25,Emilio Perot ,,Benavidez,Royal Canin,Maxi Adulto,30," $  190.000,00 ",Pago
+,30-dic-25,Rosario Caputo,,Boulogne,Royal Canin,Medium Adult,30," $  222.000,00 ",Pago
+,30-dic-25,Aly,,CABA,Royal Canin,Maxi Puppy,15," $  100.000,00 ",Pago
+,30-dic-25,Fernando,,Villanueva,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,30-dic-25,lulo,,,Vacía,Perro Adulto,15," $  70.100,00 ",Pago
+,30-dic-25,lulo,,,Royal Canin,maxi puppy,15," $  105.000,00 ",Pago
+,30-dic-25,lulo,,,Royal Canin,maxi adulto,15," $  95.000,00 ",Pago
+,30-dic-25,lulo,,,Royal Canin,urinary care,2," $  29.600,00 ",Pago
+,30-dic-25,lulo,,,Excellent,Gato Adulto,8," $  52.800,00 ",Pago
+,30-dic-25,lulo,,,Royal Canin,Giant Junio,15," $  118.000,00 ",Pago
+,30-dic-25,Melisa,,De Vicenzo,Royal Canin,Gastro Gato ,2," $  37.700,00 ",Pago
+,30-dic-25,Daiana,,Bermudas,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,30-dic-25,Connie,,Ayres,Royal Canin,Fit,3," $  50.000,00 ",Pago
+,31-dic-25,Maximiliano,,Escobar,Royal Canin,Maxi Adulto,30," $  190.000,00 ",Pago
+,31-dic-25,Tutti,,Ayres,Pro plan,Adulto mediano, ," $  93.300,00 ",Pago
+,2-ene-26,Juan,,De Vicenzo,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,2-ene-26,Juliana,,Puertos,Optimus,Perro Adulto,20," $  56.200,00 ",Pago
+,2-ene-26,Juliana,,Puertos,Prof vet,Perro Adulto,20," $  55.500,00 ",Pago
+,3-ene-26,Cristina,,De Vicenzo,Prof vet,Perro Adulto,20," $  55.500,00 ",Pago
+,3-ene-26,Diego,,Gran Bourg,Vacía,Cachorro,30," $  154.600,00 ",Pago
+,3-ene-26,Paula Etchmendy,,Maschwitz Privado,Excellent,Medium Puppy,15," $  63.000,00 ",Pago
+,3-ene-26,Max,,Caamaño,Royal Canin,Maxi Adult,15," $  95.000,00 ",Pago
+,3-ene-26,Carolina ,,Bermudas,Mon ami,SF Pequeño,5," $  63.400,00 ",Pago
+,3-ene-26,Patricia,,Altos del Barranco,Royal Canin,Maxi Adult ,15," $  95.000,00 ",Pago
+,3-ene-26,Lucho,,El Recodo,Royal Canin,Fit,3," $  42.200,00 ",Pago
+,5-ene-26,Norma,,Sheraton,Royal Canin,Maxi Adulto,45," $  285.000,00 ",Pago
+,5-ene-26,Norma,,Sheraton,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,5-ene-26,Julia ,,Del Viso,Excellent,Adult,20," $  45.000,00 ",Pago
+,5-ene-26,maria Laura,,San Matias,Royal Canin,Maxi Pupy,15," $  105.000,00 ",Pago
+,5-ene-26,maria Laura,,San Matias,Royal Canin,Mini Adulto,8," $  74.100,00 ",Pago
+,5-ene-26,maria Laura,,San Matias,Vacía,Royal Puppies,," $  20.000,00 ",Pago
+,5-ene-26,eli,,la Montura,Prof vet,Perro Adulto,40," $  93.200,00 ",Pago
+,5-ene-26,Eli,,La Montura,Vacía,Adulto small,8," $  43.600,00 ",Pago
+,6-ene-26,Marcos,,,Pro plan,Large Adult,15," $  99.800,00 ",Pago
+,6-ene-26,Tomas,,El Rocio,Old prince,Cordero mediano ,15," $  56.900,00 ",Pago
+,6-ene-26,Diego Shube,,Haras de Santa Maria,Eukanuba,mediano Adulto,15," $  70.600,00 ",Pago
+,6-ene-26,Gustavo,,caba,Club performance,Weight Control,15," $  67.500,00 ",Pago
+,6-ene-26,Tomas,,Haras de Santa Maria,Royal Canin,Maxi Puppy,15," $  105.000,00 ",Pago
+,6-ene-26,Iaco,,El Lucero,Royal Canin,Maxi adulto,15," $  95.000,00 ",Pago
+,6-ene-26,Luciana Baglione,,benavidez,Royal Canin,Mobility LD,30," $  270.000,00 ",Pago
+,6-ene-26,Silvina,,Caamaño,Royal Canin,Hypo puppy,10," $  107.500,00 ",Pago
+,6-ene-26,Myriam,,Caba,Royal Canin,Giant Junior,30," $  236.000,00 ",Pago
+,6-ene-26,Elizabet,,Haras de Santa Maria,Eukanuba,Large Adult,15," $  70.300,00 ",Pago
+,7-ene-26,Juan,,SMO,Royal Canin,Persian,2," $  30.900,00 ",Pago
+,7-ene-26,Juan,,SMO,Royal Canin,Mini Adulto,3," $  33.200,00 ",Pago
+,7-ene-26,Marcos,,,Vacía,Perro Adulto,15," $  70.100,00 ",Pago
+,7-ene-26,Marcos,,,Excellent,Gato Adulto ,8," $  59.900,00 ",Pago
+,7-ene-26,Cristina,,Martin Dale,Mon ami,Pollo,8," $  47.000,00 ",Pago
+,7-ene-26,Miriam,,Maschwtiz,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,8-ene-26,Edu,,Highlands,Royal Canin,Daschunds,6," $  69.600,00 ",Pago
+,8-ene-26,Edu,,Highlands,Royal Canin,Medium adult,8," $  70.400,00 ",Pago
+,8-ene-26,Marian,,Azurra,Royal Canin,Fit,8," $  98.700,00 ",Pago
+,8-ene-26,Marian,,Azurra,Royal Canin,Medium adult,8," $  70.400,00 ",Pago
+,8-ene-26,EM,,Escobar,Pro plan,Medium Adult,15," $  99.800,00 ",Pago
+,8-ene-26,Elizabet,,Haras de Santa Maria,Royal Canin,Gato Castrado,3," $  48.900,00 ",Pago
+,8-ene-26,Elizabet,,Haras de Santa Maria,Royal Canin,Mini Adulto,3," $  33.200,00 ",Pago
+,8-ene-26,Belen,,De Vicenzo,Eukanuba,Gato Adulto ,3," $  29.500,00 ",Pago
+,8-ene-26,Belen,,De Vicenzo,Vacía,,," $  6.000,00 ",Pago
+,9-ene-26,Carolina ,,Pilar,Royal Canin,Gastrointestinal,10," $  90.400,00 ",Pago
+,9-ene-26,Delfina,,Tortuguitas,Excellent,Skin,15," $  65.400,00 ",Pago
+,10-ene-26,Valeria ,,Del Viso,Mon ami,Cordero mediano ,12," $  58.700,00 ",Pago
+,10-ene-26,Isabel,,Olivos,Royal Canin,Mini Puppy,9," $  103.800,00 ",Pago
+,10-ene-26,isabel,,olivos,Mon ami,Churrasquitos,," $  2.000,00 ",Pago
+,11-ene-26,PedroSalas,,El Recodo,Royal Canin,Giant Puppy,15," $  118.000,00 ",Pago
+,12-ene-26,lulo,,,Excellent,Gato Adulto ,3," $  18.100,00 ",Pago
+,13-ene-26,Santi,,,Vacía,Perro Light,15," $  77.300,00 ",Pago
+,13-ene-26,Jose Maria ,,Galapagos,Mon ami,Cordero mediano ,8," $  43.900,00 ",Pago
+,13-ene-26,denise,,Del Viso,Royal Canin,Maxi Adulto,15," $  95.000,00 ",Pago
+,14-ene-26,Nico,,Del Viso,Mon ami,Cordero mediano ,12," $  58.700,00 ",Pago
+,14-ene-26,Emilio Sena,,CABA,Pro plan,mediano Adulto,15," $  99.800,00 ",Pago
+,14-ene-26,Claudia,,Caamaño,Royal Canin,Diabetic,10," $  100.000,00 ",Pago
+,15-ene-26,Marcos,,,Pro plan,Adulto Grande,15," $  199.600,00 ",Pago
+,15-ene-26,Andrea ,,Nordelta,Royal Canin,Maxi Puppy ,15," $  105.000,00 ",Pago
+,15-ene-26,Andrea ,,Nordelta,Royal Canin,Gato Sensible ,8," $  98.000,00 ",Pago
+,15-ene-26,Yanina,,Pilar,Excellent,Medium Puppy,30," $  133.600,00 ",Pago
+,15-ene-26,Natalia Pesci,,Villa Olivos,Mon ami,Cordero mediano ,12," $  58.700,00 ",Pago
+,16-ene-26,Patricio,,benavidez,Pro plan,Adulto small,8," $  65.700,00 ",Pago
+,16-ene-26,Belen,,Del Viso,Eukanuba,Senior Small,3," $  23.000,00 ",Pago
+,16-ene-26,Belen,,Del Viso,Eukanuba,Gato Adulto ,3," $  29.500,00 ",Pago
+,16-ene-26,Belen,,Del Viso,Vacía,Gato Castrado,2," $  23.500,00 ",Pago
+,16-ene-26,Steve,,la Montura,Eukanuba,Fit Body,15," $  79.200,00 ",Pago
+,17-ene-26,Tata,,Las Liebres,Royal Canin,Mini Adulto,15," $  121.000,00 ",Pago
+,17-ene-26,Rodrigo,,CABA,Royal Canin,GC Weight Control,12," $  137.500,00 ",Pago
+,17-ene-26,Matias,,CAba,Royal Canin,Mini Adulto,15," $  110.000,00 ",Pago
+,19-ene-26,Valeria Lopez ,,Highlands,Royal Canin,Giant Junior,15," $  126.300,00 ",Pago
+,19-ene-26,Norma,,Sheraton,Royal Canin,Maxi Adulto,45," $  312.000,00 ",Pago
+,19-ene-26,Norma,,Sheraton,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,19-ene-26,Cristina,,El Rocio,Excellent,Gato Adulto ,8," $  55.900,00 ",Pago
+,19-ene-26,Lulo,,,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,19-ene-26,Lulo,,,Vacía,Perro Adulto,15," $  70.100,00 ",Pago
+,19-ene-26,Lulo,,,Royal Canin,Mini Adulto,8," $  79.200,00 ",Pago
+,20-ene-26,Athi,,Tortuguitas,Vacía,Perro Adulto,15," $  70.100,00 ",Pago
+,20-ene-26,Meli,,la Montura,Mon ami,Cordero mediano ,8," $  47.000,00 ",Pago
+,20-ene-26,Gabriela Lolster,,Galapagos,Royal Canin,Hypo  ,10," $  115.000,00 ",Pago
+,20-ene-26,Gabriela Lolster,,Galapagos,Royal Canin,hypo Small,2," $  37.500,00 ",Pago
+,20-ene-26,Fernando,,Haras de Santa Maria,Royal Canin,Kitten,8," $  105.500,00 ",Pago
+,20-ene-26,Fernando,,Haras de Santa Maria,Royal Canin,Mini Puppy,3," $  37.000,00 ",Pago
+,20-ene-26,Marina,,San Isidro,Royal Canin,Maxi Adulto,15," $  106.470,00 ",Pago
+,20-ene-26,Marina,,San Isidro,Excellent,medium Puppy,15," $  63.460,00 ",Pago
+,20-ene-26,Marina,,San Isidro,Excellent,Gato Adulto ,15," $  98.515,00 ",Pago
+,21-ene-26,Gustavo,,CABA,Royal Canin,Hypo,10," $  115.000,00 ",Pago
+,21-ene-26,Jose Maria ,,Galapagos,Mon ami,Cordero mediano ,12," $  62.900,00 ",Pago
+,21-ene-26,Tomas,,Haras de Santa Maria,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,21-ene-26,tomas,,Haras de Santa Maria,Prof vet,Adulto ,20," $  55.500,00 ",Pago
+,22-ene-26,Max ,,Caamaño,Royal Canin,Maxi Adulto,15," $  104.000,00 ",Pago
+,23-ene-26,Balague,,Escobar,Pro plan,puppy large,15," $  109.800,00 ",Pago
+,23-ene-26,Balague,,Escobar,Royal Canin,hypo,2," $  34.700,00 ",Pago
+,23-ene-26,Flor,,El Recodo,Eukanuba,Fit Body,15," $  84.700,00 ",Pago
+,24-ene-26,Silvina,,Caamaño,Club performance,Weight Control,15," $  72.200,00 ",Pago
+,24-ene-26,Silvina,,Caamaño,Royal Canin,Hypo puppy,10," $  115.000,00 ",Pago
+,24-ene-26,Elizabet,,Haras de Santa Maria,Royal Canin,Gato Castrado,3," $  54.300,00 ",Pago
+,24-ene-26,Flor,,la Montura,Vacía,Gato Castrado,2," $  23.500,00 ",Pago
+,26-ene-26,Lourdes ,,Pilar,Eukanuba,puppy large,3," $  23.000,00 ",Pago
+,26-ene-26,Lourdes ,,Pilar ,Excellent,Gato Adulto ,3," $  27.000,00 ",Pago
+,26-ene-26,Eduardo,,Pilar,Royal Canin,Maxi Adult,15," $  103.000,00 ",Pago
+,27-ene-26,Franco,,Dique Lujan,Vacía,Perro Mediano Adulto,15," $  70.100,00 ",Pago
+,27-ene-26,Rocio,,Galapagos,Vacía,mediano Adulto,15," $  70.100,00 ",Pago
+,27-ene-26,David,,Savio,Royal Canin,Gastrointestinal,10," $  90.400,00 ",Pago
+,27-ene-26,Lulo,,,Club performance,Perro Adulto,20," $  92.400,00 ",Pago
+,27-ene-26,Laura Lacasa ,,lagartos,Royal Canin,Maxi Adult,15," $  105.000,00 ",Pago
+,28-ene-26,Loly,,Ayres,Vacía,Gato Castrado,2," $  47.000,00 ",Pago
+,28-ene-26,Lolly ,,Tortuguitas,Excellent,Perro Mediano Adulto,15," $  60.600,00 ",Pago
+,29-ene-26,Jose Maria ,,Pilar del Este,Optimus,Perro Adulto,20," $  60.000,00 ",Pago
+,29-ene-26,EMS,,Escobar,Pro plan,puppy large,15," $  109.800,00 ",Pago
+,29-ene-26,Ana ,,Maschwitz Privado,Royal Canin,Boxer Adulto,12," $  100.200,00 ",Pago
+,30-ene-26,Lulo,,,Royal Canin,Maxi Adult,15," $  118.300,00 ",Pago
+,30-ene-26,Lulo,,,Royal Canin,Excellent ,8," $  55.900,00 ",Pago
+,30-ene-26,Patricio,,Maschwitz  ,Pro plan,Adulto small,15," $  131.400,00 ",Pago
+,30-ene-26,Flauta ,,El Recodo,Royal Canin,Mini Adulto,3," $  35.500,00 ",Pago
+,30-ene-26,Martin,,Nqn,Royal Canin,Mini Ageing+12,3," $  39.000,00 ",Pago
+,30-ene-26,Bruno,,Pacheco,Optimus,Perro Adulto,20," $  60.000,00 ",Pago
+,31-ene-26,Cristina,,El Rocio,Prof vet,Perro Adulto,20," $  55.500,00 ",Pago
+,2-feb-26,Norma,,Sheraton,Royal Canin,Maxi Adulto,45," $  309.000,00 ",Pago
+,2-feb-26,Norma,,Sheraton,Royal Canin,Maxy Puppy,15," $  113.000,00 ",Pago
+,2-feb-26,Juan Chiossone,,SMO,Royal Canin,Persian,2," $  32.500,00 ",Pago
+,2-feb-26,Juan Chiossone,,SMO,Royal Canin,Mini Adult,3," $  35.500,00 ",Pago
+,2-feb-26,Coco,,Maschwitz,Fawna,Senior,15," $  90.000,00 ",Pago
+,2-feb-26,Edu Eguaburo,,Higlands,Royal Canin,Daschund,6," $  74.400,00 ",Pago
+,2-feb-26,Carlos,,Vicente Lopez,Royal Canin,Renal,10," $  99.300,00 ",Pago
+,2-feb-26,Fernando,,,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,2-feb-26,laura Bucheri,Diagonal 160 calle sarmiento 5921 (entre Tucuman y Entre Rios) loma hermosa san martin,San Martin,Club performance,Perro Adulto,15," $  77.200,00 ",Pago
+,2-feb-26,Paula Schacht,,Tortuguitas,Royal Canin,Hepatic,10," $  108.700,00 ",Pago
+,2-feb-26,Noelia,,La Montura,Royal Canin,Mini Adult,3," $  35.500,00 ",Pago
+,3-feb-26,Aly,Virrey Loreto 3110,caba,Royal Canin,Maxi Puppy ,15," $  110.000,00 ",Pago
+,3-feb-26,Fren,,CABA,Royal Canin,Maxi Adulto,15," $  103.000,00 ",Pago
+,3-feb-26,Valeria,,Pilar,Royal Canin,Maxi WC,10," $  91.700,00 ",Pago
+,3-feb-26,Valeria,,Pilar,Vacía,Gato Castrado,4," $  47.000,00 ",Pago
+,3-feb-26,Natta,,Canton,Mon ami,perro pequeño,6," $  62.200,00 ",Pago
+,3-feb-26,Emilio Sena,,CABA,Pro plan,medium adult,15," $  99.800,00 ",Pago
+,4-feb-26,Nico,,Pilar,Royal Canin,Dermacomfort,10," $  84.900,00 ",Pago
+,4-feb-26,Nico,,Pilar,Royal Canin,medium puppy,3," $  37.600,00 ",Pago
+,4-feb-26,Connie,,Ayres,Royal Canin,fit,3," $  45.200,00 ",Pago
+,4-feb-26,Tomas Romero,,el rocio,Old prince,Cordero,15," $  59.900,00 ",Pago
+,4-feb-26,Tomas Romero,,el rocio,Excellent,Adulto Small,3," $  18.100,00 ",Pago
+,4-feb-26,Diego,,Grand Bourg,Vacía,Perro Cachorro m/g,15," $  77.300,00 ",Pago
+,4-feb-26,Belen,,DE vicenzo,Old prince,Gato Adulto,8," $  56.000,00 ",Pago
+,5-feb-26,Enrique Ricciardi,"Fray Mamerto Esquiu 1326.El Jaguel,Monte Grande",Esteban Echeverria,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,5-feb-26,Enrique Ricciardi,,Esteban Echeverria,Royal Canin,Gato Castrado,8," $  105.500,00 ",Pago
+,5-feb-26,Enrique Ricciardi,,Esteban Echeverria,Balance,perro mediano,20," $  66.700,00 ",Pago
+,6-feb-26,Natalia,,Villa Olivos,Mon ami,Cordero,12," $  70.400,00 ",Pago
+,6-feb-26,lulo,,,Vacía,perro mediano,15," $  70.100,00 ",Pago
+,6-feb-26,Daiana,,Bermudas,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,6-feb-26,Juana Zavaleta,,Argentino,Prof vet,Cordero,30," $  102.000,00 ",Pago
+,6-feb-26,Luis ,Juan Llerena 2552,Laferrere,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,6-feb-26,Myriam,,Maschwitz,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,7-feb-26,Patricia,,Tortuguitas,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,7-feb-26,Paola,Ronday 8777,Campana,Royal Canin,Maxi Puppy ,30," $  220.000,00 ",Pago
+,9-feb-26,Lourdes,,Pilar,Royal Canin,Sensible,8," $  105.600,00 ",Pago
+,9-feb-26,Lorena,Av santa Maria 6500 Tigre Barrio Altamira lote 94 ,Tigre,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,9-feb-26,Meli, ,La Montura,Mon ami,Cordero,12," $  70.400,00 ",Pago
+,9-feb-26,Gustavo Gil,Cueli 2165,Santos Lugares,Royal Canin,Mini Adult,3," $  35.500,00 ",Pago
+,9-feb-26,Valeria,,Higlands,Royal Canin,Giant Junior,15," $  126.300,00 ",Pago
+,9-feb-26,Comander,,El recodo,Royal Canin,Daschund,3," $  37.200,00 ",Pago
+,9-feb-26,Comander,,El recodo,Royal Canin,Fit ,3," $  45.200,00 ",Pago
+,9-feb-26,Nestor,,Maschwitz Privado,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,10-feb-26,Myriam,,CABA,Royal Canin,Giant Junior,15," $  126.300,00 ",Pago
+,10-feb-26,Silvina,,Caamaño,Royal Canin,Hypo puppy,10," $  115.000,00 ",Pago
+,10-feb-26,Lulo,,,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,11-feb-26,Melisa,,DE vicenzo,Royal Canin,Gastro Gato,2," $  40.400,00 ",Pago
+,11-feb-26,Eli,,La Montura ,Prof vet,Perro Adulto,40," $  90.000,00 ",Pago
+,11-feb-26,Esme ,,Lagartos,Pro plan,Adulto Large,15," $  99.800,00 ",Pago
+,12-feb-26,Julieta,Comodoro Rivadavia 1953,CABA,Royal Canin,Hypo puppy,15," $  115.000,00 ",Pago
+,12-feb-26,Lulo,,,Royal Canin,Gato Castrado,8," $  105.500,00 ",Pago
+,12-feb-26,mauro Fonseca,calle 86 ,berisso,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,13-feb-26,Lulo,,,Royal Canin,Giant Junior,15," $  126.300,00 ",Pago
+,13-feb-26,Ylda,Santa elena 2669,Del Viso,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,14-feb-26,Matias Lopez,Dr Aleu 4363 Villa Ballester,Ballester,Vacía,Gato Adulto,8," $  64.900,00 ",Pago
+,14-feb-26,laura  ,Melincue 5559,CABA,Royal Canin,Medium Adulto,15," $  113.000,00 ",Pago
+,14-feb-26,Laura,Melincue 5559,caba,Royal Canin,Medium Puppy,3," $  35.000,00 ",Pago
+,14-feb-26,Edgard,Peirano 710,Escobar,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,14-feb-26,Elizabeth,Haras de Santa Maria,Escobar,Royal Canin,Gato Castrado,3," $  54.300,00 ",Pago
+,16-feb-26,Norma,,Sheraton,Royal Canin,Maxi Adulto,45," $  315.000,00 ",Pago
+,16-feb-26,Norma,,Sheraton,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,16-feb-26,Norma,,Sheraton,Vacía,Shampoo,," $  80.000,00 ",Pago
+,16-feb-26,Marie,,el recodo,Royal Canin,Mobilty Large,15," $  148.000,00 ",Pago
+,16-feb-26,Rochi Beach,,villanueba,Royal Canin,Medium Puppy,15," $  126.300,00 ",Pago
+,18-feb-26,Nehuen Guntin,"Corrientes 5800, club de campo el Nacional",General Rodriguez,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,18-feb-26,Nehuen Guntin,"Corrientes 5800, club de campo el Nacional",General Rodriguez,Excellent,Gato Adulto,15," $  103.700,00 ",Pago
+,18-feb-26,Fernando,,Las Liebres,Excellent,Gato Adulto,8," $  55.900,00 ",Pago
+,18-feb-26,Ramiro Iturriza ,Felix Pages 1076,Maschwitz,Optimus,Perro Adulto,20," $  56.200,00 ",Pago
+,18-feb-26,Carlos Gomez,Calle 540 número 744,Florencio Varela,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,19-feb-26,Miguel Coronado,Juan Llerena 2552,La Matanza,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,19-feb-26,Miguel Coronado,Juan Llerena 2552,La Matanza,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,19-feb-26,jose Garcia ,Pichincha 1914,Lavallol,Royal Canin,Hypo puppy,10," $  115.000,00 ",Pago
+,20-feb-26,Diego Lombardo,Donovan 1948,Avellaneda,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,20-feb-26,jose Maria Rodriguez,,Pilar del Este,Optimus,Perro Adulto,20," $  60.000,00 ",Pago
+,20-feb-26,Jose Maria Oliviera,,Galapagos,Mon ami,Cordero ,12," $  62.900,00 ",Pago
+,20-feb-26,Emilio Sena,,CABA,Pro plan,Medium Adult,15," $  99.800,00 ",Pago
+,20-feb-26,Silvana rodrigez Saa,España 491,Avellaneda,Royal Canin,Maxi puppy ,15," $  113.000,00 ",Pago
+,20-feb-26,Carolina Astudillo,,Bermudas,Mon ami,perro pequeño,6," $  63.500,00 ",Pago
+,21-feb-26,Pedro Salas,,El Recodo,Royal Canin,giant Puppy,15," $  126.300,00 ",Pago
+,21-feb-26,Lucho,,El recodo,Royal Canin,Fit,3," $  45.200,00 ",Pago
+,21-feb-26,Lucho,,el recodo,Royal Canin,Mon ami,6," $  63.500,00 ",Pago
+,21-feb-26,Geraldine,,El Argentino,Prof vet,Cordero,15," $  57.000,00 ",Pago
+,21-feb-26,Steve,,La Montura,Eukanuba,Large Fit,15," $  84.700,00 ",Pago
+,23-feb-26,Marcelo masevicuis,calle 304,la plata ,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,23-feb-26,Contanza Huergo,Condominio San Marcos,Maschwitz,Nutrique,Large Adult +6,15," $  105.000,00 ",Pago
+,23-feb-26,Mica,,Del Viso,Prof vet,Perro Adulto,20," $  55.000,00 ",Pago
+,23-feb-26,Mica,,,Vacía,,," $  45.000,00 ",Pago
+,23-feb-26,Tomas Romero,Haras de Santa Maria,Escobar,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,23-feb-26,Tomas Romero,Haras de Santa Maria,Escobar,Prof vet,perro adulto,20," $  55.500,00 ",Pago
+,23-feb-26,Edu Eguaburo,Highlands,Del Viso,Royal Canin,Daschund,6," $  74.400,00 ",Pago
+,23-feb-26,Florencia Raymundo,Federico Lacroze 2201 P14,CABA,Royal Canin,Med Adult,8," $  65.000,00 ",Pago
+,23-feb-26,Vanesa D´ofrio ,Valderrama 4133,CABA,Royal Canin,Med Adult,8," $  65.000,00 ",Pago
+,23-feb-26,Franco,,Dique Lujan,Unik,Perro Adulto,15," $  71.900,00 ",Pago
+,23-feb-26,Lulo,,,Unik,Cachorro mediano,15," $  70.100,00 ",Pago
+,23-feb-26,Lulo,,,Royal Canin,maxi puppy,15," $  126.300,00 ",Pago
+,24-feb-26,Lulo,,,Royal Canin,Maxi Adulto,15," $  118.300,00 ",Pago
+,24-feb-26,Lulo,,,Excellent,Gato Adulto,8," $  55.900,00 ",Pago
+,24-feb-26,Lulo,,,Excellent,Gato Adulto,3," $  27.000,00 ",Pago
+,24-feb-26,Max,,Caamaño,Royal Canin,Maxi Adulto,15," $  104.000,00 ",Pago
+,25-feb-26,Matias Isturiz,Avellaneda 1756 piso 11 ,CABA,Royal Canin,Maxi Adulto,15," $  104.000,00 ",Pago
+,25-feb-26,Laura,,,Royal Canin,Mini Adult,8," $  79.200,00 ",Pago
+,25-feb-26,Laura,,,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,25-feb-26,mauro Fonseca,calle 86  5172,berisso,Royal Canin,Maxi Puppy ,30," $  226.000,00 ",Pago
+,25-feb-26,Balague,,Escobar,Pro plan,Large Puppy,15," $  109.800,00 ",Pago
+,25-feb-26,Balague,,Escobar,Royal Canin,Hypo  ,2," $  34.700,00 ",Pago
+,25-feb-26,Roberto Porrovechio,Martel 1363,San Miguel,Unik,Gato Castrado,2," $  25.500,00 ",Pago
+,25-feb-26,Roberto,Martel 1363,San Miguel,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,25-feb-26,Flor ,,La Montura,Unik,Gato Castrado,2," $  25.500,00 ",Pago
+,25-feb-26,Ariana,Capdevila 5153 - Villa Ballester,Villa Ballester,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,25-feb-26,Cristina,,,Prof vet,Perro adulto,20," $  55.500,00 ",Pago
+,25-feb-26,Cristina,,,Excellent,Gato Adulto,8," $  55.900,00 ",Pago
+,26-feb-26,Diego,,Grand Bourg,Unik,Perro Cachorro m/g,15," $  82.900,00 ",Pago
+,26-feb-26,Diego shube,Haras de Santa Maria,Escobar,Eukanuba,Medium adult,15," $  75.500,00 ",Pago
+,26-feb-26,pablo Forti,Benito perez galdos 2851,Quilmes,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,26-feb-26,Angel Totoricaguena,Carlos Tejedor 2114,Munro,Royal Canin,urinary s/o ,10," $  107.400,00 ",Pago
+,26-feb-26,Alejandra Giommi,Bragado 5234,Mataderos,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,26-feb-26,Juan Chiossone,,SMO,Royal Canin,Persian,2," $  32.500,00 ",Pago
+,26-feb-26,David ,Calle Pedro nieto 138 ,Savio,Royal Canin,Gastro  ,10," $  90.400,00 ",Pago
+,27-feb-26,Paula Etchemndy,Maschwitz Privado,Escobar,Excellent,Medium Puppy,15," $  66.800,00 ",Pago
+,27-feb-26,Valeria,Olavarria 919,Pilar,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,27-feb-26,Silvina,Caamaño,Pilar,Club performance,Weight Control,15," $  72.200,00 ",Pago
+,27-feb-26,Silvina,Caamaño,Pilar,Royal Canin,Hypo puppy,15," $  115.000,00 ",Pago
+,27-feb-26,Daiana,universidad de Buenos Aires 2448 ,Manuel alberto,Royal Canin,Medium Puppy,3," $  37.400,00 ",Pago
+,28-feb-26,Edgardo,Calle 13 nro 4857 entre 149 y 149,Berazategui,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,28-feb-26,Ana Frank,Risso Patron 6927,Laferrere,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,2-mar-26,Norma,Sheraton,Pilar,Royal Canin,Maxi Adulto,45," $  315.000,00 ",Pago
+,2-mar-26,Norma,Sheraton,Pilar,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,2-mar-26,Mariano,Manuel Alberti,Azurra,Royal Canin,Med Adu,8," $  65.000,00 ",Pago
+,2-mar-26,Julieta Martinez,Comodoro Rivadavia 1953,caba,Royal Canin,Hypo Puppy,10," $  115.000,00 ",Pago
+,2-mar-26,Lolly,,Tortuguitas,Excellent,Medium Adult,30," $  121.200,00 ",Pago
+,2-mar-26,Loly,,Tortuguitas,Eukanuba,Senior Medium ,15," $  79.300,00 ",Pago
+,2-mar-26,Jaime,Condominio la Delfina,Pilar ,Royal Canin,Medium adult,8," $  65.000,00 ",Pago
+,2-mar-26,Julia,,Del viso,Excellent,adulto,20," $  45.000,00 ",Pago
+,2-mar-26,Nadia Bienneres,,Del Viso,Royal Canin,Medium Puppy,15," $  113.000,00 ",Pago
+,2-mar-26,Vale Lopez,Highland,Del viso,Royal Canin,Giant Junior,15," $  126.300,00 ",Pago
+,3-mar-26,Enrique Ricciardi,,,Royal Canin,Maxi Puppy ,15," $  113.000,00 ",Pago
+,3-mar-26,Iaco,El Recodo,Manuel Alberti,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,3-mar-26,Lourdes,,Pilar,Eukanuba,Senior Small,3," $  24.100,00 ",Pago
+,3-mar-26,Lourdes ,,Pilar,Eukanuba,Large Puppy,15," $  75.800,00 ",Pago
+,3-mar-26,Patricio,,Maschwitz,Pro plan,Adulto Small,15," $  131.400,00 ",Pago
+,3-mar-26,Valeria,Berutti 79,Pilar,Club performance,Adulto  ,15," $  72.900,00 ",Pago
+,3-mar-26,Denise,,Del viso,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,3-mar-26,Rose Marie,La Calesa,,Pro plan,mediano adulto,15," $  99.800,00 ",Pago
+,4-mar-26,Eduardo,,Pilar,Royal Canin,Maxi Adulto,15," $  103.000,00 ",Pago
+,4-mar-26,Tomas Romero,,Manuel Alberti,Old prince,Cordero mediano,15," $  59.800,00 ",Pago
+,4-mar-26,Leonardo,San Alfonso,Pilar del Este ,Old prince,Cordero mediano,15," $  59.800,00 ",Pago
+,4-mar-26,Martin Jornas,Coronel Manuel Roseti 2065,Vicente Lopez,Royal Canin,Med Adu,8," $  65.000,00 ",Pago
+,4-mar-26,Martin Jornas,Coronel Manuel Roseti 2065,Vicente lopez,Royal Canin,Gato sensible,2," $  29.000,00 ",Pago
+,4-mar-26,Soledad Pelussa,"Au la plata- bs as km 31,5 hudson, Barrio puerto Nizuc- robles 60","Hudson, La Plata",Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,4-mar-26,Tatiana,Barrio Mapuche,Pilar,Royal Canin,Urinary,2," $  32.500,00 ",Pago
+,4-mar-26,Valeria,Olavarria 919,Pilar,Royal Canin,Satiety,15," $  133.800,00 ",Pago
+,4-mar-26,Agustin Greco ,Libertador,San Fernando,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,4-mar-26,Ylda,,Del viso,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,5-mar-26,Tomas Romero,san Pablo 1550,Del viso,Vacía,,3," $  22.600,00 ",Pago
+,5-mar-26,Carla Sanabria,Santa Catalina 7821,Laferrere,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,5-mar-26,Pechi,El Lucero,Manuel Alberti,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,6-mar-26,Ana ,Maschwitz Privado,Maschwitz,Royal Canin,Mini adulto ,8," $  79.200,00 ",Pago
+,6-mar-26,Myriam,,CABA,Royal Canin,giant Junior,15," $  126.300,00 ",Pago
+,6-mar-26,Myriam,,CABA,Royal Canin,Giant Puppy,15," $  126.300,00 ",Pago
+,6-mar-26,Connie,San marcos,Escobar,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,6-mar,Claudia,Lisandro de la Torre 5088,CAba,Pro plan,Large Puppy,15," $  108.900,00 ",Pago
+,6-mar,Claudia,Lisandro de la Torre 5088,caba,Royal Canin,Gastro,10," $  90.000,00 ",Pago
+,6-mar,Ricardo Toro,Salguero 1278,San Miguel,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,6-mar,Max Angrehs,Santa Elena,Pilar del Este ,Royal Canin,Medium Adult,"7,5"," $  65.000,00 ",Pago
+,7-mar,Isabel Ladner,Villa Olivos,Tortuguitas,Royal Canin,Medium Puppy,15," $  113.000,00 ",Pago
+,7-mar,Isabel Ladner,Villa Olivos,Tortuguitas,Royal Canin,Medium Puppy,3," $  37.600,00 ",Pago
+,7-mar,Lucas Diaz ,Ayacucho 1659,CABA,Royal Canin,maxi Puppy,15," $  113.000,00 ",Pago
+,7-mar,Mariela Bergoc ,Santos Dumont 2582 4a,CABA,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,7-mar,Lorena ,Av santa Maria 6500 Tigre,Tigre,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,7-mar,David Paez,Las Onas 64,Florencio Varela,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,7-mar,Yanina,chiclana 3362 villa astolfi (pilar),Pilar,Excellent,Medium Puppy,30," $  133.600,00 ",Pago
+,9-mar,Joel Fernandez,Barrio Altamira lote 94 ,Lanus Oeste,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,9-mar,Meli,La Montura,Manuel Alberti,Mon ami,Cordero  ,12," $  63.000,00 ",Pago
+,9-mar,Maximiliano Gianin,barrio el Aromo lote 42,Loma Verde,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,9-mar,Mario Corzo,Puertos 69,Escobar,Royal canin,Maxi Adulto ,15," $  105.000,00 ",Pago
+,9-mar,yaz,acacias,Del viso,Unik,perro adulto mediano light,15," $  82.900,00 ",Pago
+,10-mar,Athi,,Tortuguitas,Unik,Perro mediano ,15," $  74.800,00 ",Pago
+,10-mar,martin  ,,Del viso,Royal Canin,Med adu +10,30," $  258.600,00 ",Pago
+,10-mar,Juliana,,Escobar,Optimus,Perro Adulto  ,20," $  60.900,00 ",Pago
+,10-mar,Fernando,,Villanueva,Royal canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,10-mar,Daiana,Bermudas,Del viso,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,11-mar,Aly,Virrey Loreto 3110,CABA,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,11-mar,Jose Maria Olivieri,Galapagos,Manuel Alberti,Mon ami,Cordero,12," $  62.900,00 ",Pago
+,11-mar,Delfina Armellin,Tortuguitas,Tortuguitas,Excellent,Skin,15," $  65.400,00 ",Pago
+,11-mar,Diego piliavsky,Araucarias Lote 167,escobar,Royal Canin,Anallergenico,8," $  121.800,00 ",Pago
+,11-mar,Gabriel Trenque,new york 4537,CABA,Royal Canin,Maxi Adulto  ,15," $  105.000,00 ",Pago
+,11-mar,Emilio Sena,,CABA,Pro plan,mediano adulto,15," $  99.800,00 ",Pago
+,11-mar,Fernando,Haras de Santa Maria,Escobar,Royal Canin,Mini Puppy,6," $  74.000,00 ",Pago
+,12-mar,Luciana Biglione,,,Royal Canin,Mobility Larger Dog,30," $  298.000,00 ",Pago
+,13-mar,Florencia,El Recodo,Escobar,Eukanuba,Fit Medium Breed,15," $  69.700,00 ",Pago
+,13-mar,Marco Moccia,Martin Dale,Pilar,Eukanuba,Large Puppy,15," $  75.800,00 ",Pago
+,13-mar,Marcelo Masevicuis,"Calle 304,esquina 48..... Barrio el Rodeo..,la plata",La Plata ,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,13-mar,Lulo,,,Unik,Perro med,15," $  74.800,00 ",Pago
+,13-mar,Melisa,Muñiz 278,Lujan,Royal Canin,Ovejero Puppy,12," $  114.000,00 ",Pago
+,13-mar,Alejandro Satirio,pichincha 1914 - lavallol,Lavallol,Royal Canin,Hypo Puppy,15," $  115.000,00 ",Pago
+,13-mar,Melisa Baez ,,,Royal Canin,Gastro ,10," $  96.700,00 ",Pago
+,13-mar,Melisa Baez ,,,Royal Canin,Gato Gastro,2," $  40.400,00 ",Pago
+,13-mar,Belen Martinez,,Manuel Alberti,Eukanuba,Gato Adulto,3," $  29.500,00 ",Pago
+,14-mar,Juan Ramirez,Jujuy171 6A,CABA,Royal Canin,Mobility  ,10," $  115.300,00 ",Pago
+,14-mar,Carlos Gomez,calle 540 744 ,Florencio Varela,Excellent,Medium Puppy,15," $  66.800,00 ",Pago
+,14-mar,Diego  ,,Grand Bourg,Unik,Cachorro mediano ,15," $  84.000,00 ",Pago
+,16-mar,Norma,Sheraton,Pilar,Royal Canin,Maxi adulto,45," $  315.000,00 ",Pago
+,16-mar,Norma,Sheraton,Pilar,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,16-mar,Ever Martinez,,Campana,Pro plan,Large Adulto,15," $  99.800,00 ",Pago
+,16-mar,Ever Martinez,,Campana,Pro plan,Medium Adulto,15," $  99.800,00 ",Pago
+,16-mar,Eduardo Eguaburo,Highland,Manuel Alberti,Royal Canin,Dachshund,6," $  74.400,00 ",Pago
+,16-mar,Marina Ileana ,San isidro Labrador,Benavidez,Old Prince,Cordero,15," $  60.000,00 ",Pago
+,16-mar,Ramiro iturriza,Felix Pages 1076,Benavidez,Optimus,perro adulto,20," $  60.900,00 ",Pago
+,16-mar,Ramiro iturriza,Felix Pages 1077,Benavidez,Excellent,Gato castrado,"7,5"," $  65.700,00 ",Pago
+,16-mar,Cristian Escalante,Jujuy 1651,Alte Brown,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,17-mar,Nehuen,"Corrientes 5800, Club de Campo el Nacional",Gral. Rodriguez,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,17-mar,lulo,,,Old Prince,Cordero,15," $  60.000,00 ",Pago
+,17-mar,lulo,,,Royal Canin,Giant Junior,15," $  126.300,00 ",Pago
+,17-mar,jose Maria Rodriguez,Los Jazimnes,Pilar del Este ,Optimus,Perro Adulto,20," $  60.000,00 ",Pago
+,17-mar,Julieta Martinez,comodoro rivadavia 1953,CABA,Royal Canin,Hypo Puppy,10," $  116.500,00 ",Pago
+,17-mar,Ana ,Maschwitz Privado,Maschwitz,Royal Canin,Boxer adulto,12," $  100.200,00 ",Pago
+,17-mar,Laura Lacasa,Lagartos,Del viso,Royal Canin,Maxi Adulto ,15," $  105.000,00 ",Pago
+,17-mar,Eli,La Montura,Manuel Alberti,Prof Vet,Nutricion,40," $  90.000,00 ",Pago
+,17-mar,Lucrecia,El Talar II,Tigre,Royal Canin,med adu,"7,5"," $  65.000,00 ",Pago
+,17-mar,Nico,,Offica Park,Royal Canin,Derma mediano,10," $  84.900,00 ",Pago
+,18-mar,Silvina,caamaño,,Royal Canin,Hypo Puppy,10," $  115.000,00 ",Pago
+,18-mar,Fernando,Haras de Santa Maria,Loma Verde,Royal canin,Kitten,"7,5"," $  105.000,00 ",Pago
+,18-mar,Tomas  ,Haras de Santa Maria,Loma Verde,Royal Canin,Maxi Puppi,15," $  113.000,00 ",Pago
+,18-mar,Connie,San Marcos,,Nutrique,Large adulto +6,15," $  105.000,00 ",Pago
+,18-mar,marcos Tomasselli,Liniers 1620,San isidro,Royal Canin,Med Adu  ,"7,5"," $  65.000,00 ",Pago
+,18-mar,Lorena Altamiranda,Doctor V de la Plaza 1470,CABA,Royal Canin, Med adu,"7,5"," $  65.000,00 ",Pago
+,18-mar,Lorena Altamiranda,Doctor V de la Plaza 1470,CABA,Royal Canin,Pug Adulto,"7,5"," $  78.000,00 ",Pago
+,18-mar,Tatiana,,Pilar,Royal Canin,Urinary,"1,5"," $  32.500,00 ",Pago
+,18-mar,Andrea,Fitz Roy 5629,Casas de Santa María,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,19-mar,Florencia Raymundo,11 de septiembre 1124,CABA,Royal Canin,Med Adulto,"7,5"," $  65.000,00 ",Pago
+,19-mar,Ignacio Zavaleta,Golf Argentino,Tortuguitas,Prof Vet,Cordero,15," $  56.100,00 ",Pago
+,19-mar,lean Delia,La Montura,Manuel Alberti,Balance,mediano adulto,20," $  63.500,00 ",Pago
+,19-mar,Pedro Salas,El Recodo,Manuel Alberti,Royal Canin,Giant Puppy,15," $  126.300,00 ",Pago
+,19-mar,Pedro Salas,El Recodo,Manuel Alberti,Unik,Gato Castrado,2," $  25.500,00 ",Pago
+,19-mar,Miriam,Bolviar 663,Maschwitz,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,20-mar,Claudio Figas,Genova 1627,Bella Vista,Royal Canin,Maxi puppy,15," $  113.000,00 ",Pago
+,20-mar,Luciano Barbolla,Arzobispo Espinosa 1446,CABA,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,20-mar,Micaela,Del viso,,Unik,Gatito,2," $  25.500,00 ",Pago
+,20-mar,Flauta,El Recodo,Manuel Alberti,Royal Canin,Mini adulto ,3," $  35.500,00 ",Pago
+,20-mar,maria Laplaza,Carlos Maria de Avear 1760,Tigre,Royal Canin,med adu,15," $  130.000,00 ",Pago
+,21-mar,Mauro Fonseca,,La Plata ,Royal Canin,Maxi Puppy,30," $  226.000,00 ",Pago
+,21-mar,Gustavo,Juan B Justo 4233 6P,CABA,Royal Canin,Hypo,10," $  115.000,00 ",Pago
+,21-mar,Gustavo,Juan B Justo 4233 6P,CABA,Balance,Weight Control,20," $  81.000,00 ",Pago
+,21-mar,Luis,,La Matanza,Royal canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,21-mar,Tomas Bufano,Avenida Ruiz huidobro 3935 6 d,CABA,Royal Canin,Maxi puppy ,15," $  113.000,00 ",Pago
+,23-mar,Fren,,,Royal Canin,Maxi adulto,15," $  104.000,00 ",Pago
+,23-mar,Vale Lopez,highland,Del viso,Royal canin,Giant Junior,15," $  136.300,00 ",Pago
+,23-mar,Ana Loiacono,Sanchez de Loria 1759,CABA,Royal Canin,Anallergenico,8," $  121.800,00 ",Pago
+,23-mar,Belen Martinez,,Del Viso,Excellent,Gato Adulto,"7,5"," $  55.900,00 ",Pago
+,24-mar,David Paez,,Savio,Royal canin,Gastro,10," $  95.000,00 ",Pago
+,24-mar-26,Maru Bienneres,,Manuel Alberti,Royal Canin,Mini Adult,3," $  36.000,00 ",Pago
+,25-mar-26,Mariano Martin,San jose de Calazans 147,CABA,Royal Canin,Medium adult,8," $  65.000,00 ",Pago
+,25-mar-26,Candelaria Vilela,Rivadavia 1833,Benavidez,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,25-mar-26,Fernanda Tassone,Barrio Los lagos lote 113,Nordelta,Royal Canin,Diabetic,10," $  100.000,00 ",Pago
+,26-mar-26,Silvana rodrigez Saa,España 491,Avellaneda,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,26-mar-26,Silvana rodrigez Saa,España 491,Avellaneda,Old prince,Adult Small,15," $  69.500,00 ",Pago
+,26-mar-26,Edgardo Amat,Calle 13 nro 4857 entre 149 y 149 berazategui,Berazategui,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,26-mar-26,Fede Roldan,La Montura,Manuel Alberti,Royal Canin,Dachshund,3," $  37.200,00 ",Pago
+,26-mar-26,Vanesa D´ofrio ,Valderrama 4133,CABA,Royal Canin,Medium Adult,8," $  65.000,00 ",Pago
+,26-mar-26,Nahuel Billordo,Rio IV Golf Club 2085,De Vicenzo,Royal Canin,Medium Adult,15," $  118.000,00 ",Pago
+,26-mar-26,Lulo,,,Unik,mediano adulto,15," $  74.800,00 ",Pago
+,26-mar-26,Lulo,,,Royal Canin,Maxi Puppy,15," $  126.300,00 ",Pago
+,26-mar-26,Maria Laura ,San Matias ,Escobar,Royal Canin,Mini Adult,8," $  79.200,00 ",Pago
+,26-mar-26,Maria Laura ,San Matias ,Escobar,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,26-mar-26,Ruben Calderon,Laroque 1102,Banfield,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,26-mar-26,Coco,,Escobar,Fawna,Senior,15," $  90.000,00 ",Pago
+,26-mar-26,Silvina,caamaño,Pilar,Fawna,Cachorro mediano,3," $  32.000,00 ",Pago
+,26-mar-26,Juan Chiossone,SMO,Pilar,Royal Canin,Persian,2," $  32.500,00 ",Pago
+,27-mar-26,Vale Pilar,Olavarria 919,Pilar,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,27-mar-26,Vale Pilar,Olavarria 919,Pilar ,Royal Canin,SAtiety,15," $  133.800,00 ",Pago
+,27-mar-26,Guillermo Fernando bustos ,Patricias mendozinas 540,Escobar,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,27-mar-26,Cristian Gatti,Torres 478,Cardales,Royal Canin,Mini adult,15," $  125.100,00 ",Pago
+,27-mar-26,David Paez,Las Onas 64,Florencio Varela,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,27-mar-26,Natalia Yamila Magallan,El canton,Escobar,Mon ami,Superfood Mini Adu,6," $  62.200,00 ",Pago
+,27-mar-26,Cris,Martin Dale,Pilar,Mon ami,Cordero,8," $  47.000,00 ",Pago
+,27-mar-26,cris,Martin Dale,Pilar,Unik,Gato Castrado,8," $  71.000,00 ",Pago
+,27-mar-26,Balague,El Canton,Escobar,Pro plan,Large Adult,15," $  99.800,00 ",Pago
+,27-mar-26,Balague,El Canton,Escobar,Royal Canin,Hypoallergenic,2," $  34.700,00 ",Pago
+,28-mar-26,German Falcon,Carlos Gardel 2802,Olivos,Mon ami,Superfood MYG,12," $  100.900,00 ",Pago
+,28-mar-26,Diego Fernando Enrique,Felipe Lavallol 1223,Grand Bourg,Unik,Cachorro MyG,15," $  80.100,00 ",Pago
+,30-mar-26,Miguel Coronado,Llerena 2552,La Matanza,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,30-mar-26,Miguel Porrovechi,Martel 1363,San Miguel,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,30-mar-26,Marie ,El recodo,escobar,Royal Canin,Mobility Larger Dog,15," $  148.700,00 ",Pago
+,30-mar-26,Norma,Sheraton,Pilar,Royal Canin,Maxi Adult,45," $  315.000,00 ",Pago
+,30-mar-26,Norma,Sheraton,Pilar,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,30-mar-26,Cristina,San jose 1550,Manuel Alberti,Prof vet,,20," $  53.500,00 ",Pago
+,30-mar-26,Cristina,San Jose 1550,Manuel Alberti,Excellent,Gato Adulto,8," $  55.900,00 ",Pago
+,30-mar-26,Lolly,Ayres,Pilar,Unik,Gato Castrado,2," $  25.500,00 ",Pago
+,30-mar-26,Rose Marie,La Calesa,Pilar,Pro plan,Mediano adulto,15," $  99.800,00 ",Pago
+,31-mar-26,Martin Jornas,Coronel Manuel Roseti 2065,Vicente lopez,Royal Canin,Med Adu,8," $  65.000,00 ",Pago
+,31-mar-26,Marcelo Masevicuis,"Calle 304,esquina 48","Barrio el Rodeo, La Plata",Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,31-mar-26,Hernan,Verdi 2513,Hurlingham,Royal Canin,Medium Adult,8," $  65.000,00 ",Pago
+,31-mar-26,Ana Maria Frank,Risso Patron 6927,Laferrere,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,31-mar-26,Mariano Gandulia, ,Manuel Alberti,Royal Canin,Med Adulto,8," $  65.000,00 ",Pago
+,31-mar-26,Graciela Acosta,Paul groussac 5467,CABA,Royal Canin,Humedo Maxi puppy,," $  40.000,00 ",Pago
+,31-mar-26,Mario Sepulveda,,,Royal Canin,Medium adu,8," $  65.000,00 ",Pago
+,31-mar-26,Abel Frete,Luis Viale 715,La Matanza,Eukanuba,Large Puppy,15," $  75.800,00 ",Pago
+,31-mar-26,Mariano Gandulia,,Manuel Alberti,Royal Canin,Fit  ,8," $  105.600,00 ",Pago
+,1-abr-26,Lorena Broggia,Av santa Maria 6500,Nordelta,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,1-abr-26,Jose Maria Olivieri,Galapagos,Manuel Alberti,Mon ami,Cordero,12," $  62.900,00 ",Pago
+,1-abr-26,Anto gonzalez,Urquiza 2965,San Fernando,Old prince,Cordero,30," $  132.000,00 ",Pago
+,1-abr-26,Yhomienny Perez,Guardia Vieja 3732,CABA,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,1-abr-26,Yhomienny Perez,Guardia Vieja 3732,CABA,Royal Canin,Gastro,2," $  27.300,00 ",Pago
+,1-abr-26,Patricia Greco,Altos del Barranco,Tortuguitas,Royal Canin,Mobility,10," $  115.300,00 ",Pago
+,1-abr-26,Max,Caamaño,Caamaño,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,2-abr-26,Matias Brunneti,Av de los Lagos 3100,Nordelta,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,2-abr-26,Pablo Filoni,Calle Cuba S/N bo. Mirabosques Lote 60Cardales ,Cardales,Royal Canin,Medium Puppy,15," $  113.000,00 ",Pago
+,2-abr-26,Patricio ,La Plata ,Maschwitz,Pro plan,Mini adult,15," $  153.800,00 ",Pago
+,2-abr-26,Vale Ballatore,beruti 79,Pilar,Club performance,Adulto,15," $  72.200,00 ",Pago
+,2-abr-26,Tobias Lestremenn,"Condarco 5364, Club de Campo los Rosales",Esteban Echverria,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,2-abr-26,Tobias Lestremenn,"Condarco 5364, Club de Campo los Rosales",Esteban Echverria,Royal Canin,Mini Adult,15," $  122.000,00 ",Pago
+,2-abr-26,Esteban,La Montura,Manuel Alberti,Eukanuba,Large Fit,15," $  84.700,00 ",Pago
+,2-abr-26,Carla Pizarr,White 183,CABA,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,2-abr-26,Luciana Fernandez,25 de mayo 1625 6A,San martin,Royal Canin,Mini adult +8,3," $  39.300,00 ",Pago
+,2-abr-26,Luciana Fernandez,25 de mayo 1625 6A,San Martin,R Puppies,Moscu,," $  25.000,00 ",Pago
+,4-abr-26,Sergio Damian bustamante,Domingo faustino Sarmiento 403,Merlo,Royal Canin,Maxi Puppt,15," $  113.000,00 ",Pago
+,4-abr-26,Sergio Damian bustamante,Domingo faustino Sarmiento 403,Merlo,Eukanuba,KHS,8," $  67.700,00 ",Pago
+,4-abr-26,Marcela Meza,Av. regimiento de Patricios 40 7 15,CABA,Royal Canin,medium adult,8," $  65.000,00 ",Pago
+,4-abr-26,Vete,,,R Puppies,Moscu,," $  24.000,00 ",Pago
+,4-abr-26,Tomas Romero,San Jose 1550,Manuel Alberti,Old prince,Cordero,15," $  66.000,00 ",Pago
+,4-abr-26,Tomas Romero,San Jose,Manuel Alberti,Eukanuba,Adulto mediano,3," $  22.500,00 ",Pago
+,4-abr-26,Laura Bucheri,Diagonal 160 calle sarmiento 5921,Loma hermosa San Martin,Old prince,cordero,15," $  66.000,00 ",Pago
+,5-abr-26,Meli,La Montura,Manuel Alberti,Mon ami,Cordero,12," $  63.000,00 ",Pago
+,6-abr-26,Lucia Matrella,Trenque Lauquen 2870,Florencio Varela,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,6-abr-26,Nehuen, Corrientes 5800,Greneral Rodriguez,Royal Canin,Maxi Puppy,30," $  226.000,00 ",Pago
+,6-abr-26,Silvina,Caamaño,Del viso,Royal Canin,Hypo puppy,10," $  115.000,00 ",Pago
+,6-abr-26,Silvina,Caamaño,Del viso,Club performance,Weight Control,15," $  72.200,00 ",Pago
+,6-abr-26,Myrian Picone,Cabrera 5599,CABA,Royal Canin,Giant Junior,30," $  252.600,00 ",Pago
+,6-abr-26,Matias Gonzalez,"Aviador Saint Exupery 2188,",Ciudad Jardin,Royal Canin,maxi Puppy,15," $  113.000,00 ",Pago
+,6-abr-26,Matias Gonzalez,"Aviador Saint Exupery 2188,",Ciudad Jardin,Excellent,Sterelized,8," $  68.300,00 ",Pago
+,6-abr-26,Giulana Aversa,Juana Manso 451,CABA,Royal Canin,Med Adu,8," $  65.000,00 ",Pago
+,6-abr-26,Alejandra  ,Ayres del Pilar,Del viso,Pro plan,Adult large,15," $  105.800,00 ",Pago
+,6-abr-26,Nestor,Maschwitz Privado,Maschwitz,Royal Canin,Maxi adult,15," $  105.000,00 ",Pago
+,6-abr-26,Ylda,Santa elena 2669,Del viso,Royal Canin,Maxi adult,15," $  105.000,00 ",Pago
+,6-abr-26,Natalia Pesci,Villa Olivos,Tortuguitas,Mon ami,Cordero,12," $  70.800,00 ",Pago
+,6-abr-26,Eduardo Eguaburo,Highladn,Del viso,Royal Canin,Dachshund,6," $  74.400,00 ",Pago
+,6-abr-26,Eduardo Eguaburo,Highlands,Del viso,Royal Canin,Medium Adult,8," $  65.000,00 ",Pago
+,7-abr-26,Aly, Virrey Loreto 3110,CABA,Old prince,Cordero,15," $  66.000,00 ",Pago
+,7-abr-26,Yanina,chiclana 3362 ,Villa Astolfi,Excellent,Medium Puppy,30," $  141.600,00 ",Pago
+,7-abr-26,Sergio  ,"San Antonio de Areco Golf Club 1995, esq Mar del Plata GC",Manuel Alberti,Nutrique,Healthy Weight,15," $  107.500,00 ",Pago
+,7-abr-26,Lulo, ,,Old prince,Cordero,15," $  66.000,00 ",Pago
+,7-abr-26,sergio bustamante,Domingo faustino Sarmiento 403,Merlo,Royal Canin,Humedos,," $  160.000,00 ",Pago
+,8-abr-26,Julieta Martinez,comodoro rivadavia 1953,CABA,Royal Canin,Hypo Puppy,15," $  115.000,00 ",Pago
+,8-abr-26,Leonardo ,San alfonso,Villa Rosa,Old prince,Cordero,15," $  66.000,00 ",Pago
+,8-abr-26,Agostina Ioppolo,Juan Mariano Larsen 3247,CABA,Royal Canin,Derma mediano,10," $  84.900,00 ",Pago
+,8-abr-26,Flor ,La Montura,Manuel Alberti,Unik,Gato Castrado,2," $  25.500,00 ",Pago
+,8-abr-26,Noelia,La Montura,Manuel Alberti,Royal Canin,Mini Adult,3," $  35.500,00 ",Pago
+,8-abr-26,Carlos Gomez,calle 540 744,Florencio Varela,Old prince,Cachorro Cordero,15," $  75.000,00 ",Pago
+,9-abr-26,Alejandro Satirio,pichincha 1914,lavallol,Royal Canin,Hypo puppy,10," $  115.000,00 ",Pago
+,9-abr-26,Carlos  Moore,Avellaneda 1450,Florida,Royal Canin,Renal,10," $  92.000,00 ",Pago
+,9-abr-26,Maria Jose Martinez ,Caamaño 901,Del viso,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,9-abr-26,Facundo Pistone,Ramón Falcón 4691 2 c,CABA,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,9-abr-26,Daniela Tissoni,"Paraguay 4653, depto G",CABA,Royal Canin,Hypo puppy,15," $  115.000,00 ",Pago
+,9-abr-26,Karina Scaniglia,burgos 1576,don torcuato,Optimus,Perro adulto,20," $  60.900,00 ",Pago
+,10-abr-26,Pablo Forti,Benito perez galdos 2851,Quilmes,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,10-abr-26,Micaela Perez Martinez,Godoy Cruz 1583,Wilde,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,10-abr-26,Rubén Aranzana,Florencio Sanchez 855,Moreno,Royal Canin,Med Adu,8," $  65.000,00 ",Pago
+,10-abr-26,Tomas,Haras de Santa Maria,Escobar,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,10-abr-26,Tomas,Haras de Santa Maria,Escobar,Old prince,Cordero,15," $  66.000,00 ",Pago
+,10-abr-26,Cecilia Passini,Habana 4741,CABA,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,10-abr-26,Gustavo Gil,Cueli 2165,Santos Lugares ,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,10-abr-26,Gustavo gil,Cueli 2165,Santos Lugares ,Royal Canin,Mini Adult,3," $  35.500,00 ",Pago
+,10-abr-26,yesica Wild,General Ramón Castilla 370,Escobar,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,10-abr-26,jose Maria Rodriguez,Los Jazminez,Villa Rosa,Optimus,Perro adulto,20," $  60.900,00 ",Pago
+,10-abr-26,Denise,Ruta 26,Del viso,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,10-abr-26,Mario Corzo,El Canton,Escobar,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,10-abr-26,Esmeralda,Lagartos,Villa Rosa,Pro plan,Large Adulto,15," $  105.800,00 ",Pago
+,10-abr-26,Marco Moccia,Martin Dale,Pilar,Eukanuba,Large puppy,15," $  75.800,00 ",Pago
+,10-abr-26,Diego Shuberoff,Haras de Santa Maria,,Eukanuba,Medium adult,15," $  75.500,00 ",Pago
+,11-abr-26,Carolina Duarte,Medrano 678 7b,CABA,Royal Canin,Medium Adult,8," $  65.000,00 ",Pago
+,11-abr-26,Gabriela Loster,Galapagos,De Vicenzo,Royal Canin,Hypoallergenic,10," $  115.000,00 ",Pago
+,11-abr-26,maria Ileana Suarez,San isidro Labrador,,Excellent,Gato Adulto,8," $  59.300,00 ",Pago
+,11-abr-26,maria Ileana Suarez,San isidro Labrador,,Old prince,Cordero,15," $  66.000,00 ",Pago
+,11-abr-26,Maria Constanza Huergo,San Marco ,,Nutrique,Large adult +6,15," $  105.000,00 ",Pago
+,11-abr-26,Maria Constanza Huergo,san Marco,,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,11-abr-26,Diego Fernando Enrique,Felipe Lavallol 1223,Grand Bourg,Unik,Cachorro mediano,15," $  88.900,00 ",Pago
+,13-abr-26,Norma,Sheraton,Pilar,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,13-abr-26,Norma,Sheraton,Pilar,Royal Canin,Maxi Adult,45," $  315.000,00 ",Pago
+,13-abr-26,Eduardo  ,,Pilar,Royal Canin,Maxi adult,15," $  103.000,00 ",Pago
+,13-abr-26,Laura Avero,melincue 5559,CABA,Royal Canin,medium Adult,8," $  65.000,00 ",Pago
+,13-abr-26,Fernando Caprara,Las liebres,Manuel Alberti,Excellent,Gato Adulto,8," $  59.300,00 ",Pago
+,13-abr-26,Diego Cavalieri,El Deslinde 1699,Ezeiza,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,13-abr-26,Lucas Diaz ,Ayacucho 1659,CABA,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,13-abr-26,Pedro Salas,El recodo,Manuel Alberti,Royal Canin,Giant Puppy,15," $  126.300,00 ",Pago
+,13-abr-26,Mauro Fonseca,CALLE 86 5172,Berisso,Royal Canin,Maxi Puppy,30," $  226.000,00 ",Pago
+,13-abr-26,Alejandra Giommi,Bragado 5234,CABA,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,13-abr-26,Cristian Escalante,Jujuy 1651 ,Almirante Brown,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,13-abr-26,Gabriel Trenque,new york 4537,CABA,Royal Canin,Maxi Adult,15," $  105.000,00 ",Pago
+,13-abr-26,Lucas De Privitellio,Rio de Janeiro 802,CABA,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,13-abr-26,Tony,,Del viso,Optimus,Perro adulto,20," $  60.900,00 ",Pago
+,13-abr-26,Tamara ,Pumahuaca 59,CABA,Royal Canin,Medium adult,8," $  65.000,00 ",Pago
+,14-abr-26,Maximiliano Gianini,Congreve 900,Escobar,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,14-abr-26,Juana Zavaleta,golf club Argentino,Del viso,Old prince,Cordero,30," $  132.000,00 ",Pago
+,14-abr-26,Carla Sanabria,Santa Catalina 7821,Laferrere,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,14-abr-26,Carolina Duarte,bermudas lote 144,Manuel Alberti,Mon ami,Razas Pequeñas ,6," $  63.400,00 ",Pago
+,15-abr-26,Veronica Celiz,Leloir 162,General Rodriguez,Prof vet,Cordero,15," $  55.000,00 ",Pago
+,15-abr-26,Diego Piliavsky,Araucarias,Escobar,Royal Canin,Anallergenico,8," $  121.800,00 ",Pago
+,15-abr-26,Ana María Sazzarolli,Talar I Lote 216,Nordelta,Royal Canin,Medium adult,8," $  65.000,00 ",Pago
+,15-abr-26,Edgardo,Peirano 710,Escobar,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,15-abr-26,Vale Lopez,Highlands,Del viso,Royal Canin,Giant Junior,15," $  126.300,00 ",Pago
+,15-abr-26,Christine,Barrio Las Victorias Uruguay 3241 lote 47,San Fernando,Old prince,Cachorro Cordero,15," $  70.500,00 ",Pago
+,15-abr-26,Lucrecia,Talar II,Nordelta,Royal Canin,Medium Adult,15," $  118.800,00 ",Pago
+,16-abr-26,Marcelo Padula,Bogota 51 ,Gral Pacheco ,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,16-abr-26,Edgardo Amat,Calle 13 nro 4857,Berazategui,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,17-abr-26,Natalia Pinto,Las liebres,Manuel Alberti,Royal Canin,Medium Adulto,15," $  118.800,00 ",Pago
+,17-abr-26,Natalia Pinto,Las liebres,Manuel Alberti,Royal Canin,Medium Puppy,3," $  37.600,00 ",Pago
+,17-abr-26,Lucho,El recodo,Manuel Alberti,Royal Canin,Fit  ,3," $  45.200,00 ",Pago
+,17-abr-26,Andrea,Andrea Fitz Roy 5629,Villanueva,Unik,Cachorro mediano,15," $  83.000,00 ",Pago
+,17-abr-26,Florencia Raymundo,,,Royal Canin,Medium adulto,8," $  65.000,00 ",Pago
+,17-abr-26,Pablo Moreira,"Franklin 2190, depto 7301",CABA,Royal Canin,Maxi Adulto,15," $  105.000,00 ",Pago
+,17-abr-26,lulo,,,Royal Canin,maxi Puppy,15," $  126.300,00 ",Pago
+,17-abr-26,Lulo,,,Unik,Perro Mediano Adulto,15," $  74.800,00 ",Pago
+,17-abr-26,Eli,La Montura,Manuel Alberti,Prof vet,Premiun,40," $  82.000,00 ",Pago
+,17-abr-26,Eli,La Montura,Manuel Alberti,Unik,Adulto Pequeño,8," $  47.300,00 ",Pago
+,17-abr-26,David,Nieto 138,Manuel Alberti,Royal Canin,Gastro,10," $  96.700,00 ",Pago
+,17-abr-26,Rochi Beach,San Francisco,Villanueva,Royal Canin,Medium Adu,8," $  65.000,00 ",Pago
+,17-abr-26,Shadia,El Canton,Escobar,Royal Canin,hypo,2," $  34.700,00 ",Pago
+,17-abr-26,Shadia,El Canton,Escobar,Pro plan,Large adult,15," $  105.800,00 ",Pago
+,17-abr-26,Lorena Broggia,Barrio Altamira lote 94 ,Nordelta,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,17-abr-26,Ignacio Pereyra,Garcia Mansila 1768,Pilar,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,18-abr-26,Juan Ramirez,Jujuy 171,CABA,Royal Canin,Mobility,10," $  115.300,00 ",Pago
+,18-abr-26,kiki,527 nro 1148 entre 6 y 7,Tolosa,Royal Canin,Maxi Adult,15," $  105.000,00 ",Pago
+,18-abr-26,Kiki,527 nro 1148 entre 6 y 7,Tolosa,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,18-abr-26,Comander,El Recodo,Manuel Alberti,Royal Canin,Dachshund,3," $  39.800,00 ",Pago
+,18-abr-26,Comander,El recodo,Manuel Alberti,Royal Canin,Gato Castrado,3," $  58.100,00 ",Pago
+,20-abr-26,Fernando Le Pors,319 bis 287,Lujan,Royal Canin,Medium Puppy,15," $  113.000,00 ",Pago
+,20-abr-26,Gabriel Basabe,"Capitán Juan de San Martín 1391, lote 17",Boulogne,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,20-abr-26,Basile,Galapagos,Manuel Alberti,Nutrique,toy and mini young adult,3," $  37.000,00 ",Pago
+,20-abr-26,Romina ,Escobar,Escobar,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,20-abr-26,Claudia Giudici,Barrio Los Laureles Lote 17 Flia Cols,Garin,Old prince,Cordero Adulto Light,15," $  72.000,00 ",Pago
+,21-abr-26,Enrique Ricciardi,Fray Mamerto Esquiu 1326,"El Jaguel, Monte Grande",Pro plan,Large Puppy,15," $  116.400,00 ",Pago
+,21-abr-26,Daiana,bermudas lote 87,Manuel Alberti,Royal Canin,Maxi adult,15," $  113.000,00 ",Pago
+,21-abr-26,Belen Martinez,Las Madreselvas ,Manuel Alberti,Excellent,Gato Adulto,8," $  59.300,00 ",Pago
+,22-abr-26,Enrique Garcia ,Macedonio Fernandez 5905,CABA,Royal Canin,Maxi Puppy,15," $  122.000,00 ",Pago
+,22-abr-26,Dante Gotelli, Nazarre 2700 primer piso,CABA,Royal Canin,Med Adulto,8," $  65.000,00 ",Pago
+,22-abr-26,María Juliana ,"Puertos de Escobar, lote 102",Escobar,Optimus,Perro adulto,20," $  60.900,00 ",Pago
+,22-abr-26,Agustina Lombardi,Talar del Lago II lote 211,Nordelta,Royal Canin,Med puppy,15," $  126.000,00 ",Pago
+,22-abr-26,Belen Martinez,Las Madreselvas ,Manuel Alberti,Royal Canin,Renal ,2," $  39.500,00 ",Pago
+,22-abr-26,Emilio Sena,uriburu 1426,CABA,Pro plan,Medium Adulto,15," $  105.800,00 ",Pago
+,22-abr-26,Emilio Sena,uriburu 1426,caba,Old prince,Cordero Mediano,15," $  66.000,00 ",Pago
+,22-abr-26,Claudia  Benitez,Lisandro de la Torre 5088,CABA,Royal Canin,Maxi Adulto,15," $  113.000,00 ",Pago
+,22-abr-26,Cristina,San Jose 1550,Manuel Alberti,Prof vet,Perro Adulto,20," $  53.500,00 ",Pago
+,22-abr-26,Cristina,San Jose 1550,Manuel Alberti,Eukanuba,Fit  ,3, |,Pago
+,23-abr-26,Ramiro Iturriz,,Maschwitz,Optimus,Perro adulto,20," $  60.900,00 ",Pago
+,23-abr-26,jose maria olivieri,Galapagos,Manuel Alberti,Mon ami,Cordero,24," $  138.800,00 ",Pago
+,23-abr-26,Soledad,Hu,Hudson,Royal Canin,Maxi Puppy,15," $  122.000,00 ",Pago
+,23-abr-26,Geraldinde,golf club Argentino,Del viso,Old prince,Cordero,15," $  65.900,00 ",Pago
+,23-abr-26,Claudia Benitez,Lisandro de la Torre 5088,CABA,Pro plan,Medium Puppy,15," $  116.400,00 ",Pago
+,24-abr-26,Iaco,El LUcero,Manuel Alberti,Royal Canin,Maxi adulto,15," $  113.000,00 ",Pago
+,24-abr-26,Sonia Basic,Warnes 2218,La Reja,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,24-abr-26,Maria Laura,San Matias,Escobar,Royal Canin,Maxi Puppy,15," $  122.000,00 ",Pago
+,24-abr-26,maria Laura,San Matias,Escobar,Royal Canin,Mini adult,8," $  84.800,00 ",Pago
+,24-abr-26,Luis Coronado,Juan Llerena 2552,La matanza,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,24-abr-26,Agustin Greco,"Av, Libertador 3266",San Fernando,Royal Canin,maxi puppy,15," $  113.000,00 ",Pago
+,24-abr-26,Lucas Di Placido,Guardia Nacional 1407,CABA ,Old prince,Novel Cachorro,15," $  74.800,00 ",Pago
+,24-abr-26,Flor,El recodo,Manuel Alberti,Excellent,Reduced Calories,15," $  73.800,00 ",Pago
+,25-abr-26,Luis Cacciatore,Milicias Orientales 703,ituzaingo,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,25-abr-26,Paola Dal Molin,Rondeau 8777,Campana,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,25-abr-26,Paola Dal Molin,Rondeau 8777,campana,Fawna,Gato Adulto,3," $  38.000,00 ",Pago
+,25-abr-26,Andrea,"Barrio Los Castores, lote 348",Nordelta,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,25-abr-26,Martin jornas,Coronel Manuel Roseti 2065,Olivos,Royal Canin,Medium Adult,8," $  70.000,00 ",Pago
+,25-abr-26,Martin jornas,Coronel Manuel Roseti 2065,Olivos,Royal Canin,Gato Sensible,2," $  31.500,00 ",Pago
+,25-abr-26,Dai Schumann,universidad de Buenos Aires 2448,Manuel Alberti,Royal Canin,Medium Puppy,3," $  40.200,00 ",Pago
+,27-abr-26,Norma,Sheraton,Pilar,Royal Canin,Maxi Adulto,45," $  339.000,00 ",Pago
+,27-abr-26,Norma,Sheraton,Pilar ,Royal Canin,Maxi Puppy,15," $  122.000,00 ",Pago
+,27-abr-26,Normal,Sheraton,Pilar,Pro plan,Gato Adulto,3," $  44.600,00 ",Pago
+,27-abr-26,Martin Cosenzo,Yapeyu 1852,San Martin,Royal Canin,Hypoallergenic,10," $  102.000,00 ",Pago
+,27-abr-26,Ever Martinez,Rawson 2411,Campana,Pro plan,Medium Adult,15," $  105.800,00 ",Pago
+,27-abr-26,Ever Martinez,Rawson 2411,Campana,Pro plan,Adulto Large,15," $  105.800,00 ",Pago
+,27-abr-26,Silvina,Caamaño 901,Pilar,Royal Canin,Hypo puppy,10," $  115.000,00 ",Pago
+,27-abr-26,Miguel Coronado,Juan Llerena 2552,La matanza,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,27-abr-26,Yaz,Acacias,Maschwitz,Unik,Light,15," $  82.900,00 ",Pago
+,28-abr-26,marianela Bergoc,Santos Dumont 5842 4A,CABA,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,28-abr-26,Tatiana,Mapuch,Villa Rosa,Royal Canin,gato urinary,2," $  33.900,00 ",Pago
+,28-abr-26,Guillermo Barile,Pilar del Este - jazmines 413,Villa Rosa,Royal Canin,Urinary care,8," $  130.200,00 ",Pago
+,28-abr-26,Juan Chiossone,Smo,,Royal Canin,Persian,4," $  76.600,00 ",Pago
+,28-abr-26,Lolly,Tortuguitas,Del viso,Excellent,Medium Adulto,30," $  128.400,00 ",Pago
+,28-abr-26,Lolly,Tortuguitas,Del Viso,Royal Canin,Mobility,10," $  123.300,00 ",Pago
+,28-abr-26,Diego ,Grand Bourg,Grand Bourg,Unik,Cachorro mediano,15," $  82.900,00 ",Pago
+,28-abr-26,Eduardo  Eguaburo,Highlands,Del viso,Royal Canin,Medium Adult,8," $  70.000,00 ",Pago
+,28-abr-26,Eduardo Eguaburo,Highlands,Del viso,Royal Canin,Dachshund,6," $  79.600,00 ",Pago
+,28-abr-26,Sandra Cuevas,,,Pro plan,Gastro,8," $  67.600,00 ",Pago
+,28-abr-26,Luis Mendy,Calle 11 n328,La Plata,Royal Canin,Diabetic,10," $  100.700,00 ",Pago
+,28-abr-26,Luis Mendy,Calle 11 n329,La Plata,Royal Canin,Mini Ageing +12,3," $  37.000,00 ",Pago
+,28-abr-26,Guillermo Barile,,Villa Rosa,Royal Canin,Gato Gastro,2," $  43.200,00 ",Pago
+,28-abr-26,Carmen,Av. Dardo Rocha 1139,Tigre,Royal Canin,Medium adult,15," $  117.000,00 ",Pago
+,29-abr-26,Ana Loiacono,Sánchez de Loria 1759,CABA,Royal Canin,Anallergenico,8," $  130.000,00 ",Pago
+,29-abr-26,Vanesa D´ofrio ,VALDERRAMA 4133,CABA,Royal Canin,Med Adulto,8," $  70.000,00 ",Pago
+,29-abr-26,Ana Frank,Risso patron 6927,Laferrere,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,29-abr-26,Luciano Barbolla,Arzobispo Espinosa 1446 3ero C,CABA,Royal Canin,Maxi puppy,15," $  113.000,00 ",Pago
+,29-abr-26,Julieta Martinez,comodoro rivadavia 1953,CABA,Royal Canin,Hypo Puppy,10," $  115.000,00 ",Pago
+,29-abr-26,Tobias Diaz Lestremenn,"Condarco 5364, Club de Campo los Rosales",Esteban Echverria,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,30-abr-26,Meli,La Montura,Manuel Alberti,Mon ami,Cordero,12," $  69.400,00 ",Pago
+,30-abr-26,Luis ,,Boulogne,Royal Canin,Satiety,30," $  286.600,00 ",Pago
+,30-abr-26,Cristhne,,,Old prince,Cachorro Novel ,15," $  70.500,00 ",Pago
+,30-abr-26,Mariano Perez,Don Francisco Larraza 2234,Florencio Varela,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,30-abr-26,Flauta,El recodo,Manuel Alberti,Royal Canin,Mini Adult,3," $  38.000,00 ",Pago
+,30-abr-26,Mario Sepulveda,,Del Viso,Royal Canin,Medium Adult,8," $  70.000,00 ",Pago
+,30-abr-26,Sebastian Tatarela,Montevideo 2167,Florencio Varela,Royal Canin,Diabetic,10," $  100.000,00 ",Pago
+,30-abr-26,Lucas Campagnucci,Calle 1340 1044,Florencio Varela,Royal Canin,Diabetic,10," $  100.000,00 ",Pago
+,30-abr-26,Florencia Bruno,Av. San Martin 1024,Vicente Lopez,Royal Canin,Medium adult,8," $  70.000,00 ",Pago
+,30-abr-26,Florencia Bruno,Av. San Martin 1024,Vicente Lopez,Royal Canin,Fit  ,3," $  48.400,00 ",Pago
+,2-may-26,Jaime Valdez,Condominio la Delfina,Pilar,Royal Canin,Medium Adult,8," $  70.000,00 ",Pago
+,2-may-26,Connie Rodriguez ,Ayres,Pilar,Royal Canin,Fit  ,3," $  48.400,00 ",Pago
+,2-may-26,Pechi,El LUcero,Pilar,Royal Canin,Maxi Adult,15," $  113.000,00 ",Pago
+,2-may-26,Tomas ,El Rocio,De Vicenzo,Old prince,Cordero adulto  ,15," $  65.900,00 ",Pago
+,2-may-26,Lourdes Garcia,Armando Ferreyra 777,Pilar,Eukanuba,Large Puppy,15," $  81.100,00 ",Pago
+,2-may-26,Lourdes Garcia,Armando Ferreyra 777,Pilar,Eukanuba,Senior Small,3," $  25.800,00 ",Pago
+,2-may-26,Ana,Salta 1848,De Vicenzo,Optimus,Gato adulto,8," $  45.400,00 ",Pago
+,4-may-26,Meli Altuna,Muñiz 278,Lujan,Royal Canin,Ovejero Puppy,12," $  118.400,00 ",Pago
+,4-may-26,Fernando Lorenzo,"Italia 4451, barrio Laguna Grande, lote 107,",Dique Lujan,Royal Canin,Maxi Adult,15," $  113.000,00 ",Pago
+,4-may-26,Mariano Perez,Don Francisco Larraza 2234,san Justo,Royal Canin,maxi Puppy,15," $  113.000,00 ",Pago
+,4-may-26,Melisa Baez ,villa maria golf club 2552,De vicenzo,Royal Canin,gastro,10," $  98.000,00 ",Pago
+,4-may-26,Melisa Baez ,villa maria golf club 2552,De Vicenzo,Royal Canin,Gastro Gato,2," $  41.000,00 ",Pago
+,4-may-26,Esteban Conde,Salta 4939,San Martin,Nutrique,Medium Young Adult Dog,12," $  86.000,00 ",
+,4-may-26,Luciana Baglioni,Bolivia 3073,Maschwitz,Royal Canin,Mobility LD,30," $  318.200,00 ",Pago
+,4-may-26,Emilio Perot,Av Alvear 70,Maschwitz,Royal Canin,Maxi Adult,30," $  210.000,00 ",Pago
+,4-may-26,Diego Lombardo,DONOVAN 1948,Avellaneda,Royal Canin,Maxi Puppy,15," $  117.000,00 ",pago
+,4-may-26,Nehuen Guntin,"Corrientes 5800, Club de Campo el Nacional",General Rodriguez,Royal Canin,Maxi Puppy,30," $  234.000,00 ",pago
+,4-may-26,Carla Pizarro, White 187,CABA,Fawna,Perro Adulto,15," $  86.000,00 ",pago
+,4-may-26,Carla Pizarro,White 187,CABA,Fawna,Cachorro mediano,15," $  89.200,00 ",Pago
+,4-may-26,Julia,,Del Viso,Prof vet,,," $  53.500,00 ",pago
+,4-may-26,Raul Bienneres,,De Vicenzo,Royal Canin,Medium Puppy,15," $  126.400,00 ",pago
+,4-may-26,Raul Bienneres,,De Vicenzo,Royal Canin,Mini Adult,3," $  38.000,00 ",pago
+,4-may-26,Richards,Av. Alvear 501,Benavidez,Royal Canin,Maxi Puppy,15," $  117.000,00 ",pago
+,4-may-26,Maria Jose Martinez ,Caamaño 901 lote 1067,Villa Rosa,Royal Canin,Maxi Puppy,15," $  117.000,00 ",
+,4-may-26,Nadia gonzalo,Maestra ada Elflein 2577 Depto 302,Castelar,Royal Canin,Diabetic,10," $  103.500,00 ",pago
+,4-may-26,Agustina Sonntag,Avellaneda 548 depto 6,Temperley,Royal Canin,Maxi Puppy,15," $  117.000,00 ",
+,4-may-26,Anabella Centurion,Leopardi 6635,Gonzalez Catan,Royal Canin,Maxi Puppy,15," $  117.000,00 ",pago
+,4-may-26,Athi,,,Unik,Adulto mediano,15," $  74.800,00 ",pago
+,5-may-26,Mario Turco,gdor Tejedor 780,Lanus,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,5-may-26,Carlos Gomez,calle 540 744,Florencio Varela,Old prince,Cachorro,15," $  74.800,00 ",pago
+,5-may-26,Max Testoni,Caamaño ,Villa Rosa,Royal Canin,Maxi Adulto,15," $  113.000,00 ",pago
+,5-may-26,Lulo,,,Royal Canin,Maxi Puppy,15," $  135.100,00 ",
+,5-may-26,Lulo,,,Unik,Perro Mediano Adulto,15," $  74.800,00 ",
+,5-may-26,Myriam,Bolivar 663,Maschwitz,Royal Canin,Maxi adult,15," $  113.000,00 ",Pago
+,5-may-26,Micaela,San Nicolas 536,Del viso,Unik,Gatito,2," $  25.500,00 ",Pago
+,5-may-26,Tomas ,Haras de Santa Maria,Escobar,Royal Canin,Maxi Puppy,15," $  117.000,00 ",Pago
+,5-may-26,Tomas ,Haras de Santa Maria,Escobar,Old prince,Cordero Mediano,15," $  65.900,00 ",Pago
+,5-may-26,Valeria Ballatore,beruti 79,Pilar,Club performance,Adulto Mediano,15," $  77.200,00 ",Pago
+,6-may-26,Fernando Perrella,Machain 4116 - piso 1 depto 10,CABA,Royal Canin,Hypoallergenic,10," $  101.000,00 ",Pago
+,5-may-26,Gino Langhi,Av. Belgrano 2422,caba,Royal Canin,Maxi Puppy,15," $  117.000,00 ",Pago
+,5-may-26,Roberto Porrovecchio,Martel 1363,San Miguel,Royal Canin,Maxi Puppy,15," $  117.000,00 ",Pago
+,5-may-26,Fernando ,Haras de Santa Maria,Escobar,Royal Canin,Mini Puppy,6," $  79.200,00 ",Pago
+,5-may-26,Natalia,El Canton,Escobar,Mon ami,Superfood RC,6," $  61.600,00 ",Pago
+,6-may-26,Coco,,Maschwitz,Fawna,Senior  ,15," $  90.000,00 ",Pago
+,6-may-26,Patricio,Libertad 500,Maschwitz,Royal Canin,Mini adult,15," $  133.800,00 ",Pago
+,6-may-26,Vale Lopez,Highlands,Del viso,Royal Canin,Giant Junior,15," $  135.100,00 ",Pago
+,7-may-26,Dani Tissoni,"Paraguay 4653, depto G",CABA,Royal Canin,Hypoallergenic,10," $  101.000,00 ",Pago
+,7-may-26,Claudio Figas,Genova  1527 San Miguel,San Miguel,Royal Canin,Maxi Puppy ,15," $  117.000,00 ",Pago
+,7-may-26,sergio bustamante,Sarmiento 403,Merlo,Royal Canin,Gastro Humedo ,," $  90.000,00 ",Pago
+,7-may-26,Diego Garcia Rodriguez,Pedernera 515,caba,Royal Canin,Maxi Puppy,15," $  113.000,00 ",Pago
+,7-may-26,Diego Garcia Rodriguez,Pedernera 515,CABA,Pro plan,Razas Pequeñas Active Mind,8," $  78.500,00 ",Pago
+,7-may-26,Mariela Di Pietro,Yapeyu 967,CABA,Royal Canin,Anallergenico,8," $  130.300,00 ",Pago
+,7-may-26,Mariela Di Pietro,Yapeyu 967,CABA,Pro plan,Adulto Small,8," $  60.700,00 ",Pago
+,7-may-26,Alejandro Satirio,pichincha 1914,Lavallor,Royal Canin,Hypo puppy,10," $  123.100,00 ",Pago
+,8-may-26,Patricia Greco,,Tortuguitas,Royal Canin,Mobility,10," $  123.300,00 ",Pago
+,8-may-26,Cristian Escalante,Jujuy 1651 ,Almirante Brown,Royal Canin,Maxi Puppy,15," $  117.000,00 ",Pago
+,8-may-26,Pablo forti,Benito perez galdos 2851,Quilmes ,Royal Canin,Maxi Puppy,15," $  119.500,00 ",Pago
+,8-may-26,María Jose Rodriguez,Los Jazmines 141,Pilar del Este ,Optimus,Perro Adulto,20," $  60.900,00 ",Pago
+,8-may-26,Marina Ileana Suarez,,,Old prince,Cordero Mediano,15," $  65.900,00 ",Pago
+,8-may-26,Marina Ileana Suarez,,,Excellent,Gato Adulto,8," $  59.300,00 ",Pago
+,8-may-26,matias Brunetti,El Palmar Homes 3 Unidad 4,Nordelta,Royal Canin,Maxi Puppy,15," $  119.500,00 ",Pago
+,8-may-26,Giuliana Aversa,Juan Manso 451,CABA,Royal Canin,Medium Adult,8," $  70.000,00 ",Pago
+,8-may-26,Ana,Maschwitz Privado,Maschwitz,Royal Canin,Boxer Adulto,12," $  107.200,00 ",Pago
+,9-may-26,Delfina Armellin,Tortuguitas,Tortuguitas,Excellent,Skin Care,15," $  69.400,00 ",Pago
+,9-may-26,Jorge Cariaga,25 de mayo 1139,Moron,Royal Canin,Maxi Puppy,15," $  119.000,00 ",Pago
+,9-may-26,Pedro Salas,El recodo,Manuel Alberti,Royal Canin,Giant Puppy,15," $  135.100,00 ",Pago
+,9-may-26,Pedro Salas,El recodo,Manuel Alberti,Unik,Gato Castrado,2," $  25.500,00 ",Pago
+,9-may-26,Carolina Lelli;,Avenida Huisi de Segui 4158,Quilmes ,Royal Canin,Maxi Puppy,15," $  119.000,00 ",Pago
+,9-may-26,Constanza Huergo,San Marco,Villanueva,Nutrique,Large Young Adult +6,15," $  105.100,00 ",Pago
+,9-may-26,Isabel Ladner,Olivos,Tortuguitas,Royal Canin,Medium Puppy,15," $  136.100,00 ",Pago
+,11-may-26,Norma,Sheraton,Pilar,Royal Canin,Maxi Adult,45," $  339.000,00 ",Pago
+,11-may-26,Norma,Sheraton,Pilar,Royal Canin,Maxi Puppy,15," $  119.000,00 ",Pago
+,11-may-26,laura Lacasa,Lagartos,Pilar,Royal Canin,Maxi Adult,15," $  113.000,00 ",Pago
+,11-may-26,Esteban  ,La Montura,Manuel Alberti,Eukanuba,Fit Large,15," $  90.600,00 ",Pago
+,11-may-26,Diego Cavalieri,El Deslinde 1699,Ezeiza,Royal Canin,Maxi Puppy,15," $  119.000,00 ",Pago
+,11-may-26,Laura Bucheri,,,Old prince,Cordero mediano,15," $  65.900,00 ",Pago
+,11-may-26,Laura Bucheri,,,Old prince,Gato Sterelized,8," $  68.600,00 ",Pago
+,11-may-26,Mafe,Martin Dale,Pilar,Royal Canin,Mini Weight Care,3," $  42.800,00 ",Pago
+,11-may-26,Mafe,Martin Dale,Pilar,Eukanuba,Large Puppy,15," $  81.100,00 ",Pago
+,11-may-26,Mario Corzo,Barrio San Ramon,Pilar del Este ,Royal Canin,Maxi Adult,15," $  113.000,00 ",Pago
+,11-may-26,Gabriel Trenque,new york 4537,CABA,Royal Canin,Maxi Adult,15," $  113.000,00 ",Pago
+,11-may-26,Lorena Altamiranda,Doctor V de la Plaza 1470,CABA,Royal Canin,medium Adult,8," $  72.000,00 ",Pago
+,11-may-26,Lorena Altamiranda,Doctor V de la Plaza 1470,CABA,Royal Canin,Kitten,8," $  113.200,00 ",Pago
+,11-may-26,Anto Gonzalez,Urquiza 2965,San Fernando,Old prince,Cordero Mediano,30," $  119.200,00 ",Pago
+,11-may-26,Mauro Fonseca,CALLE 86 5172,berisso,Royal Canin,Maxi Puppy,30," $  238.000,00 ",Pago
+,11-may-26,Ceci Passini ,La Habana 4741,CABA,Royal Canin,Maxi Puppy,15," $  119.000,00 ",Pago
+,12-may-26,Ruben Calderon,Larroque 1102,Banfield,Royal Canin,Maxi Puppy,15," $  119.000,00 ",Pago
+,12-may-26,Tomas Bufano,Ruiz Huidobro 3935,CABA,Royal Canin,Maxi Puppy,15," $  119.000,00 ",Pago
+,12-may-26,Sergio Costa,"7,5",La matanza,Royal Canin,Medium Adult,8," $  71.600,00 ",Pago
+,13-may-26,Basile,Galapagos,Manuel Alberti,Nutrique,Mini Young Adult ,8," $  76.000,00 ",Pago
+,13-may-26,Alejandra Suarez,Ayres,Pilar,Pro plan,Large Adult,15," $  105.800,00 ",Pago
+,13-may-26,Marco Tomaselli,Liniers 1620 CASA 3,CABA,Royal Canin,Medium Adult,8," $  71.600,00 ",Pago
+,13-may-26,Edgardo Amat,Calle 13 nro 4857 entre 149 y 149,Berazategui,Royal Canin,Maxi Puppy,30," $  238.000,00 ",Pago
+,13-may-26,Kiki,calle 527 nro 1148 entre 6 y 7,Tolosa,Royal Canin,Maxi Puppy,15," $  124.000,00 ",Pago
+,13-may-26,Ylda,Santa elena 2669,Del Viso,Eukanuba,Fit Body,15," $  89.800,00 ",Pago
+,13-may-26,Gustavo Gil,Cueli 2165,Santos Lugares,Royal Canin,Mini Adult,3," $  38.000,00 ",Pago
+,14-may-26,Diego Fernando Enrique,Felipe Lavallol 1223,Grand Bourg,Unik,Cachorro mediano,15," $  88.900,00 ",Pago
+,14-may-26,Mariano Martin,San José de Calasanz 147 5E.,CABA,Royal Canin,medium Adult,8," $  71.600,00 ",Pago
+,14-may-26,Marie,El recodo,Escobar,Royal Canin,Mobility LD,15," $  159.100,00 ",Pago
+,14-may-26,David ,Pedro Nieto 138,Savio,Royal Canin,Gastro,10," $  103.500,00 ",Pago
+,15-may-26,Tony,,,Excellent,Gato Sterelized,8," $  68.300,00 ",Pago
+,15-may-26,Diego Piliavsky,Araucarias Lote 167,Escobar,Royal Canin,Anallergenico,8," $  130.300,00 ",Pago
+,15-may-26,Gabriel ,"Defensa 2728 , entre primera junta y Nápoles",San Miguel,Royal Canin,Diabetic,10," $  101.300,00 ",Pago
+,15-may-26,Yhomi Perez,"Pasco 649, San Cristobal",CABA,Royal Canin,Maxi Puppy,15," $  119.000,00 ",Pago
+,15-may-26,Elian Anoratto,La Montura lote ,pilar,Prof Vet,Nutricion,60," $  128.700,00 ",Pago
+,15-may-26,Gustavo Vilella,Av. Juan Bautista Justo 4233 6° P,CABA,Royal Canin,Hypo Adulto,10," $  123.100,00 ",Pago
+,15-may-26,Emilio Sena,uriburu 1426,CABA,Pro Plan ,Medium Adulto,15," $  105.800,00 ",Pago
+,15-may-26,Tony,,,Optimus,Adulto,20," $  60.900,00 ",Pago
+,15-may-26,Eduardo Martin Miguel,,pilar,Royal Canin,Maxi Adult,15," $  113.000,00 ",Pago
+,16-may-26,Denise,arata 3325,Del Viso,Royal Canin,Maxi Adult,15," $  113.000,00 ",Pago
+,16-may-26,Silvana,Caamaño,,Royal Canin,Hypo Puppy,10," $  123.100,00 ",Pago
+,16-may-26,Silvana,Caamaño,,Club performance,Weight Control,15," $  77.200,00 ",Pago
+,16-may-26,Rose Marie,La Calesa,Pilar,Pro plan,Medium Adult,15," $  105.800,00 ",Pago
+,18-may-26,jose maria olivieri,Galapagos,Manuel Alberti,Royal Canin,Diabetic,10," $  101.400,00 ",Pago
+,18-may-26,Leonardo,San Alfonso,Pilar del Este ,Old prince,Cordero Mediano,15," $  65.900,00 ",Pago
+,18-may-26,Lorena  ,Santa Maria 6000,Benavidez,Royal Canin,Maxi Puppy,15," $  124.000,00 ",Pago
+,18-may-26,Cristina Gomez,Sucre 512,Malvinas Argentinas,Royal Canin,Medium Adult,8," $  71.700,00 ",Pago
+,18-may-26,Shadia Ahon,El Canton,Escobar,Pro Plan,Large Adult,15," $  105.800,00 ",Pago
+,18-may-26,Shadia Ahon,El Canton,Escobar,Royal Canin,Hypo,2," $  37.100,00 ",Pago
+,18-may-26,Maximiliano Gianini,Congreve 900,Escobar,Royal Canin,Maxi Adult,15," $  113.000,00 ",Pago
+,18-may-26,Paula Schacht,,Tortuguitas,Royal Canin,Hepatic ,10," $  116.300,00 ",Pago
+,18-may-26,Marcelo Padula,Bogota 51,Tigre,Royal Canin,Maxi Puppy,15," $  119.000,00 ",Pago
+,18-may-26,Ana María Sazzarolli,Talar I lote 216,Benavidez,Royal Canin,Medium Adult,8," $  74.700,00 ",Pago
+,18-may-26,Gabriela Lolster,Galapagos,Manuel Alberti,Old prince,Cordero mediano,15," $  65.900,00 ",Pago
+,19-may-26,Sebastian Frete,Luis Viale 715,La Matanza,Eukanuba,Large Puppy,15," $  81.000,00 ",Pago
+,19-may-26,Enrique Ricciardi,Fray Mamerto Esquiu 1326,El Jaguel,pro plan,Large Puppy,15," $  116.400,00 ",Pago
+,19-may-26,Enrique Ricciardi,Fray Mamerto Esquiu 1326,El Jaguel,Royal Canin,Weight Control,3," $  58.100,00 ",Pago
+,19-may-26,Matias Lopez,,,,,," $  69.800,00 ",
+,18-may-26,Lean Delia,La Montura,Manuel Alberti,Balance,Large Dogs,20," $  63.400,00 ",Pago
+,19-may-26,Benjamin,El Recodo 229,Escobar,Royal Canin,Mini adult +8,3," $  42.000,00 ",
+,20-may-26,Ignacio Pereyra Rozas,Garcia Mansilla 1768,Pilar del Este ,Royal Canin,Maxi Puppy,15," $  119.000,00 ",pago
+,20-may-26,Sergio bustamante,Sarmiento 403,Merlo,Eukanuba,EUKANUBA KITTEN HEALTHY START,," $  71.250,00 ",
+,20-may-26,Martin Jornas,Coronel Manuel Roseti 2065,Vicente Lopez,Royal Canin,medium Adult,8," $  71.600,00 ",
+,20-may-26,Gustavo Varone,La Lomada,Pilar,Royal Canin,Mini Adult,3," $  38.000,00 ",pago
+,20-may-26,Sebastian Tarela,Montevideo 2167,Florencio Varela,Royal Canin,Diabetic,10," $  101.400,00 ",pago
+,20-may-26,martin Lionel,Del Viso,Pilar  ,Royal Canin,Medium adulto +10,30," $  280.600,00 ",
+,20-may-26,Eduardo Eguaburo,Highlands,Pilar,Royal Canin,Dachshund,6," $  82.600,00 ",
+,20-may-26,Eduardo Eguaburo,Highlands,Pilar ,Royal Canin,medium adult,8," $  71.600,00 ",
+,20-may-26,sergio bustamante,Sarmiento 403,Merlo,Royal Canin,humedo ,4," $  135.000,00 ",
+,20-may-26,Martina Noe,Pasaje Almagro 3960,Lanus,Royal Canin,Diabetic,10," $  101.400,00 ",
+,20-may-26,Cristina Gomez,San jose 1550,Del viso,Excellent,Gato adulto,8," $  59.300,00 ",
+,21-may-26,Mariano Altman,Soler 6052,caba,Royal Canin,Hypoallergenic,10," $  103.300,00 ",
+,21-may-26,Geraldine ,golf club Argentino,Del viso,Old prince,Cordero Mediano,15," $  65.900,00 ",
+,21-may-26,Lucia Faga,Ferrari 1591,Tigre,Royal Canin,Maxi Puppy,15," $  124.000,00 ",
+,21-may-26,Lolly,Ayres del Pilar,Pilar,Nutrique,Gato Sterelized,8," $  104.000,00 ",
+,22-may-26,Ramiro Iturriz,Felix Pages 1076,Maschwitz,Optimus,Perro Adulto,20," $  67.000,00 ",
+,22-may-26,Roxana ,Pellegrini 638,Merlo,Old prince,Cordero Mediano,15," $  65.900,00 ",
+,22-may-26,Gabriel Basabe,Capitan juan de San Martín 1391,Boulogne,Royal Canin,Maxi puppy,15," $  119.000,00 ",
+,22-may-26,Yanina,chiclana 3362,Villa Astolfi,Excellent,Medium Puppy,30," $  141.600,00 ",
+,22-may-26,Maria Laura Vazques ,Barrio San Matias,Escobar,Royal Canin,Maxi Puppy,15," $  119.000,00 ",
+,22-may-26,Maria Laura Vazques ,Barrio San Matias,Escobar,Royal Canin,Mini adult +8,8," $  84.800,00 ",
+,22-may-26,Sonia Basic,Warnes 2218,La reja,Royal Canin,Maxi Puppy,15," $  119.000,00 ",
+,22-may-26,Lulo,,,Unik,Perro Adulto m/g,15," $  74.800,00 ",
+,22-may-26,Lulo,,,Old prince,Cordero Mediano,15," $  65.900,00 ",
+,22-may-26,Josefina Vazquez Caputo,Newman,Benavidez,Royal Canin,Maxi Puppy ,15," $  119.000,00 ",
+,23-may-26,Josefina Valente,Jorge Newbery 2762,San isidro ,Royal Canin,Maxi Puppy,15," $  119.000,00 ",
+,23-may-26,Sebastian Miranda,Suarez 1284,caba,Royal Canin,Diabetic,10," $  100.000,00 ",
+,23-may-26,Lucas Diez ,AYACUCHO 1659,CABA,Royal Canin,Maxi Adult,15," $  113.000,00 ",
+,23-may-26,Fren,Pergamino 821,CABA,Royal Canin,Maxi Adult,15," $  113.000,00 ",
+,23-may-26,Nestor,Maschwitz Privado,Maschwitz,Royal Canin,Maxi Adult,30," $  226.000,00 ",
+,23-may-26,Meli,La Montura,Manuel Alberti,Mon ami,Pollo,12," $  63.000,00 ",
+,23-may-26,Ana   ,Maschwitz Privado,Maschwitz,Royal Canin,Mini puppy,3," $  39.600,00 ",
+,25-may-26,Norma,Sheraton,Pilar,Royal Canin,Maxi Adult,45," $  339.000,00 ",
+,25-may-26,Norma,Sheraton,Pilar,Royal Canin,Maxi Puppy,15," $  119.000,00 ",
+,25-may-26,Juan Ramirez,Jujuy 171,CABA,Royal Canin,Mobility,10," $  123.300,00 ",
+,25-may-26,Victoria Ortiz,Aranjuez,Escobar,Royal Canin,Maxi Puppy,15," $  124.000,00 ",
+,26-may-26,Carla Sanabria,Santa Catalina 7821,Laferrere,Royal Canin,Maxi Puppy,15," $  124.000,00 ",
+,26-may-26,Soledad Pelusso,"Au la plata- bs as km 31,5 hudson, Barrio puerto Nizuc- robles 60",Hudson,Royal Canin,Maxi Puppy,15," $  119.000,00 ",
+,26-may-26,Cris,Martin Dale,Pilar,Mon ami,Cordero mediano,8," $  54.500,00 ",
+,26-may-26,Mariano Ferreyra, Indio Victor Manuel II 372,Matheu,Royal Canin,Maxi Puppy,15," $  119.000,00 ",
+,26-may-26,Miguel Coronado,Juan Llerena 2552,La matanza,Royal Canin,Maxi puppy,15," $  119.000,00 ",
+,26-may-26,Diego,Lavallol 1223,Grand Bourg,Unik,Cachorro mediano,30," $  165.800,00 ",
+,26-may-26,Carlos  Lilijedahl,Los Cedros 676,Savio,Royal Canin,Maxi Puppy,15," $  119.000,00 ",
+,27-may-26,Tobias Diaz Lestremenn,Condarco 5364 Club de Campo los Rosales,Esteban Echverria,Royal Canin,Maxi Puppy,15," $  119.000,00 ",
+,27-may-26,David Paz,Las onas 64,Florencio Varela,Royal Canin,Maxi Puppy,15," $  119.000,00 ",
+,27-may-26,Paula Mondillo,Maipu 2294,San Fernando,Old prince,Adulto Small,15," $  75.000,00 ",
+,27-may-26,Andrea,Fitz Roy 5629,Villanueva,Old Prince ,Cachorro mediano,15," $  75.000,00 ",
+,27-may-26,Ana,Maschwitz Privado,Maschwitz,Royal Canin,mini adulto,8," $  80.500,00 ",
+,28-may-26,Ana Loiacono,Sánchez de Loria 1759,CABA,Royal Canin,Anallergenico,8," $  130.300,00 ",
+,28-may-26,Yesica wild,General Ramón Castilla 370,Escobar,Royal Canin,Maxi Puppy,15," $  119.000,00 ",
+,28-may-26,Daiana,Bermudas,Del viso,Royal Canin,Maxi Adulto,15," $  113.000,00 ",
+,28-may-26,Connie Rodriguez ,San Marco,Villanueva,Royal Canin,Maxi Puppy,15," $  119.000,00 ",
+,28-may-26,Connie Rodriguez ,San Marco,Villanueva,Nutrique,Large Adult +6,15," $  105.100,00 ",
+,28/05,,,,,,,,
+,Total,,,,,,15321," $  106.835.785,00 ",
