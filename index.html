@@ -546,9 +546,6 @@ async function fetchGSheetRaw(sheetName){
 
 async function fetchGoogleSheets(){
   return await fetchCSV('Ventas');
-  const rows = [];
-  });
-  return rows;
 }
 
 async function cargarDesdeSheetsYActualizar(){
@@ -645,7 +642,7 @@ function renderBars(containerId, factura, meses){
 
 async function cargarVentasLive(){
   // Solo si ya hay token conectado
-  if(!avToken) return;
+  // proxy based, no token needed
   try {
     const recs = await avFetch('tblMVFDqCcHGWSoNF');
     // Agrupar por mes
@@ -768,31 +765,37 @@ cargarDesdeSheetsYActualizar();
 const ZONAS_LOCAL=['pilar','del viso','escobar','maschwitz','maschwitz p','maschwitz privado','maschwits','maschwits privado','maschwits p','maschwitch','maschwitz priivado','benavidez','tigre','nordelta','villanueva','tortuguitas','manuel alberti','pilara','pilar del este','pilar profundo','la montura','recodo','el recodo','roble joven','highlands','altos del barranco','las liebres','ayres','azurra','puertos','galapagos','galápagos','caamaño','pacheco','pachecho','bermudas','bermuda','olivos gold','olivos golf','la lomada','canton','el cantón','de vicenzo','sausalito','montura','smo','santa maria','san matías','mapuche','martin dale','haras de santa maría','haras de santa maria','sheraton','sheraton pilar','grand bourg','gran bourg','argentino golf'];
 function esLocal(l){return ZONAS_LOCAL.includes((l||'').trim().toLowerCase())}
 
-let clData=[],clFiltered=[],clToken='';
-const BASE='appjbyYBMtU1GUTuu',TABLE='tblmJVO8hN2eMdHUU';
+let clData=[],clFiltered=[];
 
 async function conectarClientes(){
-  clToken='';
-  if(!clToken)return;
   const st=document.getElementById('cl-status');
-  st.className='conn-status conn-loading';st.textContent='Conectando...';
+  st.className='conn-status conn-loading';st.textContent='Cargando...';
   try{
-    clData=await clFetch();
-    st.className='conn-status conn-ok';st.textContent='✓ '+clData.length+' registros';
+    const [ventasRows, flexRows]=await Promise.all([
+      fetchCSV('Ventas'),
+      fetchCSV('Flex meli')
+    ]);
+    const directas=ventasRows.map(r=>({
+      nombre:r['CLIENTE']||r['Cliente']||'',
+      localidad:r['Barrio/Localidad']||r['Localidad']||'',
+      telefono:'',
+      articulo:r['producto']||r['Marca']||'',
+      fecha:r['FECHA']||r['Fecha']||'',
+      fuente:'Directa'
+    })).filter(r=>r.nombre);
+    const flex=flexRows.map(r=>({
+      nombre:r['NOMBRE']||r['Nombre del comprador']||'',
+      localidad:r['LOCALIDAD']||r['Localidad']||'',
+      telefono:(r['TELEFONO']||r['Teléfono']||'').toString(),
+      articulo:r['REFERNCIA']||r['Artículo']||'',
+      fecha:r['Fecha compra']||r['FECHA']||'',
+      fuente:'Flex Meli'
+    })).filter(r=>r.nombre);
+    clData=[...directas,...flex];
+    st.className='conn-status conn-ok';st.textContent='✓ '+clData.length+' clientes';
     document.getElementById('cl-panel').style.display='block';
     clPoblarLocs();clMetricas();clFiltrar();
   }catch(e){st.className='conn-status conn-err';st.textContent='✗ '+e.message;}
-}
-
-async function clFetch(off){
-  let url=`https://api.airtable.com/v0/${BASE}/${TABLE}?pageSize=100`;
-  if(off)url+='&offset='+off;
-  const r=await fetch(url,{headers:{Authorization:'Bearer '+clToken}});
-  if(!r.ok)throw new Error('Token inválido ('+r.status+')');
-  const d=await r.json();
-  const recs=d.records.map(r=>({nombre:r.fields['Nombre del comprador']||'',localidad:r.fields['Localidad']||'',telefono:(r.fields['Teléfono']||'').toString(),articulo:r.fields['Artículo']||'',fecha:r.fields['Fecha de venta']||r.fields['Fecha']||''}));
-  if(d.offset){const more=await clFetch(d.offset);return[...recs,...more];}
-  return recs;
 }
 
 function clPoblarLocs(){
@@ -904,40 +907,34 @@ function mktKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();mktSend()
 function mktResize(el){el.style.height='40px';el.style.height=Math.min(el.scrollHeight,120)+'px';}
 
 // ===== AGENTE DE VENTAS =====
-const AV_BASE='appjbyYBMtU1GUTuu';
-const AV_TABLE_ML='tblmJVO8hN2eMdHUU'; // Mercado Libre
-const AV_TABLE_DIRECTAS='tblMVFDqCcHGWSoNF'; // Ventas directas
-
-let avToken='', avData=[], avFiltered=[];
+let avData=[], avFiltered=[];
 
 const ZONAS_LOCAL_AV=['pilar','del viso','escobar','maschwitz','maschwitz p','maschwitz privado','maschwits','maschwits privado','maschwits p','maschwitch','maschwitz priivado','benavidez','tigre','nordelta','villanueva','tortuguitas','manuel alberti','pilara','pilar del este','pilar profundo','la montura','recodo','el recodo','roble joven','highlands','altos del barranco','las liebres','ayres','azurra','puertos','galapagos','galápagos','caamaño','pacheco','pachecho','bermudas','bermuda','olivos gold','olivos golf','la lomada','canton','el cantón','de vicenzo','sausalito','montura','smo','santa maria','san matías','mapuche','martin dale','haras de santa maría','haras de santa maria','sheraton','sheraton pilar','grand bourg','gran bourg','argentino golf'];
 function avEsLocal(l){return ZONAS_LOCAL_AV.includes((l||'').trim().toLowerCase())}
 
 async function avConectar(){
-  avToken=document.getElementById('av-token').value.trim();
-  if(avToken) localStorage.setItem('wk_token',avToken);
-  if(!avToken)return;
   const st=document.getElementById('av-status');
-  st.className='conn-status conn-loading';st.textContent='Conectando...';
+  st.className='conn-status conn-loading';st.textContent='Cargando...';
   try{
-    const [ml, directas]=await Promise.all([avFetch(AV_TABLE_ML), avFetch(AV_TABLE_DIRECTAS)]);
-    // Procesar ML
-    const mlProcesado=ml.map(r=>({
-      nombre:r.fields['Nombre del comprador']||'',
-      localidad:r.fields['Localidad']||'',
-      telefono:(r.fields['Teléfono']||'').toString(),
-      fecha:r.fields['Fecha de venta']||r.fields['Fecha']||'',
-      fuente:'Mercado Libre'
-    }));
-    // Procesar directas
-    const dirProcesado=directas.map(r=>({
-      nombre:r.fields['CLIENTE']||r.fields['Nombre del comprador']||'',
-      localidad:r.fields['Barrio/Localidad']||r.fields['Localidad']||'',
-      telefono:(r.fields['Teléfono']||'').toString(),
-      fecha:r.fields['FECHA']||r.fields['Fecha']||'',
+    const [ventasRows, flexRows]=await Promise.all([
+      fetchCSV('Ventas'),
+      fetchCSV('Flex meli')
+    ]);
+    const dirProcesado=ventasRows.map(r=>({
+      nombre:r['CLIENTE']||r['Cliente']||'',
+      localidad:r['Barrio/Localidad']||r['Localidad']||'',
+      telefono:'',
+      fecha:r['FECHA']||r['Fecha']||'',
       fuente:'Directa'
     }));
-    const todos=[...mlProcesado,...dirProcesado].filter(r=>r.nombre&&r.fecha);
+    const mlProcesado=flexRows.map(r=>({
+      nombre:r['NOMBRE']||r['Nombre del comprador']||'',
+      localidad:r['LOCALIDAD']||r['Localidad']||'',
+      telefono:(r['TELEFONO']||r['Teléfono']||'').toString(),
+      fecha:r['Fecha compra']||r['FECHA']||'',
+      fuente:'Flex Meli'
+    }));
+    const todos=[...dirProcesado,...mlProcesado].filter(r=>r.nombre&&r.fecha);
     // Agrupar por cliente — última compra
     const mapa={};
     todos.forEach(r=>{
@@ -956,15 +953,7 @@ async function avConectar(){
   }catch(e){st.className='conn-status conn-err';st.textContent='✗ '+e.message;}
 }
 
-async function avFetch(tableId, offset){
-  let url=`https://api.airtable.com/v0/${AV_BASE}/${tableId}?pageSize=100`;
-  if(offset)url+='&offset='+offset;
-  const r=await fetch(url,{headers:{Authorization:'Bearer '+avToken}});
-  if(!r.ok)throw new Error('Token inválido ('+r.status+')');
-  const d=await r.json();
-  const recs=d.records;
-  if(d.offset){const more=await avFetch(tableId,d.offset);return[...recs,...more];}
-  return recs;
+// avFetch removed - using Google Sheets proxy
 }
 
 function avDiasInactivo(fecha){
