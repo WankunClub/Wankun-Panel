@@ -438,7 +438,7 @@ async function cargarVentasLive(){
     rows.forEach(r=>{
       const fechaStr=r['FECHA']||r['Fecha']||'';
       const facStr=r['Facturación']||0;
-      const fac=typeof facStr==='number'?facStr:parseFloat(facStr.toString().replace(/[^0-9.]/g,'').replace(',','.'))||0;
+      const fac=parseFac(facStr);
       if(!fechaStr||!fac)return;
       const f=parseFecha(fechaStr);
       if(!f||isNaN(f))return;
@@ -560,8 +560,17 @@ function parseFecha(str){
 }
 
 function parseFac(val){
+  if(!val)return 0;
   if(typeof val==='number')return val;
-  return parseFloat(val.toString().replace(/[^0-9,.]/g,'').replace(',','.'))||0;
+  let s=val.toString().replace(/\$/g,'').replace(/\s/g,'').trim();
+  // Argentine format: 60.700,00 -> 60700.00
+  if(s.includes(',')&&s.includes('.')){
+    s=s.replace(/\./g,'').replace(',','.');
+  } else if(s.includes(',')){
+    s=s.replace(',','.');
+  }
+  s=s.replace(/[^0-9.]/g,'');
+  return parseFloat(s)||0;
 }
 
 async function avConectar(){
