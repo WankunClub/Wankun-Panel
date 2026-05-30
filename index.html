@@ -201,6 +201,19 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
   </div>
   <div id="cl-panel" style="display:none">
     <div class="metrics-grid" id="cl-metrics"></div>
+
+    <!-- BUSCADOR RÁPIDO -->
+    <div class="card" style="border-left:4px solid var(--azul-med)">
+      <div class="card-title">🔍 Buscador rápido</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="cl-buscar" placeholder="Nombre, teléfono o dirección..." 
+          style="flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--gris-med);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif"
+          oninput="clBuscar(this.value)">
+        <button class="btn" onclick="document.getElementById('cl-buscar').value='';clBuscar('')">✕ Limpiar</button>
+      </div>
+      <div id="cl-buscar-result" style="margin-top:12px"></div>
+    </div>
+
     <div class="card">
       <div class="filtros">
         <div class="filtro-group"><label>Zona</label><select id="cl-zona" onchange="clFiltrar()"><option value="todas">Todas</option><option value="local">Radio 15 km</option><option value="fuera">Fuera del radio</option></select></div>
@@ -528,6 +541,28 @@ function waLink(tel,nombre){
 function toggleSorteoMsg(){const p=document.getElementById('sorteo-msg-panel');p.style.display=p.style.display==='none'?'block':'none';}
 function copiarMsg(){navigator.clipboard.writeText(document.getElementById('sorteo-msg-text').textContent).then(()=>{const b=event.target,o=b.textContent;b.textContent='✓ Copiado';setTimeout(()=>b.textContent=o,2000);});}
 function copiarSorteoMsg(){const t="Hola [Nombre] 👋\n¿Cómo está tu compañero peludo?\n\nTe cuento que estamos sorteando 20 camisetas de la Selección Argentina para perros — 11 de junio a las 22hs 🇦🇷⚽\n\nPara participar entrá a nuestro Instagram @wankunclub, seguinos y comentá con el talle y raza de tu perro.\n\n¡Mucha suerte!";navigator.clipboard.writeText(t).then(()=>{const b=event.target,o=b.textContent;b.textContent='✓ Copiado';setTimeout(()=>b.textContent=o,2000);});}
+
+function clBuscar(q){
+  const res=document.getElementById('cl-buscar-result');
+  if(!q||q.length<2){res.innerHTML='';return;}
+  const ql=q.toLowerCase().replace(/[^0-9a-záéíóúñ]/gi,'');
+  const found=clData.filter(c=>{
+    const tel=(c.telefono||'').toString().replace(/[^0-9]/g,'');
+    const nombre=(c.nombre||'').toLowerCase();
+    const dir=(c.localidad||'').toLowerCase();
+    const art=(c.articulo||'').toLowerCase();
+    return tel.includes(ql)||nombre.includes(q.toLowerCase())||dir.includes(q.toLowerCase())||art.includes(q.toLowerCase());
+  });
+  if(!found.length){res.innerHTML='<div style="padding:12px;color:var(--gris-dark);font-size:13px">Sin resultados para "'+q+'"</div>';return;}
+  res.innerHTML=found.slice(0,20).map(c=>`
+    <div style="background:var(--gris);border-radius:8px;padding:12px 14px;margin-bottom:8px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;align-items:center;font-size:13px">
+      <div><strong>${c.nombre||'—'}</strong><div style="font-size:11px;color:var(--gris-dark);margin-top:2px">${c.fuente||''}</div></div>
+      <div>${c.localidad||'—'} <span class="${esLocal(c.localidad)?'local-tag':'fuera-tag'}">${esLocal(c.localidad)?'local':'fuera'}</span></div>
+      <div style="font-family:'DM Mono',monospace">${c.telefono||'—'}</div>
+      <div style="color:var(--gris-dark)">${c.articulo||'—'}</div>
+      ${c.telefono?`<a class="wa-link" href="${waLink(c.telefono,c.nombre)}" target="_blank">💬 WA</a>`:'<span></span>'}
+    </div>`).join('');
+}
 
 function clExportar(){
   const rows=[['Nombre','Localidad','Teléfono','Artículo','Zona','Fuente'],...clFiltered.map(c=>[c.nombre,c.localidad,c.telefono,c.articulo,esLocal(c.localidad)?'Local':'Fuera',c.fuente])];
