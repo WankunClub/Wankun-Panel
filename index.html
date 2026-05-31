@@ -492,7 +492,7 @@ async function conectarClientes(){
   st.className='conn-status conn-loading';st.textContent='Cargando...';
   try{
     const[ventasRows,flexRows]=await Promise.all([fetchCSV('Ventas'),fetchCSV('Flex meli')]);
-    const directas=ventasRows.map(r=>({nombre:r['CLIENTE']||r['Cliente']||'',localidad:r['Barrio/Localidad']||r['Localidad']||'',telefono:'',articulo:r['producto']||r['Marca']||'',fecha:r['FECHA']||r['Fecha']||'',fuente:'Directa'})).filter(r=>r.nombre);
+    const directas=ventasRows.map(r=>({nombre:r['CLIENTE']||r['Cliente']||'',localidad:r['Barrio/Localidad']||r['Localidad']||'',telefono:'',articulo:r['producto']||r['Marca']||'',fecha:r['FECHA']||r['Fecha']||'',fac:parseFac(r['Facturación']||0),kg:parseFloat((r['kg']||0).toString().replace(',','.'))||0,fuente:'Directa'})).filter(r=>r.nombre);
     const flex=flexRows.map(r=>({nombre:r['NOMBRE']||r['Nombre del comprador']||'',localidad:r['LOCALIDAD']||r['Localidad']||'',telefono:(r['TELEFONO']||r['Teléfono']||'').toString(),articulo:r['REFERNCIA']||r['Artículo']||'',fecha:r['Fecha compra']||r['FECHA']||'',fuente:'Flex Meli'})).filter(r=>r.nombre);
     clData=[...directas,...flex];
     st.className='conn-status conn-ok';st.textContent='✓ '+clData.length+' registros';
@@ -545,23 +545,145 @@ function copiarSorteoMsg(){const t="Hola [Nombre] 👋\n¿Cómo está tu compañ
 function clBuscar(q){
   const res=document.getElementById('cl-buscar-result');
   if(!q||q.length<2){res.innerHTML='';return;}
-  const ql=q.toLowerCase().replace(/[^0-9a-záéíóúñ]/gi,'');
-  const found=clData.filter(c=>{
+  const ql=q.replace(/[^0-9]/g,'');
+  // Agrupar ventas por cliente (desde ventasRows global)
+  const grupos={};
+  clData.forEach(c=>{
+    const key=(c.nombre||'').trim().toLowerCase();
+    if(!key)return;
+    if(!grupos[key]){grupos[key]={nombre:c.nombre,localidad:c.localidad,telefono:c.telefono,compras:[]};}
+    if(c.fecha)grupos[key].compras.push({fecha:c.fecha,articulo:c.articulo,fac:c.fac||0,kg:c.kg||0});
+    if(c.telefono&&!grupos[key].telefono)grupos[key].telefono=c.telefono;
+  });
+  const found=Object.values(grupos).filter(c=>{
     const tel=(c.telefono||'').toString().replace(/[^0-9]/g,'');
     const nombre=(c.nombre||'').toLowerCase();
-    const dir=(c.localidad||'').toLowerCase();
-    const art=(c.articulo||'').toLowerCase();
-    return tel.includes(ql)||nombre.includes(q.toLowerCase())||dir.includes(q.toLowerCase())||art.includes(q.toLowerCase());
+    const loc=(c.localidad||'').toLowerCase();
+    return (ql.length>=4&&tel.includes(ql))||nombre.includes(q.toLowerCase())||loc.includes(q.toLowerCase());
   });
   if(!found.length){res.innerHTML='<div style="padding:12px;color:var(--gris-dark);font-size:13px">Sin resultados para "'+q+'"</div>';return;}
-  res.innerHTML=found.slice(0,20).map(c=>`
-    <div style="background:var(--gris);border-radius:8px;padding:12px 14px;margin-bottom:8px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;align-items:center;font-size:13px">
-      <div><strong>${c.nombre||'—'}</strong><div style="font-size:11px;color:var(--gris-dark);margin-top:2px">${c.fuente||''}</div></div>
-      <div>${c.localidad||'—'} <span class="${esLocal(c.localidad)?'local-tag':'fuera-tag'}">${esLocal(c.localidad)?'local':'fuera'}</span></div>
-      <div style="font-family:'DM Mono',monospace">${c.telefono||'—'}</div>
-      <div style="color:var(--gris-dark)">${c.articulo||'—'}</div>
-      ${c.telefono?`<a class="wa-link" href="${waLink(c.telefono,c.nombre)}" target="_blank">💬 WA</a>`:'<span></span>'}
+  res.innerHTML=found.slice(0,10).map(c=>`
+    <div style="background:var(--gris);border-radius:8px;padding:14px;margin-bottom:10px;cursor:pointer;border:1px solid var(--gris-med)" onclick="clVerFicha('${c.nombre.replace(/'/g,"\'")}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-weight:600;font-size:14px">${c.nombre}</div>
+          <div style="font-size:12px;color:var(--gris-dark);margin-top:2px">${c.localidad||'—'} <span class="${esLocal(c.localidad)?'local-tag':'fuera-tag'}">${esLocal(c.localidad)?'local':'fuera'}</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-family:'DM Mono',monospace;font-size:12px">${c.telefono||'Sin teléfono'}</span>
+          ${c.telefono?`<a class="wa-link" href="${waLink(c.telefono,c.nombre)}" target="_blank" onclick="event.stopPropagation()">💬 WA</a>`:''}
+          <span style="font-size:11px;color:var(--azul-med);font-weight:500">Ver ficha →</span>
+        </div>
+      </div>
     </div>`).join('');
+}
+
+// Ficha completa del cliente
+function clVerFicha(nombre){
+  // Build historial from avTodos if available, else from clData
+  let historial=[];
+  if(avTodos&&avTodos.length){
+    const found=avTodos.find(c=>c.nombre.toLowerCase()===nombre.toLowerCase());
+    if(found){
+      historial=found.compras||[];
+    }
+  }
+  // Also get from clData for contact info
+  const contacto=clData.find(c=>(c.nombre||'').toLowerCase()===nombre.toLowerCase()&&c.telefono);
+  const localidad=clData.find(c=>(c.nombre||'').toLowerCase()===nombre.toLowerCase());
+  
+  // Calculate frequency
+  let frecuencia=null;
+  if(historial.length>=2){
+    historial.sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+    const diffs=[];
+    for(let i=1;i<historial.length;i++){
+      const diff=Math.floor((historial[i].fecha-historial[i-1].fecha)/(1000*60*60*24));
+      if(diff>0&&diff<200)diffs.push(diff);
+    }
+    if(diffs.length)frecuencia=Math.round(diffs.reduce((a,b)=>a+b,0)/diffs.length);
+  }
+  
+  const ultima=historial.length?historial[historial.length-1].fecha:null;
+  const diasDesde=ultima?Math.floor((new Date()-ultima)/(1000*60*60*24)):null;
+  const proximaDias=frecuencia&&diasDesde!==null?frecuencia-diasDesde:null;
+  
+  const totalFac=historial.reduce((s,c)=>s+(c.fac||0),0);
+  const totalKg=historial.reduce((s,c)=>s+(c.kg||0),0);
+  
+  const tel=contacto?contacto.telefono:'';
+  const loc=localidad?localidad.localidad:'';
+
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.onclick=function(e){if(e.target===modal)modal.remove();}
+  
+  const proxColor=proximaDias===null?'var(--gris-dark)':proximaDias<0?'#c0392b':proximaDias<=5?'#856404':'var(--verde)';
+  const proxLabel=proximaDias===null?'Sin datos':proximaDias<0?`Venció hace ${Math.abs(proximaDias)}d`:proximaDias===0?'Hoy':`En ${proximaDias} días`;
+  
+  modal.innerHTML=`
+    <div style="background:#fff;border-radius:16px;padding:24px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+        <div>
+          <div style="font-size:20px;font-weight:700">${nombre}</div>
+          <div style="font-size:13px;color:var(--gris-dark);margin-top:4px">${loc||'—'} <span class="${esLocal(loc)?'local-tag':'fuera-tag'}">${esLocal(loc)?'local':'fuera'}</span></div>
+        </div>
+        <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--gris-dark)">✕</button>
+      </div>
+      
+      <!-- Datos de contacto -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+        <div style="background:var(--gris);border-radius:8px;padding:12px">
+          <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:4px">Teléfono</div>
+          <div style="font-family:'DM Mono',monospace;font-size:13px">${tel||'Sin teléfono'}</div>
+          ${tel?`<a class="wa-link" style="margin-top:8px;display:inline-block" href="${waLink(tel,nombre)}" target="_blank">💬 Enviar WA sorteo</a>`:''}
+        </div>
+        <div style="background:var(--gris);border-radius:8px;padding:12px">
+          <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:4px">Próxima recompra</div>
+          <div style="font-size:15px;font-weight:600;color:${proxColor}">${proxLabel}</div>
+          <div style="font-size:11px;color:var(--gris-dark);margin-top:2px">${frecuencia?'Frecuencia: '+frecuencia+'d':'Frecuencia: —'}</div>
+        </div>
+      </div>
+      
+      <!-- Resumen -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
+        <div style="background:var(--verde-bg);border-radius:8px;padding:12px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:var(--verde)">${historial.length||clData.filter(c=>(c.nombre||'').toLowerCase()===nombre.toLowerCase()).length}</div>
+          <div style="font-size:11px;color:var(--verde)">Compras</div>
+        </div>
+        <div style="background:#dbeafe;border-radius:8px;padding:12px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:#1d4ed8">$${totalFac>0?(totalFac/1000).toFixed(0)+'K':'—'}</div>
+          <div style="font-size:11px;color:#1d4ed8">Facturación total</div>
+        </div>
+        <div style="background:#f3e8ff;border-radius:8px;padding:12px;text-align:center">
+          <div style="font-size:22px;font-weight:700;color:#7c3aed">${totalKg>0?totalKg+'kg':'—'}</div>
+          <div style="font-size:11px;color:#7c3aed">Kilos totales</div>
+        </div>
+      </div>
+      
+      <!-- Historial de compras -->
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px">Historial de compras</div>
+      ${historial.length?`
+      <div style="border:1px solid var(--gris-med);border-radius:8px;overflow:hidden">
+        <div style="display:grid;grid-template-columns:90px 1fr 60px 80px;padding:8px 12px;background:var(--gris);font-size:11px;font-weight:600;color:var(--gris-dark);text-transform:uppercase">
+          <span>Fecha</span><span>Producto</span><span>Kg</span><span>Monto</span>
+        </div>
+        ${[...historial].sort((a,b)=>b.fecha-a.fecha).map(c=>`
+          <div style="display:grid;grid-template-columns:90px 1fr 60px 80px;padding:8px 12px;border-top:1px solid var(--gris-med);font-size:12px;align-items:center">
+            <span style="font-family:'DM Mono',monospace">${c.fecha.toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'2-digit'})}</span>
+            <span>${c.articulo||'—'}</span>
+            <span>${c.kg||'—'}</span>
+            <span style="font-weight:500">$${c.fac?(c.fac/1000).toFixed(0)+'K':'—'}</span>
+          </div>`).join('')}
+      </div>`:`
+      <div style="background:var(--gris);border-radius:8px;padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">
+        ${clData.filter(c=>(c.nombre||'').toLowerCase()===nombre.toLowerCase()).map(c=>`
+          <div style="text-align:left;padding:6px 0;border-bottom:1px solid var(--gris-med);font-size:12px">
+            <strong>${c.articulo||'—'}</strong> — ${c.localidad||'—'} — ${c.fecha||''}
+          </div>`).join('')||'Sin historial detallado disponible'}
+      </div>`}
+    </div>`;
+  document.body.appendChild(modal);
 }
 
 function clExportar(){
