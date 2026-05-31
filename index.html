@@ -231,13 +231,19 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
       </div>
       <div id="sorteo-msg-panel" style="display:none;margin-bottom:14px">
         <div class="msg-template" id="sorteo-msg-text">Hola [Nombre] 👋
-¿Cómo está tu compañero peludo?
 
-Te cuento que estamos sorteando 20 camisetas de la Selección Argentina para perros — 11 de junio a las 22hs 🇦🇷⚽
+Sabemos lo mucho que querés a tu perrito, por eso queremos que sea parte de la fiesta más grande del año 🇦🇷⚽
 
-Para participar entrá a nuestro Instagram @wankunclub, seguinos y comentá con el talle y raza de tu perro.
+Estamos sorteando 20 camisetas de la Selección Argentina — porque ellos también se merecen ponerse la 10 🏆
 
-¡Mucha suerte!</div>
+Para participar:
+✅ Seguinos en @wankunclub
+✅ Dale ❤️ a la publicación del sorteo
+✅ Comentá con el talle y la raza de tu perrito
+
+El sorteo es el 11 de junio a las 22hs.
+
+¡Vamos Argentina! 🐾</div>
         <button class="btn btn-primary" onclick="copiarMsg()">📋 Copiar mensaje</button>
       </div>
       <div class="table-wrap">
@@ -324,13 +330,19 @@ Para participar entrá a nuestro Instagram @wankunclub, seguinos y comentá con 
     <div class="card">
       <div class="card-title">Mensaje para clientes locales</div>
       <div class="msg-template">Hola [Nombre] 👋
-¿Cómo está tu compañero peludo?
 
-Te cuento que estamos sorteando 20 camisetas de la Selección Argentina para perros — 11 de junio a las 22hs 🇦🇷⚽
+Sabemos lo mucho que querés a tu perrito, por eso queremos que sea parte de la fiesta más grande del año 🇦🇷⚽
 
-Para participar entrá a nuestro Instagram @wankunclub, seguinos y comentá con el talle y raza de tu perro.
+Estamos sorteando 20 camisetas de la Selección Argentina — porque ellos también se merecen ponerse la 10 🏆
 
-¡Mucha suerte!</div>
+Para participar:
+✅ Seguinos en @wankunclub
+✅ Dale ❤️ a la publicación del sorteo
+✅ Comentá con el talle y la raza de tu perrito
+
+El sorteo es el 11 de junio a las 22hs.
+
+¡Vamos Argentina! 🐾</div>
       <button class="btn btn-primary" onclick="copiarSorteoMsg()">📋 Copiar mensaje</button>
     </div>
     <div class="card">
@@ -539,7 +551,7 @@ function clFiltrar(){
 
 function waLink(tel,nombre){
   const num=tel.toString().replace(/\D/g,''),full=num.startsWith('54')?num:'54'+num;
-  const msg=encodeURIComponent(`Hola ${nombre} 👋\n¿Cómo está tu compañero peludo?\n\nTe cuento que estamos sorteando 20 camisetas de la Selección Argentina para perros — 11 de junio a las 22hs 🇦🇷⚽\n\nPara participar entrá a nuestro Instagram @wankunclub, seguinos y comentá con el talle y raza de tu perro.\n\n¡Mucha suerte!`);
+  const msg=encodeURIComponent(`Hola ${nombre} 👋\n\nSabemos lo mucho que querés a tu perrito, por eso queremos que sea parte de la fiesta más grande del año 🇦🇷⚽\n\nEstamos sorteando 20 camisetas de la Selección Argentina — porque ellos también se merecen ponerse la 10 🏆\n\nPara participar:\n✅ Seguinos en @wankunclub\n✅ Dale ❤️ a la publicación del sorteo\n✅ Comentá con el talle y la raza de tu perrito\n\nEl sorteo es el 11 de junio a las 22hs.\n\n¡Vamos Argentina! 🐾`);
   return`https://wa.me/${full}?text=${msg}`;
 }
 
