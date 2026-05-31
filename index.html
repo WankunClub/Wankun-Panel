@@ -613,8 +613,10 @@ function clVerFicha(nombre){
   const diasDesde=ultima?Math.floor((new Date()-ultima)/(1000*60*60*24)):null;
   const proximaDias=frecuencia&&diasDesde!==null?frecuencia-diasDesde:null;
   
-  const totalFac=historial.reduce((s,c)=>s+(c.fac||0),0);
-  const totalKg=historial.reduce((s,c)=>s+(c.kg||0),0);
+  const clDataCliente=clData.filter(c=>(c.nombre||'').toLowerCase()===nombre.toLowerCase());
+  const sourceData=historial.length>0?historial:clDataCliente;
+  const totalFac=sourceData.reduce((s,c)=>s+(c.fac||0),0);
+  const totalKg=sourceData.reduce((s,c)=>s+(c.kg||0),0);
   
   const tel=contacto?contacto.telefono:'';
   const loc=localidad?localidad.localidad:'';
@@ -653,7 +655,7 @@ function clVerFicha(nombre){
       <!-- Resumen -->
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
         <div style="background:var(--verde-bg);border-radius:8px;padding:12px;text-align:center">
-          <div style="font-size:22px;font-weight:700;color:var(--verde)">${historial.length||clData.filter(c=>(c.nombre||'').toLowerCase()===nombre.toLowerCase()).length}</div>
+          <div style="font-size:22px;font-weight:700;color:var(--verde)">${historial.length>0?historial.length:clData.filter(c=>(c.nombre||'').toLowerCase()===nombre.toLowerCase()).length}</div>
           <div style="font-size:11px;color:var(--verde)">Compras</div>
         </div>
         <div style="background:#dbeafe;border-radius:8px;padding:12px;text-align:center">
@@ -681,11 +683,20 @@ function clVerFicha(nombre){
             <span style="font-weight:500">$${c.fac?(c.fac/1000).toFixed(0)+'K':'—'}</span>
           </div>`).join('')}
       </div>`:`
-      <div style="background:var(--gris);border-radius:8px;padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">
-        ${clData.filter(c=>(c.nombre||'').toLowerCase()===nombre.toLowerCase()).map(c=>`
-          <div style="text-align:left;padding:6px 0;border-bottom:1px solid var(--gris-med);font-size:12px">
-            <strong>${c.articulo||'—'}</strong> — ${c.localidad||'—'} — ${c.fecha||''}
-          </div>`).join('')||'Sin historial detallado disponible'}
+      <div style="border:1px solid var(--gris-med);border-radius:8px;overflow:hidden">
+        <div style="display:grid;grid-template-columns:90px 1fr 60px 80px;padding:8px 12px;background:var(--gris);font-size:11px;font-weight:600;color:var(--gris-dark);text-transform:uppercase">
+          <span>Fecha</span><span>Producto</span><span>Kg</span><span>Monto</span>
+        </div>
+        ${clData.filter(c=>(c.nombre||'').toLowerCase()===nombre.toLowerCase()).sort((a,b)=>{
+          const fa=parseFecha(a.fecha),fb=parseFecha(b.fecha);
+          return fb&&fa?fb-fa:0;
+        }).map(c=>`
+          <div style="display:grid;grid-template-columns:90px 1fr 60px 80px;padding:8px 12px;border-top:1px solid var(--gris-med);font-size:12px;align-items:center">
+            <span style="font-family:'DM Mono',monospace">${(()=>{const f=parseFecha(c.fecha);return f?f.toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'2-digit'}):c.fecha||'—';})()}</span>
+            <span>${c.articulo||'—'}</span>
+            <span>${c.kg||'—'}</span>
+            <span style="font-weight:500">${c.fac?'$'+(c.fac/1000).toFixed(0)+'K':'—'}</span>
+          </div>`).join('')||'<div style="padding:16px;text-align:center;color:var(--gris-dark)">Sin historial disponible</div>'}
       </div>`}
     </div>`;
   document.body.appendChild(modal);
