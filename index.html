@@ -492,7 +492,12 @@ async function conectarClientes(){
   st.className='conn-status conn-loading';st.textContent='Cargando...';
   try{
     const[ventasRows,flexRows]=await Promise.all([fetchCSV('Ventas'),fetchCSV('Flex meli')]);
-    const directas=ventasRows.map(r=>({nombre:r['CLIENTE']||r['Cliente']||'',localidad:r['Barrio/Localidad']||r['Localidad']||'',telefono:'',articulo:r['producto']||r['Marca']||'',fecha:r['FECHA']||r['Fecha']||'',fac:parseFac(r['Facturación']||0),kg:parseFloat((r['kg']||0).toString().replace(',','.'))||0,fuente:'Directa'})).filter(r=>r.nombre);
+    const directas=ventasRows.map(r=>{
+  const marca=r['Marca']||r['marca']||'';
+  const producto=r['producto']||r['Producto']||'';
+  const articulo=[marca,producto].filter(Boolean).join(' — ');
+  return{nombre:r['CLIENTE']||r['Cliente']||'',localidad:r['Barrio/Localidad']||r['Localidad']||'',telefono:'',articulo,fecha:r['FECHA']||r['Fecha']||'',fac:parseFac(r['Facturación']||0),kg:parseFloat((r['kg']||0).toString().replace(',','.'))||0,fuente:'Directa'};
+}).filter(r=>r.nombre);
     const flex=flexRows.map(r=>({nombre:r['NOMBRE']||r['Nombre del comprador']||'',localidad:r['LOCALIDAD']||r['Localidad']||'',telefono:(r['TELEFONO']||r['Teléfono']||'').toString(),articulo:r['REFERNCIA']||r['Artículo']||'',fecha:r['Fecha compra']||r['FECHA']||'',fuente:'Flex Meli'})).filter(r=>r.nombre);
     clData=[...directas,...flex];
     st.className='conn-status conn-ok';st.textContent='✓ '+clData.length+' registros';
@@ -751,7 +756,7 @@ async function avConectar(){
       const kg=parseFloat((r['kg']||0).toString().replace(',','.'))||0;
       const key=nombre.toLowerCase();
       if(!historial[key]){historial[key]={nombre,localidad:r['Barrio/Localidad']||r['Localidad']||'',compras:[],totalFac:0,totalKg:0};}
-      historial[key].compras.push({fecha,fac,kg,producto:r['producto']||r['Marca']||''});
+      historial[key].compras.push({fecha,fac,kg,producto:[r['Marca']||'',r['producto']||''].filter(Boolean).join(' — ')});
       historial[key].totalFac+=fac;
       historial[key].totalKg+=kg;
     });
