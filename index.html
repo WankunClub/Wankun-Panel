@@ -551,7 +551,8 @@ function clFiltrar(){
 
 function waLink(tel,nombre){
   const num=tel.toString().replace(/\D/g,''),full=num.startsWith('54')?num:'54'+num;
-  const msg=encodeURIComponent(`Hola ${nombre} 👋\n\nSabemos lo mucho que querés a tu perrito, por eso queremos que sea parte de la fiesta más grande del año 🇦🇷⚽\n\nEstamos sorteando 20 camisetas de la Selección Argentina — porque ellos también se merecen ponerse la 10 🏆\n\nPara participar:\n✅ Seguinos en @wankunclub\n✅ Dale ❤️ a la publicación del sorteo\n✅ Comentá con el talle y la raza de tu perrito\n\nEl sorteo es el 11 de junio a las 22hs.\n\n¡Vamos Argentina! 🐾`);
+  const primerNombre=(nombre||'').split(' ')[0];
+  const msg=encodeURIComponent(`Hola ${primerNombre} 👋\n\nSabemos lo mucho que querés a tu perrito, por eso queremos que sea parte de la fiesta más grande del año 🇦🇷⚽\n\nEstamos sorteando 20 camisetas de la Selección Argentina — porque ellos también se merecen ponerse la 10 🏆\n\nPara participar:\n✅ Seguinos en @wankunclub\n✅ Dale ❤️ a la publicación del sorteo\n✅ Comentá con el talle y la raza de tu perrito\n\nEl sorteo es el 11 de junio a las 22hs.\n\n¡Vamos Argentina! 🐾`);
   return`https://wa.me/${full}?text=${msg}`;
 }
 
@@ -877,7 +878,8 @@ function avFiltrar(){
 
 function avWaLink(tel,nombre,producto){
   const num=tel.toString().replace(/\D/g,''),full=num.startsWith('54')?num:'54'+num;
-  const msg=encodeURIComponent(`Hola ${nombre} 👋\n¿Cómo está tu compañero peludo?\n\nTe escribimos porque se acerca la hora de reponer el alimento${producto?' ('+producto+')':''}.\n\n¿Te mandamos el pedido? Tenemos stock y hacemos envío a tu zona.\n\nWankun Club 🐾`);
+  const primerNombre=(nombre||'').split(' ')[0];
+  const msg=encodeURIComponent(`Hola ${primerNombre} 👋\n¿Cómo está tu compañero peludo?\n\nTe escribimos porque se acerca la hora de reponer el alimento${producto?' ('+producto+')':''}.\n\n¿Te mandamos el pedido? Tenemos stock y hacemos envío a tu zona.\n\nWankun Club 🐾`);
   return`https://wa.me/${full}?text=${msg}`;
 }
 
