@@ -552,7 +552,16 @@ function clFiltrar(){
 function waLink(tel,nombre){
   const num=tel.toString().replace(/\D/g,''),full=num.startsWith('54')?num:'54'+num;
   const primerNombre=(nombre||'').split(' ')[0];
-  const msg=encodeURIComponent(`Hola ${primerNombre} 👋\n\nSabemos lo mucho que querés a tu perrito, por eso queremos que sea parte de la fiesta más grande del año 🇦🇷⚽\n\nEstamos sorteando 20 camisetas de la Selección Argentina — porque ellos también se merecen ponerse la 10 🏆\n\nPara participar:\n✅ Seguinos en @wankunclub\n✅ Dale ❤️ a la publicación del sorteo\n✅ Comentá con el talle y la raza de tu perrito\n\nEl sorteo es el 11 de junio a las 22hs.\n\n¡Vamos Argentina! 🐾`);
+  const sorteoMsg='Hola '+primerNombre+'!'+
+    '%0A%0ASabemos lo mucho que queres a tu perrito, por eso queremos que sea parte de la fiesta mas grande del año!'+
+    '%0A%0AEstamos sorteando 20 camisetas de la Seleccion Argentina — porque ellos tambien se merecen ponerse la 10!'+
+    '%0A%0APara participar:'+
+    '%0A✅ Seguinos en @wankunclub'+
+    '%0A✅ Dale un like a la publicacion del sorteo'+
+    '%0A✅ Comentá con el talle y la raza de tu perrito'+
+    '%0A%0AEl sorteo es el 11 de junio a las 22hs.'+
+    '%0A%0AVamos Argentina!';
+  const msg=sorteoMsg;
   return`https://wa.me/${full}?text=${msg}`;
 }
 
