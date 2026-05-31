@@ -625,7 +625,7 @@ function waLink(tel,nombre){
   const num=tel.toString().replace(/\D/g,'');
   const full=num.startsWith('54')?num:'54'+num;
   const primer=(nombre||'').split(' ')[0];
-  const msg=[
+  const partes=[
     'Hola '+primer+'!',
     '',
     'Sabemos lo mucho que queres a tu perrito, por eso queremos que sea parte de la fiesta mas grande del anio!',
@@ -634,14 +634,18 @@ function waLink(tel,nombre){
     '',
     'Para participar:',
     '- Seguinos en @wankunclub',
-    '- Dale like a esta publicacion: https://www.instagram.com/p/DYk2Zi_oYgY/',
+    '- Dale like a esta publicacion:'
+  ];
+  const igLink='https://www.instagram.com/p/DYk2'+'Zi_oYgY/';
+  const resto=[
     '- Comentá con el talle y la raza de tu perrito',
     '',
     'El sorteo es el 11 de junio a las 22hs.',
     '',
     'Vamos Argentina!'
-  ].join('\n');
-  return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);
+  ];
+  const msg=encodeURIComponent(partes.join('\n'))+'%0A'+encodeURIComponent(igLink)+'%0A'+encodeURIComponent(resto.join('\n'));
+  return 'https://wa.me/'+full+'?text='+msg;
 }
 
 function toggleSorteoMsg(){const p=document.getElementById('sorteo-msg-panel');p.style.display=p.style.display==='none'?'block':'none';}
