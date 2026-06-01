@@ -238,7 +238,7 @@ Vamos Argentina!</div>
         <button class="btn btn-primary" onclick="copiarMsg()">Copiar mensaje</button>
       </div>
       <div class="table-wrap">
-        <div class="table-head" style="grid-template-columns:1fr 130px 140px 120px 80px"><span>Nombre</span><span>Localidad</span><span>Telefono</span><span>Articulo</span><span>WhatsApp</span></div>
+        <div class="table-head" style="grid-template-columns:1fr 120px 140px 140px 120px 80px"><span>Nombre</span><span>Localidad</span><span>Direccion</span><span>Telefono</span><span>Articulo</span><span>WA</span></div>
         <div class="table-body" id="cl-table"></div>
       </div>
     </div>
@@ -500,9 +500,9 @@ async function conectarClientes(){
       const marca=r['Marca']||r['marca']||'';
       const prod=r['producto']||r['Producto']||'';
       const art=[marca,prod].filter(Boolean).join(' - ');
-      return{nombre:r['CLIENTE']||r['Cliente']||'',localidad:r['Barrio/Localidad']||r['Localidad']||'',telefono:'',articulo:art,fecha:r['FECHA']||r['Fecha']||'',fac:parseFac(r['Facturacion']||r['Facturación']||0),kg:parseFloat((r['kg']||0).toString().replace(',','.'))||0,fuente:'Directa'};
+      return{nombre:r['CLIENTE']||r['Cliente']||'',localidad:r['Barrio/Localidad']||r['Localidad']||'',direccion:r['Domicilio']||r['domicilio']||'',telefono:'',articulo:art,fecha:r['FECHA']||r['Fecha']||'',fac:parseFac(r['Facturacion']||r['Facturación']||0),kg:parseFloat((r['kg']||0).toString().replace(',','.'))||0,fuente:'Directa'};
     }).filter(r=>r.nombre);
-    const flex=fRows.map(r=>({nombre:r['NOMBRE']||'',localidad:r['LOCALIDAD']||'',telefono:(r['TELEFONO']||'').toString(),articulo:r['REFERNCIA']||'',fecha:r['Fecha compra']||'',fac:0,kg:0,fuente:'Flex Meli'})).filter(r=>r.nombre);
+    const flex=fRows.map(r=>({nombre:r['NOMBRE']||'',localidad:r['LOCALIDAD']||'',direccion:r['DIRECCION']||r['Direccion']||'',telefono:(r['TELEFONO']||'').toString(),articulo:r['REFERNCIA']||'',fecha:r['Fecha compra']||'',fac:0,kg:0,fuente:'Flex Meli'})).filter(r=>r.nombre);
     clData=[...directas,...flex];
     st.className='conn-status conn-ok';st.textContent=clData.length+' registros';
     document.getElementById('cl-panel').style.display='block';
@@ -595,11 +595,15 @@ function clVerFicha(nombre){
       <div><div style="font-size:20px;font-weight:700">${nombre}</div><div style="font-size:13px;color:var(--gris-dark);margin-top:4px">${loc} <span class="${esLocal(loc)?'local-tag':'fuera-tag'}">${esLocal(loc)?'local':'fuera'}</span></div></div>
       <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--gris-dark)">x</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;grid-template-rows:auto auto">
       <div style="background:var(--gris);border-radius:8px;padding:12px">
         <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:4px">Telefono</div>
         <div style="font-family:'DM Mono',monospace;font-size:13px">${tel||'Sin telefono'}</div>
         ${tel?`<a class="wa-link" style="margin-top:8px;display:inline-block" href="${waLink(tel,nombre)}" target="_blank">Enviar WA sorteo</a>`:''}
+      </div>
+      <div style="background:var(--gris);border-radius:8px;padding:12px;grid-column:span 2">
+        <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:4px">Direccion</div>
+        <div style="font-size:13px">${registros.find(r=>r.direccion)?.direccion||'Sin direccion registrada'}</div>
       </div>
       <div style="background:var(--gris);border-radius:8px;padding:12px">
         <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:4px">Proxima recompra</div>
