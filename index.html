@@ -537,7 +537,7 @@ function clFiltrar(){
   const labels={todas:'Todos los registros',local:'Clientes zona local (15 km)',fuera:'Clientes fuera del radio'};
   document.getElementById('cl-title').textContent=labels[zona]||'Clientes';
   const tb=document.getElementById('cl-table');
-  tb.innerHTML=clFiltered.slice(0,500).map(c=>`<div class="table-row" style="grid-template-columns:1fr 130px 140px 120px 80px"><span style="font-weight:500;cursor:pointer;color:var(--azul-med)" onclick="clVerFicha('${c.nombre.replace(/'/g,"\\'")}')">${c.nombre||'--'}</span><span>${c.localidad||'--'} <span class="${esLocal(c.localidad)?'local-tag':'fuera-tag'}">${esLocal(c.localidad)?'local':'fuera'}</span></span><span style="font-family:'DM Mono',monospace;font-size:12px">${c.telefono||'--'}</span><span style="font-size:12px;color:var(--gris-dark)">${c.articulo||'--'}</span>${c.telefono?`<a class="wa-link" href="${waLink(c.telefono,c.nombre)}" target="_blank">WA</a>`:'<span></span>'}</div>`).join('');
+  tb.innerHTML=clFiltered.map(c=>`<div class="table-row" style="grid-template-columns:1fr 130px 140px 120px 80px"><span style="font-weight:500;cursor:pointer;color:var(--azul-med)" onclick="clVerFicha('${c.nombre.replace(/'/g,"\\'")}')">${c.nombre||'--'}</span><span>${c.localidad||'--'} <span class="${esLocal(c.localidad)?'local-tag':'fuera-tag'}">${esLocal(c.localidad)?'local':'fuera'}</span></span><span style="font-family:'DM Mono',monospace;font-size:12px">${c.telefono||'--'}</span><span style="font-size:12px;color:var(--gris-dark)">${c.articulo||'--'}</span>${c.telefono?`<a class="wa-link" href="${waLink(c.telefono,c.nombre)}" target="_blank">WA</a>`:'<span></span>'}</div>`).join('');
 }
 
 function clBuscar(q){
