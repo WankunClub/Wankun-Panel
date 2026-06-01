@@ -459,10 +459,12 @@ async function cargarVentasLive(){
   try{
     const rows=await fetchCSV('Ventas');
     const porMes={},zonas={},marcas={};let total=0;
+    const hoy=new Date();
     rows.forEach(r=>{
       const f=parseFecha(r['FECHA']||r['Fecha']||'');
       const fac=parseFac(r['Facturacion']||r['Facturación']||0);
       if(!f||isNaN(f)||!fac)return;
+      if(f>hoy)return; // ignorar fechas futuras
       total+=fac;
       const key=f.getFullYear()+'-'+(f.getMonth()+1).toString().padStart(2,'0');
       porMes[key]=(porMes[key]||0)+fac;
