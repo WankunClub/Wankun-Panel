@@ -322,6 +322,21 @@ Vamos Argentina!</div>
     <div class="metric"><div class="metric-label">Likes</div><div class="metric-value">31</div><div class="metric-delta delta-up">alta participacion</div></div>
     <div class="metric"><div class="metric-label">Comentarios</div><div class="metric-value">54</div><div class="metric-delta delta-up">en 10 dias</div></div>
   </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="results-header">
+      <div class="card-title" style="margin:0">Clientes para contactar</div>
+      <div class="btn-row">
+        <div class="filtro-group"><label>Zona</label><select id="sorteo-zona" onchange="sorteoFiltrar()"><option value="todas">Todas</option><option value="caba">CABA</option><option value="local">Radio 15 km</option><option value="fuera">Fuera</option></select></div>
+        <div class="filtro-group"><label>Telefono</label><select id="sorteo-tel" onchange="sorteoFiltrar()"><option value="todos">Todos</option><option value="contel">Con telefono</option></select></div>
+        <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500;align-self:flex-end" id="sorteo-count">0</span>
+        <button class="btn btn-primary" onclick="sorteoCargar()" style="align-self:flex-end">Cargar clientes</button>
+      </div>
+    </div>
+    <div class="table-wrap" id="sorteo-wrap" style="display:none;margin-top:12px">
+      <div class="table-head" style="grid-template-columns:1fr 130px 120px 80px"><span>Cliente</span><span>Zona</span><span>Telefono</span><span>WA</span></div>
+      <div class="table-body" id="sorteo-table" style="max-height:360px"></div>
+    </div>
+  </div>
   <div class="card-grid">
     <div class="card">
       <div class="card-title">Mensaje para clientes</div>
@@ -664,6 +679,40 @@ function waLink(tel,nombre){
 
 function toggleSorteoMsg(){const p=document.getElementById('sorteo-msg-panel');p.style.display=p.style.display==='none'?'block':'none';}
 function copiarMsg(){const t=document.getElementById('sorteo-msg-text').textContent;navigator.clipboard.writeText(t).then(()=>{const b=event.target,o=b.textContent;b.textContent='Copiado!';setTimeout(()=>b.textContent=o,2000);});}
+let sorteoData=[];
+function esCaba(loc){
+  const l=(loc||'').toLowerCase();
+  return l.includes('caba')||l.includes('capital federal')||l.includes('buenos aires ciudad')||l.includes('c.a.b.a');
+}
+async function sorteoCargar(){
+  const[vRows,fRows]=await Promise.all([fetchCSV('Ventas'),fetchCSV('Flex meli')]);
+  const vistos={};
+  const directas=vRows.map(r=>({nombre:(r['CLIENTE']||r['Cliente']||'').trim(),localidad:r['Barrio/Localidad']||r['Localidad']||'',telefono:''})).filter(r=>r.nombre);
+  const flex=fRows.map(r=>({nombre:(r['NOMBRE']||'').trim(),localidad:r['LOCALIDAD']||'',telefono:(r['TELEFONO']||'').toString()})).filter(r=>r.nombre);
+  sorteoData=[...flex,...directas].filter(r=>{
+    const k=r.nombre.toLowerCase();
+    if(vistos[k])return false;
+    vistos[k]=true;
+    return true;
+  });
+  document.getElementById('sorteo-wrap').style.display='block';
+  sorteoFiltrar();
+}
+function sorteoFiltrar(){
+  const zona=document.getElementById('sorteo-zona').value;
+  const tel=document.getElementById('sorteo-tel').value;
+  let lista=sorteoData.filter(c=>{
+    if(zona==='caba'&&!esCaba(c.localidad))return false;
+    if(zona==='local'&&!esLocal(c.localidad))return false;
+    if(zona==='fuera'&&(esLocal(c.localidad)||esCaba(c.localidad)))return false;
+    if(tel==='contel'&&!c.telefono)return false;
+    return true;
+  });
+  document.getElementById('sorteo-count').textContent=lista.length+' clientes';
+  const tb=document.getElementById('sorteo-table');
+  if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin resultados</div>';return;}
+  tb.innerHTML=lista.slice(0,300).map(c=>`<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">${c.nombre}</span><span style="font-size:11px">${c.localidad||'--'} <span class="${esCaba(c.localidad)?'local-tag':esLocal(c.localidad)?'local-tag':'fuera-tag'}">${esCaba(c.localidad)?'CABA':esLocal(c.localidad)?'local':'fuera'}</span></span><span style="font-family:'DM Mono',monospace;font-size:12px">${c.telefono||'--'}</span>${c.telefono?`<a class="wa-link" href="${waLink(c.telefono,c.nombre)}" target="_blank">WA</a>`:'<span style="color:var(--gris-dark);font-size:12px">--</span>'}</div>`).join('');
+}
 function copiarSorteoMsg(){const t=`Hola [Nombre]!\n\nSabemos lo mucho que queres a tu perrito, por eso queremos que sea parte de la fiesta mas grande del anio!\n\nEstamos sorteando 20 camisetas de la Seleccion Argentina, porque ellos tambien se merecen ponerse la 10!\n\nPara participar:\n- Seguinos en @wankunclub\n- Dale like a esta publicacion: https://www.instagram.com/p/DYk2Zi_oYgY/\n- Comentá con el talle y la raza de tu perrito\n\nEl sorteo es el 11 de junio a las 22hs.\n\nVamos Argentina!`;navigator.clipboard.writeText(t).then(()=>{const b=event.target,o=b.textContent;b.textContent='Copiado!';setTimeout(()=>b.textContent=o,2000);});}
 function clExportar(){const rows=[['Nombre','Localidad','Telefono','Articulo','Zona'],...clFiltered.map(c=>[c.nombre,c.localidad,c.telefono,c.articulo,esLocal(c.localidad)?'Local':'Fuera'])];const csv=rows.map(r=>r.map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='clientes_wankun.csv';a.click();URL.revokeObjectURL(url);}
 
