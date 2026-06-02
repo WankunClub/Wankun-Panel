@@ -259,8 +259,15 @@ Vamos Argentina!</div>
     <div class="card" style="border-left:4px solid #c0392b">
       <div class="card-title" style="color:#c0392b">Contactar hoy</div>
       <div class="table-wrap">
-        <div class="table-head" style="grid-template-columns:1fr 100px 90px 80px 80px 80px"><span>Cliente</span><span>Zona</span><span>Ultima compra</span><span>Frecuencia</span><span>Estado</span><span>WA</span></div>
+        <div class="table-head" style="grid-template-columns:1fr 130px 120px 80px"><span>Cliente</span><span>Zona</span><span>Producto</span><span>WA</span></div>
         <div class="table-body" id="av-hoy" style="max-height:300px"></div>
+      </div>
+    </div>
+    <div class="card" style="border-left:4px solid #856404">
+      <div class="card-title" style="color:#856404">Mañana</div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:1fr 130px 120px 80px"><span>Cliente</span><span>Zona</span><span>Producto</span><span>WA</span></div>
+        <div class="table-body" id="av-manana" style="max-height:300px"></div>
       </div>
     </div>
     <div class="card">
@@ -725,7 +732,7 @@ async function avConectar(){
     avTodos.sort((a,b)=>(a.prox!==null?a.prox:999)-(b.prox!==null?b.prox:999));
     st.className='conn-status conn-ok';st.textContent=avTodos.length+' clientes';
     document.getElementById('av-panel').style.display='block';
-    avMetricas();avMostrarHoy();avFiltrar();avProyeccion();
+    avMetricas();avMostrarHoy();avMostrarManana();avFiltrar();avProyeccion();
   }catch(e){st.className='conn-status conn-err';st.textContent='Error: '+e.message;console.error(e);}
 }
 
@@ -745,6 +752,23 @@ function avMostrarHoy(){
   const tb=document.getElementById('av-hoy');
   if(!urgentes.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin contactos para hoy</div>';return;}
   tb.innerHTML=urgentes.map(c=>{
+    const tel=c.telefono||'';
+    return`<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">${c.nombre}</span><span style="font-size:11px">${c.localidad||'--'} <span class="${esLocal(c.localidad)?'local-tag':'fuera-tag'}">${esLocal(c.localidad)?'local':'fuera'}</span></span><span style="font-size:12px;color:var(--gris-dark)">${c.ultimoProd||'--'}</span>${tel?`<a class="wa-link" href="${avWaLink(tel,c.nombre,c.ultimoProd)}" target="_blank">WA 🐾</a>`:'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>'}</div>`;
+  }).join('');
+}
+
+function avMostrarManana(){
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const manana=new Date(hoy);manana.setDate(manana.getDate()+1);
+  const lista=avTodos.filter(c=>{
+    if(c.fuente!=='Flex Meli')return false;
+    if(!c.recompraFecha)return false;
+    const f=new Date(c.recompraFecha);f.setHours(0,0,0,0);
+    return f.getTime()===manana.getTime();
+  });
+  const tb=document.getElementById('av-manana');
+  if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin contactos para mañana</div>';return;}
+  tb.innerHTML=lista.map(c=>{
     const tel=c.telefono||'';
     return`<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">${c.nombre}</span><span style="font-size:11px">${c.localidad||'--'} <span class="${esLocal(c.localidad)?'local-tag':'fuera-tag'}">${esLocal(c.localidad)?'local':'fuera'}</span></span><span style="font-size:12px;color:var(--gris-dark)">${c.ultimoProd||'--'}</span>${tel?`<a class="wa-link" href="${avWaLink(tel,c.nombre,c.ultimoProd)}" target="_blank">WA 🐾</a>`:'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>'}</div>`;
   }).join('');
