@@ -667,19 +667,49 @@ async function avConectar(){
   const st=document.getElementById('av-status');
   st.className='conn-status conn-loading';st.textContent='Calculando...';
   try{
-    const rows=await fetchCSV('Ventas');
+    const [vRows, fRows]=await Promise.all([fetchCSV('Ventas'), fetchCSV('Flex meli')]);
+    const hoy=new Date();hoy.setHours(0,0,0,0);
+
+    // === FLEX MELI: usar fecha exacta de recompra ===
+    const flexClientes=fRows.map(r=>{
+      const nom=(r['NOMBRE']||'').trim();
+      const tel=(r['TELEFONO']||'').toString();
+      const recompraFecha=parseFecha(r['Recompra']||r['recompra']||'');
+      const ultimaFecha=parseFecha(r['Fecha compra']||'');
+      if(!nom||!recompraFecha)return null;
+      const diasHastaRecompra=Math.floor((recompraFecha-hoy)/(1000*60*60*24));
+      let estado='ok';
+      if(diasHastaRecompra<-2)estado='vencido';
+      else if(diasHastaRecompra<=2)estado='proximo';
+      return{
+        nombre:nom,
+        localidad:r['LOCALIDAD']||'',
+        direccion:r['DIRECCION']||'',
+        telefono:tel,
+        nCompras:1,
+        ultima:ultimaFecha||recompraFecha,
+        dias:ultimaFecha?Math.floor((hoy-ultimaFecha)/(1000*60*60*24)):null,
+        freq:null,
+        prox:diasHastaRecompra,
+        recompraFecha,
+        estado,
+        ultimoProd:r['REFERNCIA']||'',
+        fuente:'Flex Meli'
+      };
+    }).filter(Boolean);
+
+    // === VENTAS DIRECTAS: calcular frecuencia ===
     const hist={};
-    rows.forEach(r=>{
+    vRows.forEach(r=>{
       const nom=(r['CLIENTE']||r['Cliente']||'').trim();
       if(!nom)return;
       const f=parseFecha(r['FECHA']||r['Fecha']||'');
-      if(!f||isNaN(f))return;
+      if(!f||isNaN(f)||f>hoy)return;
       const key=nom.toLowerCase();
       if(!hist[key])hist[key]={nombre:nom,localidad:r['Barrio/Localidad']||r['Localidad']||'',compras:[]};
       hist[key].compras.push({fecha:f,fac:parseFac(r['Facturacion']||r['Facturación']||0),kg:parseFloat((r['kg']||0).toString().replace(',','.'))||0,producto:[r['Marca']||'',r['producto']||''].filter(Boolean).join(' - ')});
     });
-    const hoy=new Date();
-    avTodos=Object.values(hist).map(c=>{
+    const ventasClientes=Object.values(hist).map(c=>{
       c.compras.sort((a,b)=>a.fecha-b.fecha);
       const ultima=c.compras[c.compras.length-1].fecha;
       const dias=Math.floor((hoy-ultima)/(1000*60*60*24));
@@ -688,10 +718,12 @@ async function avConectar(){
       let prox=null,estado='sin_datos';
       if(freq){prox=freq-dias;if(prox<-5)estado='vencido';else if(prox<=5)estado='proximo';else estado='ok';}
       else{if(dias>45)estado='vencido';else if(dias>38)estado='proximo';else estado='ok';}
-      return{nombre:c.nombre,localidad:c.localidad,nCompras:c.compras.length,ultima,dias,freq,prox,estado,ultimoProd:c.compras[c.compras.length-1].producto};
+      return{nombre:c.nombre,localidad:c.localidad,direccion:'',telefono:'',nCompras:c.compras.length,ultima,dias,freq,prox,estado,ultimoProd:c.compras[c.compras.length-1].producto,fuente:'Directa'};
     });
+
+    avTodos=[...flexClientes,...ventasClientes];
     avTodos.sort((a,b)=>(a.prox!==null?a.prox:999)-(b.prox!==null?b.prox:999));
-    st.className='conn-status conn-ok';st.textContent=avTodos.length+' clientes unicos';
+    st.className='conn-status conn-ok';st.textContent=avTodos.length+' clientes';
     document.getElementById('av-panel').style.display='block';
     avMetricas();avMostrarHoy();avFiltrar();avProyeccion();
   }catch(e){st.className='conn-status conn-err';st.textContent='Error: '+e.message;console.error(e);}
@@ -709,7 +741,7 @@ function avMostrarHoy(){
   tb.innerHTML=urgentes.map(c=>{
     const color=c.estado==='vencido'?'#c0392b':'#856404';
     const label=c.prox!==null?(c.prox<0?Math.abs(c.prox)+'d pasado':c.prox+'d'):(c.dias+'d inactivo');
-    const tel=clData.find(x=>(x.nombre||'').toLowerCase().startsWith((c.nombre||'').toLowerCase().split(' ')[0])&&x.telefono)?.telefono||'';
+    const tel=c.telefono||clData.find(x=>(x.nombre||'').toLowerCase().startsWith((c.nombre||'').toLowerCase().split(' ')[0])&&x.telefono)?.telefono||'';
     return`<div class="table-row" style="grid-template-columns:1fr 100px 90px 80px 80px 80px"><span style="font-weight:500">${c.nombre}</span><span style="font-size:11px">${c.localidad||'--'} <span class="${esLocal(c.localidad)?'local-tag':'fuera-tag'}">${esLocal(c.localidad)?'local':'fuera'}</span></span><span style="font-size:12px">${c.ultima.toLocaleDateString('es-AR',{day:'numeric',month:'short'})}</span><span style="font-size:12px">${c.freq?c.freq+'d':'--'}</span><span style="font-weight:600;color:${color}">${label}</span>${tel?`<a class="wa-link" href="${avWaLink(tel,c.nombre,c.ultimoProd)}" target="_blank">WA</a>`:'<span>--</span>'}</div>`;
   }).join('');
 }
@@ -726,7 +758,7 @@ function avFiltrar(){
   const tb=document.getElementById('av-table');
   if(!avFiltered.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin resultados</div>';return;}
   tb.innerHTML=avFiltered.slice(0,500).map(c=>{
-    const tel=clData.find(x=>(x.nombre||'').toLowerCase().startsWith((c.nombre||'').toLowerCase().split(' ')[0])&&x.telefono)?.telefono||'';
+    const tel=c.telefono||clData.find(x=>(x.nombre||'').toLowerCase().startsWith((c.nombre||'').toLowerCase().split(' ')[0])&&x.telefono)?.telefono||'';
     const pc=c.estado==='vencido'?'#c0392b':c.estado==='proximo'?'#856404':c.estado==='ok'?'var(--verde)':'var(--gris-dark)';
     const pl=c.prox===null?'--':c.prox<0?Math.abs(c.prox)+'d pasado':'en '+c.prox+'d';
     return`<div class="table-row" style="grid-template-columns:1fr 90px 60px 80px 70px 80px 60px"><span style="font-weight:500">${c.nombre}</span><span style="font-size:11px">${c.localidad||'--'}</span><span style="font-size:12px;text-align:center">${c.nCompras}</span><span style="font-size:12px">${c.ultima.toLocaleDateString('es-AR',{day:'numeric',month:'short'})}</span><span style="font-size:12px;text-align:center">${c.freq?c.freq+'d':'--'}</span><span style="font-size:12px;font-weight:600;color:${pc}">${pl}</span>${tel?`<a class="wa-link" href="${avWaLink(tel,c.nombre,c.ultimoProd)}" target="_blank">WA</a>`:'<span>--</span>'}</div>`;
