@@ -524,7 +524,7 @@ async function conectarClientes(){
       const marca=r['Marca']||r['marca']||'';
       const prod=r['producto']||r['Producto']||'';
       const art=[marca,prod].filter(Boolean).join(' - ');
-      return{nombre:r['CLIENTE']||r['Cliente']||'',localidad:r['Barrio/Localidad']||r['Localidad']||'',direccion:r['Domicilio']||r['domicilio']||'',telefono:'',articulo:art,fecha:r['FECHA']||r['Fecha']||'',fac:parseFac(r['Facturacion']||r['Facturación']||0),kg:parseFloat((r['kg']||0).toString().replace(',','.'))||0,fuente:'Directa'};
+      return{nombre:r['CLIENTE']||r['Cliente']||'',localidad:r['Barrio/Localidad']||r['Localidad']||'',direccion:r['Domicilio']||r['domicilio']||'',telefono:'',articulo:art,fecha:r['FECHA']||r['Fecha']||'',fac:parseFac(r['Facturacion']||r['Facturación']||0),kg:parseFloat((r['kg']||0).toString().replace(',','.'))||0,fuente:'Directa',id:r['ID']||''};
     }).filter(r=>r.nombre);
     const flex=fRows.map(r=>({nombre:r['NOMBRE']||'',localidad:r['LOCALIDAD']||'',direccion:r['DIRECCION']||r['Direccion']||'',telefono:(r['TELEFONO']||'').toString(),articulo:r['REFERNCIA']||'',fecha:r['Fecha compra']||'',fac:0,kg:0,fuente:'Flex Meli'})).filter(r=>r.nombre);
     clData=[...directas,...flex];
@@ -583,6 +583,7 @@ function clBuscar(q){
           ${c.direccion?`<span style="font-size:11px;color:var(--gris-dark)">${c.direccion}</span>`:''}
           <span style="font-family:'DM Mono',monospace;font-size:12px">${c.telefono||'Sin telefono'}</span>
           ${c.telefono?`<a class="wa-link" href="${waLink(c.telefono,c.nombre)}" target="_blank" onclick="event.stopPropagation()">WA</a>`:''}
+          ${c.id?`<button onclick="event.stopPropagation();navigator.clipboard.writeText('${c.id}');this.textContent='Copiado!';setTimeout(()=>this.textContent='ID: ${c.id}',1500)" style="font-size:11px;padding:3px 8px;border-radius:6px;background:#dbeafe;color:#1d4ed8;border:none;cursor:pointer;font-weight:600">ID: ${c.id}</button>`:''}
           <span style="font-size:11px;color:var(--azul-med);font-weight:500">Ver ficha →</span>
         </div>
       </div>
@@ -625,6 +626,11 @@ function clVerFicha(nombre){
         <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:4px">Telefono</div>
         <div style="font-family:'DM Mono',monospace;font-size:13px">${tel||'Sin telefono'}</div>
         ${tel?`<a class="wa-link" style="margin-top:8px;display:inline-block" href="${waLink(tel,nombre)}" target="_blank">Enviar WA sorteo</a>`:''}
+      </div>
+      <div style="background:var(--gris);border-radius:8px;padding:12px">
+        <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:4px">ID Cliente</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--azul-med)">${registros.find(r=>r.id)?.id||'Sin ID'}</div>
+        ${registros.find(r=>r.id)?`<button onclick="navigator.clipboard.writeText('${registros.find(r=>r.id)?.id||''}');this.textContent='Copiado!';setTimeout(()=>this.textContent='Copiar ID',1500)" style="margin-top:8px;font-size:11px;padding:4px 10px;border-radius:6px;background:#dbeafe;color:#1d4ed8;border:none;cursor:pointer;font-weight:600">Copiar ID</button>`:''}
       </div>
       <div style="background:var(--gris);border-radius:8px;padding:12px;grid-column:span 2">
         <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:4px">Direccion</div>
