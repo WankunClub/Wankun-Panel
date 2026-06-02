@@ -735,14 +735,18 @@ function avMetricas(){
 }
 
 function avMostrarHoy(){
-  const urgentes=avTodos.filter(c=>c.estado==='vencido'||c.estado==='proximo').slice(0,100);
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const urgentes=avTodos.filter(c=>{
+    if(c.fuente!=='Flex Meli')return false;
+    if(!c.recompraFecha)return false;
+    const f=new Date(c.recompraFecha);f.setHours(0,0,0,0);
+    return f.getTime()===hoy.getTime();
+  });
   const tb=document.getElementById('av-hoy');
-  if(!urgentes.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin urgentes hoy</div>';return;}
+  if(!urgentes.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin contactos para hoy</div>';return;}
   tb.innerHTML=urgentes.map(c=>{
-    const color=c.estado==='vencido'?'#c0392b':'#856404';
-    const label=c.prox!==null?(c.prox<0?Math.abs(c.prox)+'d pasado':c.prox+'d'):(c.dias+'d inactivo');
-    const tel=c.telefono||clData.find(x=>(x.nombre||'').toLowerCase().startsWith((c.nombre||'').toLowerCase().split(' ')[0])&&x.telefono)?.telefono||'';
-    return`<div class="table-row" style="grid-template-columns:1fr 100px 90px 80px 80px 80px"><span style="font-weight:500">${c.nombre}</span><span style="font-size:11px">${c.localidad||'--'} <span class="${esLocal(c.localidad)?'local-tag':'fuera-tag'}">${esLocal(c.localidad)?'local':'fuera'}</span></span><span style="font-size:12px">${c.ultima.toLocaleDateString('es-AR',{day:'numeric',month:'short'})}</span><span style="font-size:12px">${c.freq?c.freq+'d':'--'}</span><span style="font-weight:600;color:${color}">${label}</span>${tel?`<a class="wa-link" href="${avWaLink(tel,c.nombre,c.ultimoProd)}" target="_blank">WA</a>`:'<span>--</span>'}</div>`;
+    const tel=c.telefono||'';
+    return`<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">${c.nombre}</span><span style="font-size:11px">${c.localidad||'--'} <span class="${esLocal(c.localidad)?'local-tag':'fuera-tag'}">${esLocal(c.localidad)?'local':'fuera'}</span></span><span style="font-size:12px;color:var(--gris-dark)">${c.ultimoProd||'--'}</span>${tel?`<a class="wa-link" href="${avWaLink(tel,c.nombre,c.ultimoProd)}" target="_blank">WA 🐾</a>`:'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>'}</div>`;
   }).join('');
 }
 
