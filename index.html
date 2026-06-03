@@ -703,7 +703,18 @@ function esCaba(loc){
 async function sorteoCargar(){
   const[vRows,fRows]=await Promise.all([fetchCSV('Ventas'),fetchCSV('Flex meli')]);
   const vistos={};
-  const directas=vRows.map(r=>({nombre:(r['CLIENTE']||r['Cliente']||'').trim(),localidad:r['Barrio/Localidad']||r['Localidad']||'',telefono:''})).filter(r=>r.nombre);
+  // Construir mapa de telefonos desde Flex Meli
+  const telMap={};
+  fRows.forEach(r=>{
+    const n=(r['NOMBRE']||'').trim().toLowerCase();
+    const t=(r['TELEFONO']||'').toString().trim();
+    if(n&&t) telMap[n]=t;
+  });
+  const directas=vRows.map(r=>{
+    const nombre=(r['CLIENTE']||r['Cliente']||'').trim();
+    const tel=telMap[nombre.toLowerCase()]||'';
+    return{nombre,localidad:r['Barrio/Localidad']||r['Localidad']||'',telefono:tel};
+  }).filter(r=>r.nombre);
   const flex=fRows.map(r=>({nombre:(r['NOMBRE']||'').trim(),localidad:r['LOCALIDAD']||'',telefono:(r['TELEFONO']||'').toString()})).filter(r=>r.nombre);
   sorteoData=[...flex,...directas].filter(r=>{
     const k=r.nombre.toLowerCase();
