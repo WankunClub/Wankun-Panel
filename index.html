@@ -270,6 +270,13 @@ Vamos Argentina!</div>
         <div class="table-body" id="av-manana" style="max-height:300px"></div>
       </div>
     </div>
+    <div class="card" style="border-left:4px solid #16a34a">
+      <div class="card-title" style="color:#16a34a">Ventas — Contactar hoy</div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:1fr 130px 120px 80px"><span>Cliente</span><span>Zona</span><span>Producto</span><span>WA</span></div>
+        <div class="table-body" id="av-ventas-hoy" style="max-height:300px"></div>
+      </div>
+    </div>
     <div class="card" style="border-left:4px solid #2563eb">
       <div class="card-title" style="color:#2563eb">Compraron ayer</div>
       <div class="table-wrap">
@@ -815,7 +822,7 @@ async function avConectar(){
     avTodos.sort((a,b)=>(a.prox!==null?a.prox:999)-(b.prox!==null?b.prox:999));
     st.className='conn-status conn-ok';st.textContent=avTodos.length+' clientes';
     document.getElementById('av-panel').style.display='block';
-    avMetricas();avMostrarHoy();avMostrarManana();avMostrarAyer();avFiltrar();avProyeccion();
+    avMetricas();avMostrarHoy();avMostrarManana();avMostrarVentasHoy();avMostrarAyer();avFiltrar();avProyeccion();
   }catch(e){st.className='conn-status conn-err';st.textContent='Error: '+e.message;console.error(e);}
 }
 
@@ -846,6 +853,24 @@ function avWaLinkAyer(tel,nombre){
   const primer=(nombre||'').split(' ')[0];
   const msg='Hola '+primer+' buen dia\n\nCuando llegue el momento de reponer el alimento para tu mascota, escribime en forma directa y lo coordinamos.\nEntregamos en el dia, el precio es mejor que en Mercado Libre y el alimento siempre va acompanado con snacks de Filan.\n\nQue tengas un gran dia!\nSaludos,\nNacho';
   return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);
+}
+
+function avMostrarVentasHoy(){
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const lista=avTodos.filter(function(c){
+    if(c.fuente!=='Directa')return false;
+    if(!c.prox&&c.prox!==0)return false;
+    return c.prox===0;
+  });
+  const tb=document.getElementById('av-ventas-hoy');
+  if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin contactos para hoy</div>';return;}
+  tb.innerHTML=lista.map(function(c){
+    const tel=c.telefono||clData.find(function(x){return (x.nombre||'').toLowerCase().startsWith((c.nombre||'').toLowerCase().split(' ')[0])&&x.telefono;})||'';
+    const telStr=typeof tel==='object'?tel.telefono:tel;
+    const waBtn=telStr?'<a class="wa-link" href="'+avWaLink(telStr,c.nombre,c.ultimoProd)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';
+    const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';
+    return '<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span><span style="font-size:12px;color:var(--gris-dark)">'+(c.ultimoProd||'--')+'</span>'+waBtn+'</div>';
+  }).join('');
 }
 
 function avMostrarAyer(){
