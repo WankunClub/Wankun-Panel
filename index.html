@@ -721,7 +721,7 @@ async function sorteoCargar(){
     if(vistos[k])return false;
     vistos[k]=true;
     return true;
-  });
+  }).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
   document.getElementById('sorteo-wrap').style.display='block';
   sorteoFiltrar();
 }
