@@ -844,37 +844,30 @@ function avWaLinkAyer(tel,nombre){
   const num=tel.toString().replace(/\D/g,'');
   const full=num.startsWith('54')?num:'54'+num;
   const primer=(nombre||'').split(' ')[0];
-  const msg=[
-    'Hola '+primer+' buen dia',
-    '',
-    'Cuando llegue el momento de reponer el alimento para tu mascota, escribime en forma directa y lo coordinamos.',
-    'Entregamos en el dia, el precio es mejor que en Mercado Libre y el alimento siempre va acompanado con snacks de Filan.',
-    '',
-    'Que tengas un gran dia!',
-    'Saludos,',
-    'Nacho'
-  ].join('\n');
+  const msg='Hola '+primer+' buen dia\n\nCuando llegue el momento de reponer el alimento para tu mascota, escribime en forma directa y lo coordinamos.\nEntregamos en el dia, el precio es mejor que en Mercado Libre y el alimento siempre va acompanado con snacks de Filan.\n\nQue tengas un gran dia!\nSaludos,\nNacho';
   return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);
 }
 
 function avMostrarAyer(){
   const hoy=new Date();hoy.setHours(0,0,0,0);
   const ayer=new Date(hoy);ayer.setDate(ayer.getDate()-1);
-  const lista=avTodos.filter(c=>{
+  const lista=avTodos.filter(function(c){
     if(c.fuente!=='Flex Meli')return false;
     if(!c.ultima)return false;
-    const f=new Date(c.ultima);f.setHours(0,0,0,0);
+    var f=new Date(c.ultima);f.setHours(0,0,0,0);
     return f.getTime()===ayer.getTime();
   });
   const tb=document.getElementById('av-ayer');
   if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin compras de ayer</div>';return;}
-  tb.innerHTML=lista.map(c=>{
+  tb.innerHTML=lista.map(function(c){
     const tel=c.telefono||'';
-    return\`<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">\${c.nombre}</span><span style="font-size:11px">\${c.localidad||'--'} <span class="\${esLocal(c.localidad)?'local-tag':'fuera-tag'}">\${esLocal(c.localidad)?'local':'fuera'}</span></span><span style="font-size:12px;color:var(--gris-dark)">\${c.ultimoProd||'--'}</span>\${tel?\`<a class="wa-link" href="\${avWaLinkAyer(tel,c.nombre)}" target="_blank">WA</a>\`:'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>'}</div>\`;
+    const waBtn=tel?'<a class="wa-link" href="'+avWaLinkAyer(tel,c.nombre)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';
+    const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';
+    return '<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span><span style="font-size:12px;color:var(--gris-dark)">'+(c.ultimoProd||'--')+'</span>'+waBtn+'</div>';
   }).join('');
 }
 
-function avMostrarManana(){
+function avMostrarManana(){function avMostrarManana(){
   const hoy=new Date();hoy.setHours(0,0,0,0);
   const manana=new Date(hoy);manana.setDate(manana.getDate()+1);
   const lista=avTodos.filter(c=>{
