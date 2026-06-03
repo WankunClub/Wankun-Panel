@@ -416,6 +416,16 @@ function parseFecha(s){
   return null;
 }
 
+function getCol(r, ...keys){
+  for(const k of keys){
+    // Buscar exacto
+    if(r[k]!==undefined && r[k]!==null && r[k]!=='') return r[k];
+    // Buscar con espacios trimmeados
+    const trimmed = Object.keys(r).find(rk => rk.trim().toLowerCase() === k.toLowerCase());
+    if(trimmed && r[trimmed]!==undefined && r[trimmed]!==null && r[trimmed]!=='') return r[trimmed];
+  }
+  return '';
+}
 function parseFac(v){
   if(!v)return 0;
   if(typeof v==='number')return v;
@@ -484,7 +494,7 @@ async function cargarVentasLive(){
     const hoy=new Date();
     rows.forEach(r=>{
       const f=parseFecha(r['FECHA']||r['Fecha']||'');
-      const fac=parseFac(r['Facturacion']||r['Facturación']||0);
+      const fac=parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0);
       if(!f||isNaN(f)||!fac)return;
       if(f>hoy)return; // ignorar fechas futuras
       total+=fac;
@@ -524,7 +534,7 @@ async function conectarClientes(){
       const marca=r['Marca']||r['marca']||'';
       const prod=r['producto']||r['Producto']||'';
       const art=[marca,prod].filter(Boolean).join(' - ');
-      return{nombre:r['CLIENTE']||r['Cliente']||'',localidad:r['Barrio/Localidad']||r['Localidad']||'',direccion:r['Domicilio']||r['domicilio']||'',telefono:'',articulo:art,fecha:r['FECHA']||r['Fecha']||'',fac:parseFac(r['Facturacion']||r['Facturación']||0),kg:parseFloat((r['kg']||0).toString().replace(',','.'))||0,fuente:'Directa',id:r['ID']||''};
+      return{nombre:r['CLIENTE']||r['Cliente']||'',localidad:r['Barrio/Localidad']||r['Localidad']||'',direccion:r['Domicilio']||r['domicilio']||'',telefono:'',articulo:art,fecha:r['FECHA']||r['Fecha']||'',fac:parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0),kg:parseFloat((getCol(r,'kg')||0).toString().replace(',','.'))||0,fuente:'Directa',id:r['ID']||''};
     }).filter(r=>r.nombre);
     const flex=fRows.map(r=>({nombre:r['NOMBRE']||'',localidad:r['LOCALIDAD']||'',direccion:r['DIRECCION']||r['Direccion']||'',telefono:(r['TELEFONO']||'').toString(),articulo:r['REFERNCIA']||'',fecha:r['Fecha compra']||'',fac:0,kg:0,fuente:'Flex Meli'})).filter(r=>r.nombre);
     clData=[...directas,...flex];
@@ -769,7 +779,7 @@ async function avConectar(){
       if(!f||isNaN(f)||f>hoy)return;
       const key=nom.toLowerCase();
       if(!hist[key])hist[key]={nombre:nom,localidad:r['Barrio/Localidad']||r['Localidad']||'',compras:[]};
-      hist[key].compras.push({fecha:f,fac:parseFac(r['Facturacion']||r['Facturación']||0),kg:parseFloat((r['kg']||0).toString().replace(',','.'))||0,producto:[r['Marca']||'',r['producto']||''].filter(Boolean).join(' - ')});
+      hist[key].compras.push({fecha:f,fac:parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0),kg:parseFloat((getCol(r,'kg')||0).toString().replace(',','.'))||0,producto:[r['Marca']||'',r['producto']||''].filter(Boolean).join(' - ')});
     });
     const ventasClientes=Object.values(hist).map(c=>{
       c.compras.sort((a,b)=>a.fecha-b.fecha);
