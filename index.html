@@ -734,7 +734,7 @@ function sorteoFiltrar(){
     if(zona==='fuera'&&(esLocal(c.localidad)||esCaba(c.localidad)))return false;
     if(tel==='contel'&&!c.telefono)return false;
     return true;
-  });
+  }).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
   document.getElementById('sorteo-count').textContent=lista.length+' clientes';
   const tb=document.getElementById('sorteo-table');
   if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin resultados</div>';return;}
