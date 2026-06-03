@@ -716,7 +716,7 @@ async function sorteoCargar(){
     return{nombre,localidad:r['Barrio/Localidad']||r['Localidad']||'',telefono:tel};
   }).filter(r=>r.nombre);
   const flex=fRows.map(r=>({nombre:(r['NOMBRE']||'').trim(),localidad:r['LOCALIDAD']||'',telefono:(r['TELEFONO']||'').toString()})).filter(r=>r.nombre);
-  sorteoData=[...flex,...directas].filter(r=>{
+  sorteoData=[...flex].filter(r=>{
     const k=r.nombre.toLowerCase();
     if(vistos[k])return false;
     vistos[k]=true;
