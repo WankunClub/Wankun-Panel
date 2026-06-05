@@ -183,6 +183,21 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="card"><div class="card-title">Top zonas</div><div id="zonas-bars"></div></div>
     <div class="card"><div class="card-title">Top marcas</div><div id="marcas-bars"></div></div>
   </div>
+  <div class="card">
+    <div class="results-header">
+      <div class="card-title" style="margin:0">Productos más vendidos</div>
+      <div class="filtro-group">
+        <label>Mes</label>
+        <select id="prod-mes-sel" onchange="renderTopProductos()">
+          <option value="todos">Todos</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap" style="margin-top:12px">
+      <div class="table-head" style="grid-template-columns:2fr 80px 80px 120px"><span>Producto</span><span>Ventas</span><span>Kg total</span><span>Facturación</span></div>
+      <div class="table-body" id="top-productos" style="max-height:400px"></div>
+    </div>
+  </div>
 </div>
 
 <!-- CLIENTES -->
@@ -546,9 +561,62 @@ async function cargarVentasLive(){
     const topM=Object.fromEntries(Object.entries(marcas).sort((a,b)=>b[1]-a[1]).slice(0,8));
     renderPeq('zonas-bars',topZ,VERDE);
     renderPeq('marcas-bars',topM,AZUL);
+    buildTopProductos(rows);
   }catch(e){console.log('Error ventas live:',e);}
 }
 setTimeout(cargarVentasLive,600);
+
+// TOP PRODUCTOS
+let prodData=[];
+function buildTopProductos(vRows){
+  const byMesProd={};
+  vRows.forEach(function(r){
+    const fecha=parseFecha(r['FECHA']||r['Fecha']||'');
+    if(!fecha)return;
+    const mes=fecha.getFullYear()+'-'+(fecha.getMonth()+1).toString().padStart(2,'0');
+    const marca=(r['Marca']||'').trim();
+    const prod=(r['producto']||'').trim();
+    const kg=parseFloat((r['kg']||0).toString().replace(',','.'))||0;
+    const fac=parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0);
+    if(!marca&&!prod)return;
+    const key=marca+(marca&&prod?' - ':'')+prod;
+    if(!byMesProd[mes])byMesProd[mes]={};
+    if(!byMesProd[mes][key])byMesProd[mes][key]={nombre:key,ventas:0,kg:0,fac:0};
+    byMesProd[mes][key].ventas++;
+    byMesProd[mes][key].kg+=kg;
+    byMesProd[mes][key].fac+=fac;
+  });
+  prodData=byMesProd;
+  // Llenar selector de meses
+  const sel=document.getElementById('prod-mes-sel');
+  const meses=Object.keys(byMesProd).sort().reverse();
+  sel.innerHTML='<option value="todos">Todos los meses</option>'+meses.map(function(m){
+    const [y,mo]=m.split('-');
+    const nom=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(mo)]+' '+y;
+    return'<option value="'+m+'">'+nom+'</option>';
+  }).join('');
+  renderTopProductos();
+}
+function renderTopProductos(){
+  const sel=document.getElementById('prod-mes-sel').value;
+  const agg={};
+  Object.keys(prodData).forEach(function(mes){
+    if(sel!=='todos'&&mes!==sel)return;
+    Object.values(prodData[mes]).forEach(function(p){
+      if(!agg[p.nombre])agg[p.nombre]={nombre:p.nombre,ventas:0,kg:0,fac:0};
+      agg[p.nombre].ventas+=p.ventas;
+      agg[p.nombre].kg+=p.kg;
+      agg[p.nombre].fac+=p.fac;
+    });
+  });
+  const lista=Object.values(agg).sort(function(a,b){return b.fac-a.fac;}).slice(0,50);
+  const tb=document.getElementById('top-productos');
+  if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark)">Sin datos</div>';return;}
+  tb.innerHTML=lista.map(function(p,i){
+    const bg=i%2===0?'var(--gris)':'transparent';
+    return'<div class="table-row" style="grid-template-columns:2fr 80px 80px 120px;background:'+bg+'"><span style="font-size:12px;font-weight:'+(i<3?'700':'500')+'">'+p.nombre+'</span><span style="text-align:center;font-size:12px">'+p.ventas+'</span><span style="text-align:center;font-size:12px">'+p.kg.toLocaleString('es-AR')+'kg</span><span style="text-align:right;font-size:12px;font-weight:600">$'+Math.round(p.fac/1000).toLocaleString('es-AR')+'K</span></div>';
+  }).join('');
+}
 
 // CLIENTES
 let clData=[];
