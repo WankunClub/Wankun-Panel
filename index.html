@@ -1173,21 +1173,14 @@ async function cargarStock() {
       fetchCSV('Meli')
     ]);
     const parseNum = v => parseFloat((v||'0').toString().replace(',','.').replace(/[^0-9.-]/g,''))||0;
-    const parse = (rows) => {
-      const header = rows[0];
-      return rows.slice(1).map(r => {
-        const o = {};
-        header.forEach((h,i) => o[h] = r[i]||'');
-        return {
-          sku: o['SKU']||'', producto: o['PRODUCTO']||'', kg: o['KG']||'',
-          canal: o['CANAL']||'', disponible: parseNum(o['DISPONIBLE']),
-          total: parseNum(o['TOTAL']), minimo: parseNum(o['MÍNIMO']||o['MINIMO']||'0'),
-          seguridad: parseNum(o['SEGURIDAD']), estado: o['ESTADO']||'',
-          costo: parseNum(o['COSTO UNIT.']), precio: parseNum(o['PRECIO PÚBLICO']||o['PRECIO PUBLICO']),
-          valorStock: parseNum(o['VALOR STOCK']), margen: parseNum(o['MARGEN %'])
-        };
-      }).filter(r => r.producto);
-    };
+    const parse = (rows) => rows.slice(1).map(r => ({
+      sku: r['SKU']||'', producto: r['PRODUCTO']||'', kg: r['KG']||'',
+      canal: r['CANAL']||'', disponible: parseNum(r['DISPONIBLE']),
+      total: parseNum(r['TOTAL']), minimo: parseNum(r['MÍNIMO']||r['MINIMO']||'0'),
+      seguridad: parseNum(r['SEGURIDAD']), estado: r['ESTADO']||'',
+      costo: parseNum(r['COSTO UNIT.']), precio: parseNum(r['PRECIO PÚBLICO']||r['PRECIO PUBLICO']),
+      valorStock: parseNum(r['VALOR STOCK']), margen: parseNum(r['MARGEN %'])
+    })).filter(r => r.producto);
     stockDatos = [...parse(rowsStock), ...parse(rowsMeli)];
     stockRenderizar();
   } catch(e) {
