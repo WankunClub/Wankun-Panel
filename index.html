@@ -120,6 +120,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="nav-section">Principal</div>
     <div class="nav-item active" onclick="irA('inicio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Inicio</div>
     <div class="nav-item" onclick="irA('ventas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Ventas</div>
+    <div class="nav-item" onclick="irA('stock')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Stock</div>
     <div class="nav-section">Clientes</div>
     <div class="nav-item" onclick="irA('clientes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</div>
     <div class="nav-item" onclick="irA('recompras')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Recompras</div>
@@ -413,6 +414,45 @@ Vamos Argentina!</div>
 </div>
 
 <!-- ROADMAP -->
+<div class="page" id="page-stock">
+  <!-- Métricas resumen -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px" id="stock-metricas"></div>
+
+  <!-- Alertas sin stock -->
+  <div class="card" id="stock-quiebre-card" style="display:none;border-left:3px solid #ef4444">
+    <div class="card-title" style="color:#ef4444">⚠️ Sin stock — reposición urgente</div>
+    <div id="stock-quiebre-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
+  </div>
+
+  <!-- Tabla principal -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <div class="card-title" style="margin:0;flex:1">Stock valorizado</div>
+      <div style="display:flex;gap:6px">
+        <button id="btn-canal-todos" onclick="stockFiltrarCanal('todos')" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #ddd;background:#1a1a2e;color:#fff;cursor:pointer;font-weight:600">Todos</button>
+        <button id="btn-canal-Club" onclick="stockFiltrarCanal('Club')" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #ddd;background:transparent;color:#666;cursor:pointer">Club</button>
+        <button id="btn-canal-Vete" onclick="stockFiltrarCanal('Vete')" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #ddd;background:transparent;color:#666;cursor:pointer">Vete</button>
+        <button id="btn-canal-Meli" onclick="stockFiltrarCanal('Meli')" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #ddd;background:transparent;color:#666;cursor:pointer">Meli</button>
+      </div>
+      <input type="text" id="stock-buscar" placeholder="Buscar producto..." onInput="stockBuscar()" style="font-size:13px;padding:6px 10px;border-radius:8px;border:1px solid #ddd;width:200px">
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="border-bottom:2px solid #eee">
+            <th style="text-align:left;padding:8px 6px;color:#888;font-weight:600">Producto</th>
+            <th style="text-align:center;padding:8px 6px;color:#888;font-weight:600">KG</th>
+            <th style="text-align:center;padding:8px 6px;color:#888;font-weight:600">Canal</th>
+            <th style="text-align:center;padding:8px 6px;color:#888;font-weight:600">Disp.</th>
+            <th style="text-align:center;padding:8px 6px;color:#888;font-weight:600">Estado</th>
+            <th style="text-align:right;padding:8px 6px;color:#888;font-weight:600">Valor stock</th>
+          </tr>
+        </thead>
+        <tbody id="stock-tabla-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 <div class="page" id="page-roadmap">
   <div class="card">
     <div class="card-title">Roadmap - consolidacion 15 km</div>
@@ -441,7 +481,7 @@ function irA(p){
   const el=document.getElementById('page-'+p);
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
-  const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap'};
+  const t={'inicio':'Inicio','ventas':'Ventas','stock':'Stock','clientes':'Clientes','recompras':'Recompras','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
 }
@@ -1117,6 +1157,112 @@ function mktTyping(show){
 function mktQuick(t){document.getElementById('mkt-input').value=t;mktSend();}
 function mktKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();mktSend();}}
 function mktResize(el){el.style.height='40px';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+
+// ============================================================
+// MÓDULO STOCK
+// ============================================================
+let stockDatos = [];
+let stockCanalActivo = 'todos';
+
+async function cargarStock() {
+  if (stockDatos.length > 0) { stockRenderizar(); return; }
+  document.getElementById('stock-tabla-body').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#888">Cargando stock...</td></tr>';
+  try {
+    const [rowsStock, rowsMeli] = await Promise.all([
+      fetchCSV('Stock'),
+      fetchCSV('Meli')
+    ]);
+    const parse = (rows) => rows.slice(1).map(r => ({
+      sku: r[0]||'', producto: r[1]||'', kg: r[2]||'',
+      canal: r[3]||'', disponible: parseFloat(r[4])||0,
+      total: parseFloat(r[5])||0, minimo: parseFloat(r[6])||0,
+      seguridad: parseFloat(r[7])||0, estado: r[8]||'',
+      costo: parseFloat(r[9])||0, precio: parseFloat(r[10])||0,
+      valorStock: parseFloat(r[11])||0, margen: parseFloat(r[12])||0
+    })).filter(r => r.producto);
+    stockDatos = [...parse(rowsStock), ...parse(rowsMeli)];
+    stockRenderizar();
+  } catch(e) {
+    document.getElementById('stock-tabla-body').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#e44">Error cargando stock</td></tr>';
+  }
+}
+
+function stockFiltrarCanal(canal) {
+  stockCanalActivo = canal;
+  // Estilos botones
+  ['todos','Club','Vete','Meli'].forEach(c => {
+    const btn = document.getElementById('btn-canal-' + c);
+    if (!btn) return;
+    if (c === canal) {
+      btn.style.background = '#1a1a2e'; btn.style.color = '#fff'; btn.style.fontWeight = '600';
+    } else {
+      btn.style.background = 'transparent'; btn.style.color = '#666'; btn.style.fontWeight = '400';
+    }
+  });
+  stockRenderizar();
+}
+
+function stockBuscar() { stockRenderizar(); }
+
+function stockRenderizar() {
+  const q = (document.getElementById('stock-buscar')?.value||'').toLowerCase();
+  let datos = stockDatos;
+  if (stockCanalActivo !== 'todos') datos = datos.filter(r => r.canal === stockCanalActivo);
+  if (q) datos = datos.filter(r => r.producto.toLowerCase().includes(q) || r.sku.toLowerCase().includes(q));
+
+  // Métricas
+  const total = datos.length;
+  const ok = datos.filter(r => r.estado === 'OK').length;
+  const sinStock = datos.filter(r => r.estado === 'SIN STOCK').length;
+  const valorTotal = datos.reduce((s, r) => s + (r.disponible * r.costo), 0);
+
+  document.getElementById('stock-metricas').innerHTML = `
+    <div class="metric"><div class="metric-label">Total referencias</div><div class="metric-value">${total}</div></div>
+    <div class="metric"><div class="metric-label">Con stock OK</div><div class="metric-value" style="color:#22c55e">${ok}</div></div>
+    <div class="metric"><div class="metric-label">Sin stock</div><div class="metric-value" style="color:#ef4444">${sinStock}</div></div>
+    <div class="metric"><div class="metric-label">Valor total</div><div class="metric-value" style="font-size:16px">$ ${valorTotal.toLocaleString('es-AR',{maximumFractionDigits:0})}</div></div>
+  `;
+
+  // Quiebres
+  const quiebres = datos.filter(r => r.estado === 'SIN STOCK' && r.disponible === 0);
+  const quiebreCard = document.getElementById('stock-quiebre-card');
+  if (quiebres.length > 0) {
+    quiebreCard.style.display = 'block';
+    document.getElementById('stock-quiebre-list').innerHTML = quiebres.map(r =>
+      `<span style="font-size:11px;background:#fee2e2;color:#b91c1c;padding:3px 8px;border-radius:4px;border:1px solid #fca5a5">${r.producto} ${r.kg}kg (${r.canal})</span>`
+    ).join('');
+  } else {
+    quiebreCard.style.display = 'none';
+  }
+
+  // Tabla — ordenar por valor desc
+  const sorted = [...datos].sort((a,b) => (b.disponible*b.costo) - (a.disponible*a.costo));
+
+  const estadoColor = {
+    'OK': { bg:'#dcfce7', color:'#166534' },
+    'SIN STOCK': { bg:'#fee2e2', color:'#991b1b' },
+    'MÍNIMO': { bg:'#fef9c3', color:'#854d0e' },
+    'STOCK BAJO': { bg:'#fef9c3', color:'#854d0e' },
+  };
+
+  document.getElementById('stock-tabla-body').innerHTML = sorted.map(r => {
+    const st = estadoColor[r.estado] || { bg:'#f1f5f9', color:'#64748b' };
+    const valor = r.disponible * r.costo;
+    return `<tr style="border-bottom:1px solid #f1f5f9">
+      <td style="padding:8px 6px;font-weight:500">${r.producto}</td>
+      <td style="padding:8px 6px;text-align:center;color:#666">${r.kg}</td>
+      <td style="padding:8px 6px;text-align:center"><span style="font-size:11px;background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px">${r.canal}</span></td>
+      <td style="padding:8px 6px;text-align:center;font-weight:600">${r.disponible}</td>
+      <td style="padding:8px 6px;text-align:center"><span style="font-size:11px;background:${st.bg};color:${st.color};padding:2px 8px;border-radius:4px;font-weight:600">${r.estado}</span></td>
+      <td style="padding:8px 6px;text-align:right;color:#374151">${valor > 0 ? '$ ' + valor.toLocaleString('es-AR',{maximumFractionDigits:0}) : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  if (sorted.length === 0) {
+    document.getElementById('stock-tabla-body').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#888">Sin resultados</td></tr>';
+  }
+}
+
 </script>
 </body>
 </html>
