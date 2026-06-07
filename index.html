@@ -430,7 +430,7 @@ Vamos Argentina!</div>
       <div class="card-title" style="margin:0;flex:1">Stock valorizado</div>
       <div style="display:flex;gap:6px">
         <button id="btn-canal-todos" onclick="stockFiltrarCanal('todos')" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #ddd;background:#1a1a2e;color:#fff;cursor:pointer;font-weight:600">Todos</button>
-        <button id="btn-canal-Club" onclick="stockFiltrarCanal('Club')" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #ddd;background:transparent;color:#666;cursor:pointer">Club</button>
+        <button id="btn-canal-Club" onclick="stockFiltrarCanal('Deposito')" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #ddd;background:transparent;color:#666;cursor:pointer">Depósito</button>
         <button id="btn-canal-Vete" onclick="stockFiltrarCanal('Vete')" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #ddd;background:transparent;color:#666;cursor:pointer">Vete</button>
         <button id="btn-canal-Meli" onclick="stockFiltrarCanal('Meli')" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #ddd;background:transparent;color:#666;cursor:pointer">Meli</button>
       </div>
@@ -1198,7 +1198,7 @@ async function cargarStock() {
 function stockFiltrarCanal(canal) {
   stockCanalActivo = canal;
   // Estilos botones
-  ['todos','Club','Vete','Meli'].forEach(c => {
+  ['todos','Deposito','Vete','Meli'].forEach(c => {
     const btn = document.getElementById('btn-canal-' + c);
     if (!btn) return;
     if (c === canal) {
@@ -1215,7 +1215,7 @@ function stockBuscar() { stockRenderizar(); }
 function stockRenderizar() {
   const q = (document.getElementById('stock-buscar')?.value||'').toLowerCase();
   let datos = stockDatos;
-  if (stockCanalActivo !== 'todos') datos = datos.filter(r => r.canal === stockCanalActivo);
+  if (stockCanalActivo !== 'todos') datos = datos.filter(r => r.canal === (stockCanalActivo === "Deposito" ? "Club" : stockCanalActivo));
   if (q) datos = datos.filter(r => r.producto.toLowerCase().includes(q) || r.sku.toLowerCase().includes(q));
 
   // Métricas
