@@ -610,6 +610,8 @@ function renderGraficoDiario(){
   const {meses,byMesDia}=diarioData;
   const COLORES=['#C9A84C','#1565C0','#2e7d32'];
   const MESES_NOM=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const W=900,H=160,PAD_L=50,PAD_R=10,PAD_T=10,PAD_B=30;
+  const DIAS=31;
 
   ['fac','kg'].forEach(function(modo){
     let maxVal=0;
@@ -621,24 +623,56 @@ function renderGraficoDiario(){
     });
     if(!maxVal)return;
 
-    let html='<div style="font-size:10px;color:#888;margin-bottom:8px">'+
+    // Leyenda
+    let html='<div style="font-size:11px;color:#888;margin-bottom:8px">'+
       meses.map(function(m,i){
         const [y,mo]=m.split('-');
-        return'<span style="display:inline-block;width:12px;height:12px;background:'+COLORES[i]+';border-radius:2px;margin-right:4px;vertical-align:middle"></span>'+MESES_NOM[parseInt(mo)]+' '+y;
-      }).join('<span style="margin:0 12px"></span>')+'</div>';
+        return'<span style="display:inline-flex;align-items:center;margin-right:16px"><svg width="24" height="3" style="margin-right:4px"><line x1="0" y1="1.5" x2="24" y2="1.5" stroke="'+COLORES[i]+'" stroke-width="2.5"/></svg>'+MESES_NOM[parseInt(mo)]+' '+y+'</span>';
+      }).join('')+'</div>';
 
-    html+='<div style="display:grid;grid-template-columns:repeat(31,1fr);gap:2px;align-items:end;height:140px">';
-    for(var dia=1;dia<=31;dia++){
-      html+='<div style="display:flex;flex-direction:column;align-items:center;gap:1px">';
-      meses.forEach(function(m,i){
-        const v=(byMesDia[m]&&byMesDia[m][dia])?byMesDia[m][dia][modo]:0;
-        const h=v>0?Math.max(4,Math.round((v/maxVal)*120)):0;
-        const label=modo==='fac'?('$'+Math.round(v/1000)+'K'):(v+'kg');
-        html+='<div title="'+MESES_NOM[parseInt(m.split('-')[1])]+' '+dia+': '+label+'" style="width:100%;height:'+h+'px;background:'+COLORES[i]+';border-radius:2px 2px 0 0;opacity:'+(v>0?0.9:0.07)+';cursor:pointer"></div>';
-      });
-      html+='<div style="font-size:8px;color:#aaa;margin-top:2px;line-height:1">'+dia+'</div></div>';
+    // SVG
+    html+='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;overflow:visible" xmlns="http://www.w3.org/2000/svg">';
+
+    // Grid lines
+    const nLines=4;
+    for(var li=0;li<=nLines;li++){
+      const y=PAD_T+(H-PAD_T-PAD_B)*li/nLines;
+      const val=maxVal*(1-li/nLines);
+      const label=modo==='fac'?('$'+Math.round(val/1000)+'K'):(Math.round(val)+'kg');
+      html+='<line x1="'+PAD_L+'" y1="'+y+'" x2="'+(W-PAD_R)+'" y2="'+y+'" stroke="#e5e7eb" stroke-width="1"/>';
+      html+='<text x="'+(PAD_L-4)+'" y="'+(y+4)+'" text-anchor="end" font-size="9" fill="#aaa">'+label+'</text>';
     }
-    html+='</div>';
+
+    // Etiquetas días eje X
+    for(var dia=1;dia<=DIAS;dia++){
+      const x=PAD_L+(dia-1)*(W-PAD_L-PAD_R)/(DIAS-1);
+      if(dia===1||dia%5===0||dia===31){
+        html+='<text x="'+x+'" y="'+(H-PAD_B+14)+'" text-anchor="middle" font-size="9" fill="#aaa">'+dia+'</text>';
+      }
+    }
+
+    // Líneas por mes
+    meses.forEach(function(m,mi){
+      const puntos=[];
+      for(var dia=1;dia<=DIAS;dia++){
+        const v=(byMesDia[m]&&byMesDia[m][dia])?byMesDia[m][dia][modo]:0;
+        const x=PAD_L+(dia-1)*(W-PAD_L-PAD_R)/(DIAS-1);
+        const y=PAD_T+(H-PAD_T-PAD_B)*(1-v/maxVal);
+        puntos.push({x,y,v,dia});
+      }
+      // Línea
+      const d=puntos.map(function(p,i){return(i===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' ');
+      html+='<path d="'+d+'" fill="none" stroke="'+COLORES[mi]+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+      // Puntos
+      puntos.forEach(function(p){
+        if(p.v>0){
+          const label=modo==='fac'?('$'+Math.round(p.v/1000)+'K'):(p.v+'kg');
+          html+='<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="4" fill="white" stroke="'+COLORES[mi]+'" stroke-width="2"><title>'+MESES_NOM[parseInt(m.split('-')[1])]+' '+p.dia+': '+label+'</title></circle>';
+        }
+      });
+    });
+
+    html+='</svg>';
     document.getElementById('grafico-diario-'+modo).innerHTML=html;
   });
 }
