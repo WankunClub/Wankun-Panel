@@ -502,9 +502,13 @@ function getCol(r,...keys){
 function parseFac(v){
   if(!v)return 0;
   if(typeof v==='number')return v;
-  let s=v.toString().replace(/\$/g,'').replace(/\s/g,'').trim();
-  if(s.includes(',')&&s.includes('.')){s=s.replace(/\./g,'').replace(',','.');}
-  else if(s.includes(',')){s=s.replace(',','.');}
+  let s=v.toString().replace(/"/g,'').replace(/\$/g,'').replace(/\s/g,'').trim();
+  if(s.includes(',')&&s.includes('.')){
+    const lastDot=s.lastIndexOf('.');
+    const lastComma=s.lastIndexOf(',');
+    if(lastDot<lastComma){s=s.replace(/\./g,'').replace(',','.');}
+    else{s=s.replace(/,/g,'');}
+  } else if(s.includes(',')){s=s.replace(',','.');}
   s=s.replace(/[^0-9.]/g,'');
   return parseFloat(s)||0;
 }
