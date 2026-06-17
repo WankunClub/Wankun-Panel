@@ -126,7 +126,6 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="nav-item" onclick="irA('entregas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>Mensajes de entrega</div>
     <div class="nav-section">Marketing</div>
     <div class="nav-item" onclick="irA('marketing')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 5.61 5.61l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Agente Marketing</div>
-    <div class="nav-item" onclick="irA('sorteo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>Sorteo Mundial</div>
     <div class="nav-section">Sistema</div>
     <div class="nav-item" onclick="irA('roadmap')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Roadmap</div>
   </nav>
@@ -394,61 +393,6 @@ Vamos Argentina!</div>
   </div>
 </div>
 
-<!-- SORTEO -->
-<div class="page" id="page-sorteo">
-  <div class="metrics-grid">
-    <div class="metric"><div class="metric-label">Camisetas</div><div class="metric-value">20</div><div class="metric-delta">en sorteo</div></div>
-    <div class="metric"><div class="metric-label">Fecha</div><div class="metric-value">11 Jun</div><div class="metric-delta">a las 22hs</div></div>
-    <div class="metric"><div class="metric-label">Likes</div><div class="metric-value">31</div><div class="metric-delta delta-up">alta participacion</div></div>
-    <div class="metric"><div class="metric-label">Comentarios</div><div class="metric-value">54</div><div class="metric-delta delta-up">en 10 dias</div></div>
-  </div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="results-header">
-      <div class="card-title" style="margin:0">Clientes para contactar</div>
-      <div class="btn-row">
-        <div class="filtro-group"><label>Zona</label><select id="sorteo-zona" onchange="sorteoFiltrar()"><option value="todas">Todas</option><option value="caba">CABA</option><option value="local">Radio 15 km</option><option value="fuera">Fuera</option></select></div>
-        <div class="filtro-group"><label>Telefono</label><select id="sorteo-tel" onchange="sorteoFiltrar()"><option value="todos">Todos</option><option value="contel">Con telefono</option></select></div>
-        <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500;align-self:flex-end" id="sorteo-count">0</span>
-        <button class="btn btn-primary" onclick="sorteoCargar()" style="align-self:flex-end">Cargar clientes</button>
-      </div>
-    </div>
-    <div class="table-wrap" id="sorteo-wrap" style="display:none;margin-top:12px">
-      <div class="table-head" style="grid-template-columns:1fr 130px 120px 80px"><span>Cliente</span><span>Zona</span><span>Telefono</span><span>WA</span></div>
-      <div class="table-body" id="sorteo-table" style="max-height:360px"></div>
-    </div>
-  </div>
-  <div class="card-grid">
-    <div class="card">
-      <div class="card-title">Mensaje para clientes</div>
-      <div class="msg-template">Hola [Nombre]!
-
-Sabemos lo mucho que queres a tu perrito, por eso queremos que sea parte de la fiesta mas grande del anio!
-
-Estamos sorteando 20 camisetas de la Seleccion Argentina, porque ellos tambien se merecen ponerse la 10!
-
-Para participar:
-- Seguinos en @wankunclub
-- Dale like a esta publicacion: https://www.instagram.com/p/DYk2Zi_oYgY/
-- Comentá con el talle y la raza de tu perrito
-
-El sorteo es el 11 de junio a las 22hs.
-
-Vamos Argentina!</div>
-      <button class="btn btn-primary" onclick="copiarSorteoMsg()">Copiar mensaje</button>
-    </div>
-    <div class="card">
-      <div class="card-title">Checklist</div>
-      <ul class="checklist">
-        <li class="check-item"><div class="check-dot dot-ok">v</div><span>Publicacion creada en Instagram <span class="check-tag tag-ok">Hecho</span></span></li>
-        <li class="check-item"><div class="check-dot dot-ok">v</div><span>Mecanica clara: seguir + like + comentar <span class="check-tag tag-ok">Hecho</span></span></li>
-        <li class="check-item"><div class="check-dot dot-bad">!</div><span>Mandar mensaje a clientes locales <span class="check-tag tag-bad">Urgente</span></span></li>
-        <li class="check-item"><div class="check-dot dot-bad">!</div><span>Promocionar publicacion zona norte GBA <span class="check-tag tag-bad">Pendiente</span></span></li>
-        <li class="check-item"><div class="check-dot dot-warn">~</div><span>Story de recordatorio 8 junio <span class="check-tag tag-warn">Programar</span></span></li>
-      </ul>
-    </div>
-  </div>
-</div>
-
 <!-- ROADMAP -->
 <div class="page" id="page-roadmap">
   <div class="card">
@@ -495,7 +439,7 @@ function irA(p){
   const el=document.getElementById('page-'+p);
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
-  const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','entregas':'Mensajes de entrega de hoy','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap'};
+  const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','entregas':'Mensajes de entrega de hoy','marketing':'Agente Marketing','roadmap':'Roadmap'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
 }
