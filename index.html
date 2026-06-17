@@ -449,7 +449,7 @@ function irA(p){
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
   const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','entregas':'Mensajes de entrega de hoy','marketing':'Agente Marketing','roadmap':'Roadmap'};
   document.getElementById('page-title').textContent=t[p]||p;
-  if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
+  if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);if(diarioData.byMesDia){renderGraficoDiario();renderGraficoMesVigente(diarioData.byMesDia);renderGraficoProgreso(diarioData.byMesDia);}}
 }
 
 document.getElementById('fecha-hoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
