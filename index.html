@@ -180,12 +180,19 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="bar-chart" id="bar-ventas"></div>
   </div>
   <div class="card">
-    <div class="card-title">Facturación diaria — últimos 3 meses</div>
-    <div id="grafico-diario-fac" style="overflow-x:auto;padding-top:8px"></div>
+    <div class="card-title">Mes vigente — Facturación y Kg por día</div>
+    <div id="grafico-mes-vigente" style="overflow-x:auto;padding-top:8px"></div>
   </div>
   <div class="card">
-    <div class="card-title">Kg vendidos por día — últimos 3 meses</div>
-    <div id="grafico-diario-kg" style="overflow-x:auto;padding-top:8px"></div>
+    <div class="card-title">Progreso al objetivo mensual</div>
+    <div id="grafico-progreso" style="overflow-x:auto;padding-top:8px"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Comparativo diario — últimos 3 meses</div>
+    <div style="display:flex;gap:16px;margin-bottom:8px">
+      <div id="grafico-diario-fac" style="flex:1;overflow-x:auto;padding-top:8px"></div>
+      <div id="grafico-diario-kg" style="flex:1;overflow-x:auto;padding-top:8px"></div>
+    </div>
   </div>
   <div class="card-grid">
     <div class="card"><div class="card-title">Top zonas</div><div id="zonas-bars"></div></div>
@@ -649,6 +656,8 @@ function buildGraficoDiario(rows){
   const meses=Object.keys(byMesDia).sort().slice(-3);
   diarioData={meses,byMesDia};
   renderGraficoDiario();
+  renderGraficoMesVigente(byMesDia);
+  renderGraficoProgreso(byMesDia);
 }
 
 function renderGraficoDiario(){
@@ -1227,6 +1236,182 @@ function waLinkEntregaDirecta(tel,nombre){
   const primer=(nombre||'').split(' ')[0];
   const msg='Hola '+primer+' el alimento para tu perrito esta en camino, Muchas gracias por tu compra!';
   return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);
+}
+
+
+// ── DATOS DE PRESUPUESTO ──────────────────────────────────────────────────────
+const BUDGET_DATA={
+  '2026-01':{budget:3500000,real:9661745},
+  '2026-02':{budget:11111006,real:11334800},
+  '2026-03':{budget:13035020,real:16575600},
+  '2026-04':{budget:19061940,real:19195600},
+  '2026-05':{budget:22074940,real:20079350},
+  '2026-06':{budget:23091252,real:0}  // real se actualiza desde Sheets
+};
+
+// ── GRAFICO MES VIGENTE (fac + kg por dia) ───────────────────────────────────
+function renderGraficoMesVigente(byMesDia){
+  const hoy=new Date();
+  const mesKey=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0');
+  const diasData=byMesDia[mesKey]||{};
+  const diasMes=new Date(hoy.getFullYear(),hoy.getMonth()+1,0).getDate();
+  const diaHoy=hoy.getDate();
+
+  const W=860,H=200,PAD_L=55,PAD_R=55,PAD_T=15,PAD_B=30;
+  let maxFac=0,maxKg=0;
+  for(var d=1;d<=diaHoy;d++){
+    if(diasData[d]){
+      if(diasData[d].fac>maxFac)maxFac=diasData[d].fac;
+      if(diasData[d].kg>maxKg)maxKg=diasData[d].kg;
+    }
+  }
+  if(!maxFac)return;
+
+  var html='<div style="font-size:11px;color:#888;margin-bottom:6px;display:flex;gap:20px">';
+  html+='<span style="display:inline-flex;align-items:center;gap:6px"><svg width="24" height="3"><line x1="0" y1="1.5" x2="24" y2="1.5" stroke="#1565C0" stroke-width="2.5"/></svg>Facturación</span>';
+  html+='<span style="display:inline-flex;align-items:center;gap:6px"><svg width="12" height="12"><rect width="12" height="12" fill="#74c69d" opacity="0.7" rx="2"/></svg>Kg</span></div>';
+
+  html+='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;overflow:visible" xmlns="http://www.w3.org/2000/svg">';
+
+  // Grid fac (izq)
+  for(var li=0;li<=4;li++){
+    const y=PAD_T+(H-PAD_T-PAD_B)*li/4;
+    const val=maxFac*(1-li/4);
+    html+='<line x1="'+PAD_L+'" y1="'+y+'" x2="'+(W-PAD_R)+'" y2="'+y+'" stroke="#e5e7eb" stroke-width="1"/>';
+    html+='<text x="'+(PAD_L-4)+'" y="'+(y+4)+'" text-anchor="end" font-size="9" fill="#aaa">$'+Math.round(val/1000)+'K</text>';
+  }
+  // Grid kg (der)
+  for(var li=0;li<=4;li++){
+    const y=PAD_T+(H-PAD_T-PAD_B)*li/4;
+    const val=maxKg*(1-li/4);
+    html+='<text x="'+(W-PAD_R+4)+'" y="'+(y+4)+'" text-anchor="start" font-size="9" fill="#2d6a4f">'+Math.round(val)+'kg</text>';
+  }
+
+  // Barras Kg
+  const barW=Math.max(2, Math.floor((W-PAD_L-PAD_R)/diaHoy*0.6));
+  for(var d=1;d<=diaHoy;d++){
+    const kg=(diasData[d]?diasData[d].kg:0);
+    if(!kg)continue;
+    const x=PAD_L+(d-1)*(W-PAD_L-PAD_R)/(diasMes-1);
+    const bh=(kg/maxKg)*(H-PAD_T-PAD_B);
+    const by=H-PAD_B-bh;
+    html+='<rect x="'+(x-barW/2)+'" y="'+by+'" width="'+barW+'" height="'+bh+'" fill="#74c69d" opacity="0.5" rx="2"><title>'+d+': '+kg+'kg</title></rect>';
+  }
+
+  // Línea facturación
+  var pts=[];
+  for(var d=1;d<=diaHoy;d++){
+    const fac=(diasData[d]?diasData[d].fac:0);
+    if(!fac)continue;
+    const x=PAD_L+(d-1)*(W-PAD_L-PAD_R)/(diasMes-1);
+    const y=PAD_T+(H-PAD_T-PAD_B)*(1-fac/maxFac);
+    pts.push({x,y,fac,d});
+  }
+  if(pts.length>1){
+    const pathD=pts.map(function(p,i){return(i===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' ');
+    html+='<path d="'+pathD+'" fill="none" stroke="#1565C0" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+    pts.forEach(function(p){
+      html+='<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="3.5" fill="white" stroke="#1565C0" stroke-width="2"><title>'+p.d+': $'+Math.round(p.fac/1000)+'K</title></circle>';
+    });
+  }
+
+  // Eje X días
+  for(var d=1;d<=diaHoy;d++){
+    const x=PAD_L+(d-1)*(W-PAD_L-PAD_R)/(diasMes-1);
+    if(d===1||d%5===0||d===diaHoy){
+      html+='<text x="'+x+'" y="'+(H-PAD_B+14)+'" text-anchor="middle" font-size="9" fill="#aaa">'+d+'</text>';
+    }
+  }
+
+  html+='</svg>';
+  document.getElementById('grafico-mes-vigente').innerHTML=html;
+}
+
+// ── GRAFICO PROGRESO AL OBJETIVO ─────────────────────────────────────────────
+function renderGraficoProgreso(porMesDia){
+  const hoy=new Date();
+  const mesActual=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0');
+
+  // Tomar los ultimos 3 meses con data
+  const mesesDisp=Object.keys(porMesDia).sort().slice(-3);
+  const COLORES=['#C9A84C','#1565C0','#2e7d32'];
+  const MESES_NOM=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  const W=860,H=200,PAD_L=60,PAD_R=10,PAD_T=15,PAD_B=30;
+
+  // Max objetivo para escala
+  let maxVal=0;
+  mesesDisp.forEach(function(m){
+    const bd=BUDGET_DATA[m];
+    if(bd&&bd.budget>maxVal)maxVal=bd.budget;
+    // acumulado real
+    let acum=0;
+    for(var d=1;d<=31;d++){acum+=(porMesDia[m]&&porMesDia[m][d]?porMesDia[m][d].fac:0);}
+    if(acum>maxVal)maxVal=acum;
+  });
+  if(!maxVal)return;
+  maxVal=maxVal*1.1;
+
+  var html='<div style="font-size:11px;color:#888;margin-bottom:6px;display:flex;gap:20px;flex-wrap:wrap">';
+  mesesDisp.forEach(function(m,i){
+    const[y,mo]=m.split('-');
+    html+='<span style="display:inline-flex;align-items:center;gap:6px"><svg width="24" height="3"><line x1="0" y1="1.5" x2="24" y2="1.5" stroke="'+COLORES[i]+'" stroke-width="2.5"/></svg>'+MESES_NOM[parseInt(mo)]+' '+y+'</span>';
+  });
+  html+='<span style="display:inline-flex;align-items:center;gap:6px"><svg width="24" height="3"><line x1="0" y1="1.5" x2="24" y2="1.5" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3"/></svg>Objetivo</span>';
+  html+='</div>';
+
+  html+='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;overflow:visible" xmlns="http://www.w3.org/2000/svg">';
+
+  // Grid
+  for(var li=0;li<=4;li++){
+    const y=PAD_T+(H-PAD_T-PAD_B)*li/4;
+    const val=maxVal*(1-li/4);
+    html+='<line x1="'+PAD_L+'" y1="'+y+'" x2="'+(W-PAD_R)+'" y2="'+y+'" stroke="#e5e7eb" stroke-width="1"/>';
+    html+='<text x="'+(PAD_L-4)+'" y="'+(y+4)+'" text-anchor="end" font-size="9" fill="#aaa">$'+Math.round(val/1e6).toFixed(0)+'M</text>';
+  }
+
+  // Eje X
+  for(var d=1;d<=31;d++){
+    const x=PAD_L+(d-1)*(W-PAD_L-PAD_R)/30;
+    if(d===1||d%5===0||d===31){
+      html+='<text x="'+x+'" y="'+(H-PAD_B+14)+'" text-anchor="middle" font-size="9" fill="#aaa">'+d+'</text>';
+    }
+  }
+
+  // Línea acumulada por mes
+  mesesDisp.forEach(function(m,mi){
+    const diasMes=new Date(parseInt(m.split('-')[0]),parseInt(m.split('-')[1]),0).getDate();
+    const esActual=(m===mesActual);
+    const diaMax=esActual?hoy.getDate():diasMes;
+    var acum=0,pts=[];
+    for(var d=1;d<=diaMax;d++){
+      acum+=(porMesDia[m]&&porMesDia[m][d]?porMesDia[m][d].fac:0);
+      const x=PAD_L+(d-1)*(W-PAD_L-PAD_R)/30;
+      const y=PAD_T+(H-PAD_T-PAD_B)*(1-acum/maxVal);
+      pts.push({x,y,acum,d});
+    }
+    if(pts.length>1){
+      const pathD=pts.map(function(p,i){return(i===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' ');
+      html+='<path d="'+pathD+'" fill="none" stroke="'+COLORES[mi]+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"'+(esActual?'':' opacity="0.7"')+'/>';
+      // Solo último punto con circle
+      const last=pts[pts.length-1];
+      html+='<circle cx="'+last.x.toFixed(1)+'" cy="'+last.y.toFixed(1)+'" r="4" fill="'+COLORES[mi]+'" stroke="white" stroke-width="2"><title>'+MESES_NOM[parseInt(m.split('-')[1])]+' dia '+last.d+': $'+(last.acum/1e6).toFixed(2)+'M</title></circle>';
+
+      // Label final
+      html+='<text x="'+(last.x+6)+'" y="'+(last.y+4)+'" font-size="9" fill="'+COLORES[mi]+'" font-weight="600">$'+(last.acum/1e6).toFixed(1)+'M</text>';
+    }
+
+    // Línea punteada del objetivo
+    const bd=BUDGET_DATA[m];
+    if(bd&&bd.budget){
+      const yObj=PAD_T+(H-PAD_T-PAD_B)*(1-bd.budget/maxVal);
+      html+='<line x1="'+PAD_L+'" y1="'+yObj+'" x2="'+(W-PAD_R)+'" y2="'+yObj+'" stroke="'+COLORES[mi]+'" stroke-width="1" stroke-dasharray="5,4" opacity="0.5"/>';
+      html+='<text x="'+(PAD_L-4)+'" y="'+(yObj+4)+'" text-anchor="end" font-size="8" fill="'+COLORES[mi]+'" opacity="0.7">$'+(bd.budget/1e6).toFixed(1)+'M</text>';
+    }
+  });
+
+  html+='</svg>';
+  document.getElementById('grafico-progreso').innerHTML=html;
 }
 
 </script>
