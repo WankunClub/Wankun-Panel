@@ -1092,7 +1092,7 @@ function avMostrarReactivar(){
     var f=new Date(c.ultima);f.setHours(0,0,0,0);
     var dias=Math.round((hoy-f)/(1000*60*60*24));
     return dias>=0&&dias<=60&&c.nCompras===1;
-  }).sort(function(a,b){return(a.dias||0)-(b.dias||0);});
+  }).sort(function(a,b){return(b.dias||0)-(a.dias||0);});
   const tb=document.getElementById('av-reactivar');
   if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin clientes para recuperar</div>';return;}
   tb.innerHTML=lista.map(function(c){
