@@ -1254,7 +1254,7 @@ async function entrCargar(){
       const articulo=[marca,prod].filter(Boolean).join(' - ');
       const zonaTag='<span class="'+(esLocal(loc)?'local-tag':'fuera-tag')+'">'+(esLocal(loc)?'local':'fuera')+'</span>';
       // Buscar telefono en clData si existe
-      const tel=(clData.find(function(x){return (x.nombre||'').toLowerCase()===nombre.toLowerCase()&&x.telefono;})||{}).telefono||'';
+      const tel=(r['TELEFONO']||r['telefono']||'').toString().trim();
       const waBtn=tel?'<a class="wa-link" href="'+waLinkEntregaDirecta(tel,nombre)+'" target="_blank">WA 🛵</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';
       return '<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">'+nombre+'</span><span style="font-size:11px">'+loc+' '+zonaTag+'</span><span style="font-size:12px;color:var(--gris-dark)">'+articulo+'</span>'+waBtn+'</div>';
     }).join('');}
