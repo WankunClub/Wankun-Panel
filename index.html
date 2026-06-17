@@ -295,7 +295,7 @@ Vamos Argentina!</div>
       </div>
     </div>
     <div class="card" style="border-left:4px solid #9333ea">
-      <div class="card-title" style="color:#9333ea">Reactivar <span style="font-size:12px;font-weight:400;margin-left:8px">90 a 150 días sin comprar</span></div>
+      <div class="card-title" style="color:#9333ea">Clientes a recuperar <span style="font-size:12px;font-weight:400;margin-left:8px">1 sola compra en los últimos 60 días</span></div>
       <div class="table-wrap">
         <div class="table-head" style="grid-template-columns:1fr 130px 60px 80px"><span>Cliente</span><span>Zona</span><span>Días</span><span>WA</span></div>
         <div class="table-body" id="av-reactivar" style="max-height:300px"></div>
@@ -1085,10 +1085,25 @@ function avWaLinkAyer(tel,nombre){const num=tel.toString().replace(/\D/g,'');con
 
 function avMostrarReactivar(){
   const hoy=new Date();hoy.setHours(0,0,0,0);
-  const lista=avTodos.filter(function(c){if(c.fuente!=='Directa')return false;if(!c.ultima)return false;var f=new Date(c.ultima);f.setHours(0,0,0,0);var dias=Math.round((hoy-f)/(1000*60*60*24));return dias>=90&&dias<=150;}).sort(function(a,b){return(b.dias||0)-(a.dias||0);});
+  // Clientes con exactamente 1 compra en los ultimos 60 dias
+  const lista=avTodos.filter(function(c){
+    if(c.fuente!=='Directa')return false;
+    if(!c.ultima)return false;
+    var f=new Date(c.ultima);f.setHours(0,0,0,0);
+    var dias=Math.round((hoy-f)/(1000*60*60*24));
+    return dias>=0&&dias<=60&&c.nCompras===1;
+  }).sort(function(a,b){return(a.dias||0)-(b.dias||0);});
   const tb=document.getElementById('av-reactivar');
-  if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin clientes en este rango</div>';return;}
-  tb.innerHTML=lista.map(function(c){const tel=c.telefono||'';const hoyD=new Date();hoyD.setHours(0,0,0,0);const ult=new Date(c.ultima);ult.setHours(0,0,0,0);const dias=Math.round((hoyD-ult)/(1000*60*60*24));const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,c.nombre,c.ultimoProd)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';return '<div class="table-row" style="grid-template-columns:1fr 130px 60px 80px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span><span style="font-size:12px;color:#9333ea;font-weight:600">'+dias+'d</span>'+waBtn+'</div>';}).join('');
+  if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin clientes para recuperar</div>';return;}
+  tb.innerHTML=lista.map(function(c){
+    const tel=c.telefono||'';
+    const hoyD=new Date();hoyD.setHours(0,0,0,0);
+    const ult=new Date(c.ultima);ult.setHours(0,0,0,0);
+    const dias=Math.round((hoyD-ult)/(1000*60*60*24));
+    const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,c.nombre,c.ultimoProd)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';
+    const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';
+    return '<div class="table-row" style="grid-template-columns:1fr 130px 60px 80px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span><span style="font-size:12px;color:#9333ea;font-weight:600">'+dias+'d</span>'+waBtn+'</div>';
+  }).join('');
 }
 
 function avMostrarStockProx(){
