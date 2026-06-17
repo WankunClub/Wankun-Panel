@@ -123,6 +123,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="nav-section">Clientes</div>
     <div class="nav-item" onclick="irA('clientes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</div>
     <div class="nav-item" onclick="irA('recompras')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Recompras</div>
+    <div class="nav-item" onclick="irA('entregas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>Mensajes de entrega</div>
     <div class="nav-section">Marketing</div>
     <div class="nav-item" onclick="irA('marketing')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 5.61 5.61l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Agente Marketing</div>
     <div class="nav-item" onclick="irA('sorteo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>Sorteo Mundial</div>
@@ -314,13 +315,7 @@ Vamos Argentina!</div>
         <div class="table-body" id="av-ventas-hoy" style="max-height:300px"></div>
       </div>
     </div>
-    <div class="card" style="border-left:4px solid #ea580c">
-      <div class="card-title" style="color:#ea580c">Entregas de hoy 🚚</div>
-      <div class="table-wrap">
-        <div class="table-head" style="grid-template-columns:1fr 130px 120px 80px"><span>Cliente</span><span>Zona</span><span>Producto</span><span>WA</span></div>
-        <div class="table-body" id="av-entregas-hoy" style="max-height:300px"></div>
-      </div>
-    </div>
+
     <div class="card" style="border-left:4px solid #2563eb">
       <div class="card-title" style="color:#2563eb">Compraron ayer</div>
       <div class="table-wrap">
@@ -346,6 +341,33 @@ Vamos Argentina!</div>
     <div class="card">
       <div class="card-title">Proyeccion del mes</div>
       <div class="metrics-grid" id="av-proyeccion"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ENTREGAS -->
+<div class="page" id="page-entregas">
+  <div class="conn-card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span style="font-size:14px;font-weight:600">Google Sheets</span>
+      <span class="conn-status conn-err" id="entr-status">Sin conectar</span>
+    </div>
+    <button class="btn btn-primary" onclick="entrCargar()">Cargar entregas de hoy</button>
+  </div>
+  <div id="entr-panel" style="display:none">
+    <div class="card" style="border-left:4px solid #ea580c">
+      <div class="card-title" style="color:#ea580c">Flex Meli — Entregas de hoy 🚚</div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:1fr 130px 120px 80px"><span>Cliente</span><span>Zona</span><span>Producto</span><span>WA</span></div>
+        <div class="table-body" id="entr-flex" style="max-height:300px"></div>
+      </div>
+    </div>
+    <div class="card" style="border-left:4px solid #16a34a">
+      <div class="card-title" style="color:#16a34a">Ventas directas — Entregas de hoy 🛵</div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:1fr 130px 120px 80px"><span>Cliente</span><span>Zona</span><span>Producto</span><span>WA</span></div>
+        <div class="table-body" id="entr-directas" style="max-height:300px"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -473,7 +495,7 @@ function irA(p){
   const el=document.getElementById('page-'+p);
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
-  const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap'};
+  const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','entregas':'Mensajes de entrega de hoy','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
 }
@@ -1179,6 +1201,75 @@ function mktTyping(show){
 function mktQuick(t){document.getElementById('mkt-input').value=t;mktSend();}
 function mktKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();mktSend();}}
 function mktResize(el){el.style.height='40px';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+
+// ── ENTREGAS DE HOY ───────────────────────────────────────────────────────────
+async function entrCargar(){
+  const st=document.getElementById('entr-status');
+  st.className='conn-status conn-loading';st.textContent='Cargando...';
+  try{
+    const[vRows,fRows]=await Promise.all([fetchCSV('Ventas'),fetchCSV('Flex meli')]);
+    const hoy=new Date();hoy.setHours(0,0,0,0);
+
+    // Flex Meli — fecha de compra = hoy
+    const flex=fRows.filter(function(r){
+      const f=parseFecha(r['Fecha compra']||'');
+      if(!f)return false;
+      f.setHours(0,0,0,0);
+      return f.getTime()===hoy.getTime();
+    });
+
+    // Ventas directas — fecha = hoy
+    const directas=vRows.filter(function(r){
+      const f=parseFecha(r['FECHA']||r['Fecha']||'');
+      if(!f)return false;
+      f.setHours(0,0,0,0);
+      return f.getTime()===hoy.getTime();
+    });
+
+    st.className='conn-status conn-ok';
+    st.textContent=flex.length+' Flex + '+directas.length+' Directas';
+    document.getElementById('entr-panel').style.display='block';
+
+    // Render Flex Meli
+    const tbFlex=document.getElementById('entr-flex');
+    if(!flex.length){tbFlex.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin entregas Flex Meli hoy</div>';}
+    else{tbFlex.innerHTML=flex.map(function(r){
+      const nombre=(r['NOMBRE']||'').trim();
+      const tel=(r['TELEFONO']||'').toString();
+      const loc=r['LOCALIDAD']||'';
+      const prod=r['REFERNCIA']||'';
+      const zonaTag='<span class="'+(esLocal(loc)?'local-tag':'fuera-tag')+'">'+(esLocal(loc)?'local':'fuera')+'</span>';
+      const waBtn=tel?'<a class="wa-link" href="'+waLinkCamino(tel,nombre)+'" target="_blank">WA 🚚</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';
+      return '<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">'+nombre+'</span><span style="font-size:11px">'+loc+' '+zonaTag+'</span><span style="font-size:12px;color:var(--gris-dark)">'+prod+'</span>'+waBtn+'</div>';
+    }).join('');}
+
+    // Render Ventas directas
+    const tbDir=document.getElementById('entr-directas');
+    if(!directas.length){tbDir.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin entregas directas hoy</div>';}
+    else{tbDir.innerHTML=directas.map(function(r){
+      const nombre=(r['CLIENTE']||r['Cliente']||'').trim();
+      const loc=r['Barrio/Localidad']||r['Localidad']||'';
+      const marca=r['Marca']||'';
+      const prod=r['producto']||'';
+      const articulo=[marca,prod].filter(Boolean).join(' - ');
+      const zonaTag='<span class="'+(esLocal(loc)?'local-tag':'fuera-tag')+'">'+(esLocal(loc)?'local':'fuera')+'</span>';
+      // Buscar telefono en clData si existe
+      const tel=(clData.find(function(x){return (x.nombre||'').toLowerCase()===nombre.toLowerCase()&&x.telefono;})||{}).telefono||'';
+      const waBtn=tel?'<a class="wa-link" href="'+waLinkEntregaDirecta(tel,nombre)+'" target="_blank">WA 🛵</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';
+      return '<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">'+nombre+'</span><span style="font-size:11px">'+loc+' '+zonaTag+'</span><span style="font-size:12px;color:var(--gris-dark)">'+articulo+'</span>'+waBtn+'</div>';
+    }).join('');}
+
+  }catch(e){st.className='conn-status conn-err';st.textContent='Error: '+e.message;console.error(e);}
+}
+
+function waLinkEntregaDirecta(tel,nombre){
+  const num=tel.toString().replace(/\D/g,'');
+  const full=num.startsWith('54')?num:'54'+num;
+  const primer=(nombre||'').split(' ')[0];
+  const msg='Hola '+primer+' el alimento para tu perrito esta en camino, Muchas gracias por tu compra!';
+  return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);
+}
+
 </script>
 </body>
 </html>
