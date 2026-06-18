@@ -123,9 +123,9 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="nav-section">Clientes</div>
     <div class="nav-item" onclick="irA('clientes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</div>
     <div class="nav-item" onclick="irA('recompras')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Recompras</div>
-    <div class="nav-item" onclick="irA('entregas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>Mensajes de entrega</div>
     <div class="nav-section">Marketing</div>
     <div class="nav-item" onclick="irA('marketing')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 5.61 5.61l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Agente Marketing</div>
+    <div class="nav-item" onclick="irA('sorteo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>Sorteo Mundial</div>
     <div class="nav-section">Sistema</div>
     <div class="nav-item" onclick="irA('roadmap')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Roadmap</div>
   </nav>
@@ -180,19 +180,11 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="bar-chart" id="bar-ventas"></div>
   </div>
   <div class="card">
-    <div class="card-title">Mes vigente — Facturación y Kg por día</div>
-    <div id="grafico-mes-vigente" style="overflow-x:auto;padding-top:8px"></div>
-  </div>
-  <div class="card">
-    <div class="card-title">Progreso al objetivo mensual</div>
-    <div id="grafico-progreso" style="padding-top:8px"></div>
-  </div>
-  <div class="card">
-    <div class="card-title">Comparativo diario — Facturación — últimos 3 meses</div>
+    <div class="card-title">Facturación diaria — últimos 3 meses</div>
     <div id="grafico-diario-fac" style="overflow-x:auto;padding-top:8px"></div>
   </div>
   <div class="card">
-    <div class="card-title">Comparativo diario — Kg — últimos 3 meses</div>
+    <div class="card-title">Kg vendidos por día — últimos 3 meses</div>
     <div id="grafico-diario-kg" style="overflow-x:auto;padding-top:8px"></div>
   </div>
   <div class="card-grid">
@@ -302,7 +294,7 @@ Vamos Argentina!</div>
       </div>
     </div>
     <div class="card" style="border-left:4px solid #9333ea">
-      <div class="card-title" style="color:#9333ea">Clientes a recuperar <span style="font-size:12px;font-weight:400;margin-left:8px">1 sola compra en los últimos 60 días</span></div>
+      <div class="card-title" style="color:#9333ea">Reactivar <span style="font-size:12px;font-weight:400;margin-left:8px">90 a 150 días sin comprar</span></div>
       <div class="table-wrap">
         <div class="table-head" style="grid-template-columns:1fr 130px 60px 80px"><span>Cliente</span><span>Zona</span><span>Días</span><span>WA</span></div>
         <div class="table-body" id="av-reactivar" style="max-height:300px"></div>
@@ -322,7 +314,13 @@ Vamos Argentina!</div>
         <div class="table-body" id="av-ventas-hoy" style="max-height:300px"></div>
       </div>
     </div>
-
+    <div class="card" style="border-left:4px solid #ea580c">
+      <div class="card-title" style="color:#ea580c">Entregas de hoy 🚚</div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:1fr 130px 120px 80px"><span>Cliente</span><span>Zona</span><span>Producto</span><span>WA</span></div>
+        <div class="table-body" id="av-entregas-hoy" style="max-height:300px"></div>
+      </div>
+    </div>
     <div class="card" style="border-left:4px solid #2563eb">
       <div class="card-title" style="color:#2563eb">Compraron ayer</div>
       <div class="table-wrap">
@@ -352,33 +350,6 @@ Vamos Argentina!</div>
   </div>
 </div>
 
-<!-- ENTREGAS -->
-<div class="page" id="page-entregas">
-  <div class="conn-card">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-      <span style="font-size:14px;font-weight:600">Google Sheets</span>
-      <span class="conn-status conn-err" id="entr-status">Sin conectar</span>
-    </div>
-    <button class="btn btn-primary" onclick="entrCargar()">Cargar entregas de hoy</button>
-  </div>
-  <div id="entr-panel" style="display:none">
-    <div class="card" style="border-left:4px solid #ea580c">
-      <div class="card-title" style="color:#ea580c">Flex Meli — Entregas de hoy 🚚</div>
-      <div class="table-wrap">
-        <div class="table-head" style="grid-template-columns:1fr 130px 120px 80px"><span>Cliente</span><span>Zona</span><span>Producto</span><span>WA</span></div>
-        <div class="table-body" id="entr-flex" style="max-height:300px"></div>
-      </div>
-    </div>
-    <div class="card" style="border-left:4px solid #16a34a">
-      <div class="card-title" style="color:#16a34a">Ventas directas — Entregas de hoy 🛵</div>
-      <div class="table-wrap">
-        <div class="table-head" style="grid-template-columns:1fr 130px 120px 80px"><span>Cliente</span><span>Zona</span><span>Producto</span><span>WA</span></div>
-        <div class="table-body" id="entr-directas" style="max-height:300px"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- MARKETING -->
 <div class="page" id="page-marketing">
   <div class="card">
@@ -397,6 +368,61 @@ Vamos Argentina!</div>
       <button class="quick-btn" onclick="mktQuick('Que publico en Instagram esta semana para captar clientes nuevos de la zona?')">Que publicar en IG</button>
       <button class="quick-btn" onclick="mktQuick('Dame una estrategia de WhatsApp para reactivar clientes que no compran hace mas de 30 dias')">Reactivar clientes</button>
       <button class="quick-btn" onclick="mktQuick('Como cierro junio arriba del objetivo?')">Cerrar junio al objetivo</button>
+    </div>
+  </div>
+</div>
+
+<!-- SORTEO -->
+<div class="page" id="page-sorteo">
+  <div class="metrics-grid">
+    <div class="metric"><div class="metric-label">Camisetas</div><div class="metric-value">20</div><div class="metric-delta">en sorteo</div></div>
+    <div class="metric"><div class="metric-label">Fecha</div><div class="metric-value">11 Jun</div><div class="metric-delta">a las 22hs</div></div>
+    <div class="metric"><div class="metric-label">Likes</div><div class="metric-value">31</div><div class="metric-delta delta-up">alta participacion</div></div>
+    <div class="metric"><div class="metric-label">Comentarios</div><div class="metric-value">54</div><div class="metric-delta delta-up">en 10 dias</div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="results-header">
+      <div class="card-title" style="margin:0">Clientes para contactar</div>
+      <div class="btn-row">
+        <div class="filtro-group"><label>Zona</label><select id="sorteo-zona" onchange="sorteoFiltrar()"><option value="todas">Todas</option><option value="caba">CABA</option><option value="local">Radio 15 km</option><option value="fuera">Fuera</option></select></div>
+        <div class="filtro-group"><label>Telefono</label><select id="sorteo-tel" onchange="sorteoFiltrar()"><option value="todos">Todos</option><option value="contel">Con telefono</option></select></div>
+        <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500;align-self:flex-end" id="sorteo-count">0</span>
+        <button class="btn btn-primary" onclick="sorteoCargar()" style="align-self:flex-end">Cargar clientes</button>
+      </div>
+    </div>
+    <div class="table-wrap" id="sorteo-wrap" style="display:none;margin-top:12px">
+      <div class="table-head" style="grid-template-columns:1fr 130px 120px 80px"><span>Cliente</span><span>Zona</span><span>Telefono</span><span>WA</span></div>
+      <div class="table-body" id="sorteo-table" style="max-height:360px"></div>
+    </div>
+  </div>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">Mensaje para clientes</div>
+      <div class="msg-template">Hola [Nombre]!
+
+Sabemos lo mucho que queres a tu perrito, por eso queremos que sea parte de la fiesta mas grande del anio!
+
+Estamos sorteando 20 camisetas de la Seleccion Argentina, porque ellos tambien se merecen ponerse la 10!
+
+Para participar:
+- Seguinos en @wankunclub
+- Dale like a esta publicacion: https://www.instagram.com/p/DYk2Zi_oYgY/
+- Comentá con el talle y la raza de tu perrito
+
+El sorteo es el 11 de junio a las 22hs.
+
+Vamos Argentina!</div>
+      <button class="btn btn-primary" onclick="copiarSorteoMsg()">Copiar mensaje</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Checklist</div>
+      <ul class="checklist">
+        <li class="check-item"><div class="check-dot dot-ok">v</div><span>Publicacion creada en Instagram <span class="check-tag tag-ok">Hecho</span></span></li>
+        <li class="check-item"><div class="check-dot dot-ok">v</div><span>Mecanica clara: seguir + like + comentar <span class="check-tag tag-ok">Hecho</span></span></li>
+        <li class="check-item"><div class="check-dot dot-bad">!</div><span>Mandar mensaje a clientes locales <span class="check-tag tag-bad">Urgente</span></span></li>
+        <li class="check-item"><div class="check-dot dot-bad">!</div><span>Promocionar publicacion zona norte GBA <span class="check-tag tag-bad">Pendiente</span></span></li>
+        <li class="check-item"><div class="check-dot dot-warn">~</div><span>Story de recordatorio 8 junio <span class="check-tag tag-warn">Programar</span></span></li>
+      </ul>
     </div>
   </div>
 </div>
@@ -447,9 +473,9 @@ function irA(p){
   const el=document.getElementById('page-'+p);
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
-  const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','entregas':'Mensajes de entrega de hoy','marketing':'Agente Marketing','roadmap':'Roadmap'};
+  const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap'};
   document.getElementById('page-title').textContent=t[p]||p;
-  if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);if(diarioData.byMesDia){renderGraficoDiario();renderGraficoMesVigente(diarioData.byMesDia);renderGraficoProgreso(diarioData.byMesDia);}}
+  if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
 }
 
 document.getElementById('fecha-hoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
@@ -476,13 +502,9 @@ function getCol(r,...keys){
 function parseFac(v){
   if(!v)return 0;
   if(typeof v==='number')return v;
-  let s=v.toString().replace(/"/g,'').replace(/\$/g,'').replace(/\s/g,'').trim();
-  if(s.includes(',')&&s.includes('.')){
-    const lastDot=s.lastIndexOf('.');
-    const lastComma=s.lastIndexOf(',');
-    if(lastDot<lastComma){s=s.replace(/\./g,'').replace(',','.');}
-    else{s=s.replace(/,/g,'');}
-  } else if(s.includes(',')){s=s.replace(',','.');}
+  let s=v.toString().replace(/\$/g,'').replace(/\s/g,'').trim();
+  if(s.includes(',')&&s.includes('.')){s=s.replace(/\./g,'').replace(',','.');}
+  else if(s.includes(',')){s=s.replace(',','.');}
   s=s.replace(/[^0-9.]/g,'');
   return parseFloat(s)||0;
 }
@@ -657,8 +679,6 @@ function buildGraficoDiario(rows){
   const meses=Object.keys(byMesDia).sort().slice(-3);
   diarioData={meses,byMesDia};
   renderGraficoDiario();
-  renderGraficoMesVigente(byMesDia);
-  renderGraficoProgreso(byMesDia);
 }
 
 function renderGraficoDiario(){
@@ -973,12 +993,13 @@ async function avConectar(){
       const tel=(r['TELEFONO']||'').toString();
       const recompraFecha=parseFecha(r['Recompra']||r['recompra']||'');
       const ultimaFecha=parseFecha(r['Fecha compra']||'');
-      if(!nom||!recompraFecha)return null;
-      const diasHastaRecompra=Math.floor((recompraFecha-hoy)/(1000*60*60*24));
+      if(!nom)return null;
+      // Permitir registros sin recompraFecha para que aparezcan en "Compraron ayer"
+      const diasHastaRecompra=recompraFecha?Math.floor((recompraFecha-hoy)/(1000*60*60*24)):null;
       let estado='ok';
-      if(diasHastaRecompra<-2)estado='vencido';
-      else if(diasHastaRecompra<=2)estado='proximo';
-      return{nombre:nom,localidad:r['LOCALIDAD']||'',direccion:r['DIRECCION']||'',telefono:tel,nCompras:1,ultima:ultimaFecha||recompraFecha,dias:ultimaFecha?Math.floor((hoy-ultimaFecha)/(1000*60*60*24)):null,freq:null,prox:diasHastaRecompra,recompraFecha,estado,ultimoProd:r['REFERNCIA']||'',fuente:'Flex Meli'};
+      if(diasHastaRecompra!==null&&diasHastaRecompra<-2)estado='vencido';
+      else if(diasHastaRecompra!==null&&diasHastaRecompra<=2)estado='proximo';
+      return{nombre:nom,localidad:r['LOCALIDAD']||'',direccion:r['DIRECCION']||'',telefono:tel,nCompras:1,ultima:ultimaFecha||(recompraFecha||null),dias:ultimaFecha?Math.floor((hoy-ultimaFecha)/(1000*60*60*24)):null,freq:null,prox:diasHastaRecompra,recompraFecha:recompraFecha||null,estado,ultimoProd:r['REFERNCIA']||'',fuente:'Flex Meli'};
     }).filter(Boolean);
     const hist={};
     vRows.forEach(r=>{
@@ -1020,6 +1041,7 @@ function avMetricas(){
 function avMostrarHoy(){
   const hoy=new Date();hoy.setHours(0,0,0,0);
   const urgentes=avTodos.filter(c=>{if(c.fuente!=='Flex Meli')return false;if(!c.recompraFecha)return false;const f=new Date(c.recompraFecha);f.setHours(0,0,0,0);return f.getTime()===hoy.getTime();});
+  // (solo muestra los que tienen fecha de recompra = hoy)
   const tb=document.getElementById('av-hoy');
   if(!urgentes.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin contactos para hoy</div>';return;}
   tb.innerHTML=urgentes.map(c=>{const tel=c.telefono||'';return`<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">${c.nombre}</span><span style="font-size:11px">${c.localidad||'--'} <span class="${esLocal(c.localidad)?'local-tag':'fuera-tag'}">${esLocal(c.localidad)?'local':'fuera'}</span></span><span style="font-size:12px;color:var(--gris-dark)">${c.ultimoProd||'--'}</span>${tel?`<a class="wa-link" href="${avWaLink(tel,c.nombre,c.ultimoProd)}" target="_blank">WA 🐾</a>`:'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>'}</div>`;}).join('');
@@ -1035,29 +1057,14 @@ function avMostrarEntregasHoy(){
   tb.innerHTML=lista.map(function(c){const tel=c.telefono||'';const waBtn=tel?'<a class="wa-link" href="'+waLinkCamino(tel,c.nombre)+'" target="_blank">WA 🚚</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';return '<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span><span style="font-size:12px;color:var(--gris-dark)">'+(c.ultimoProd||'--')+'</span>'+waBtn+'</div>';}).join('');
 }
 
-function avWaLinkAyer(tel,nombre){const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];const msg='Hola '+primer+' buen dia! Cuando llegue el momento de reponer el alimento para tu mascota, escribime en forma directa y lo coordinamos. Entregamos en el dia, el precio es mejor que en Mercado Libre y el alimento siempre va acompanado con snacks de Filan. Que tengas un gran dia! Saludos, Nacho.';return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
+function avWaLinkAyer(tel,nombre){const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];const msg='Hola '+primer+'! Te saluda Nacho desde Wankun Club. Como esta tu perrito? Estimamos que el alimento debe estar por terminarse — si queres coordinamos la reposicion para que no le falte. Entregamos en el dia y como siempre van los snacks Filan.';return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
 
 function avMostrarReactivar(){
   const hoy=new Date();hoy.setHours(0,0,0,0);
-  // Clientes con exactamente 1 compra en los ultimos 60 dias
-  const lista=avTodos.filter(function(c){
-    if(c.fuente!=='Directa')return false;
-    if(!c.ultima)return false;
-    var f=new Date(c.ultima);f.setHours(0,0,0,0);
-    var dias=Math.round((hoy-f)/(1000*60*60*24));
-    return dias>=0&&dias<=60&&c.nCompras===1;
-  }).sort(function(a,b){return(b.dias||0)-(a.dias||0);});
+  const lista=avTodos.filter(function(c){if(c.fuente!=='Directa')return false;if(!c.ultima)return false;var f=new Date(c.ultima);f.setHours(0,0,0,0);var dias=Math.round((hoy-f)/(1000*60*60*24));return dias>=90&&dias<=150;}).sort(function(a,b){return(b.dias||0)-(a.dias||0);});
   const tb=document.getElementById('av-reactivar');
-  if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin clientes para recuperar</div>';return;}
-  tb.innerHTML=lista.map(function(c){
-    const tel=c.telefono||'';
-    const hoyD=new Date();hoyD.setHours(0,0,0,0);
-    const ult=new Date(c.ultima);ult.setHours(0,0,0,0);
-    const dias=Math.round((hoyD-ult)/(1000*60*60*24));
-    const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,c.nombre,c.ultimoProd)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';
-    const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';
-    return '<div class="table-row" style="grid-template-columns:1fr 130px 60px 80px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span><span style="font-size:12px;color:#9333ea;font-weight:600">'+dias+'d</span>'+waBtn+'</div>';
-  }).join('');
+  if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin clientes en este rango</div>';return;}
+  tb.innerHTML=lista.map(function(c){const tel=c.telefono||'';const hoyD=new Date();hoyD.setHours(0,0,0,0);const ult=new Date(c.ultima);ult.setHours(0,0,0,0);const dias=Math.round((hoyD-ult)/(1000*60*60*24));const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,c.nombre,c.ultimoProd)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';return '<div class="table-row" style="grid-template-columns:1fr 130px 60px 80px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span><span style="font-size:12px;color:#9333ea;font-weight:600">'+dias+'d</span>'+waBtn+'</div>';}).join('');
 }
 
 function avMostrarStockProx(){
@@ -1170,251 +1177,6 @@ function mktTyping(show){
 function mktQuick(t){document.getElementById('mkt-input').value=t;mktSend();}
 function mktKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();mktSend();}}
 function mktResize(el){el.style.height='40px';el.style.height=Math.min(el.scrollHeight,120)+'px';}
-
-// ── ENTREGAS DE HOY ───────────────────────────────────────────────────────────
-async function entrCargar(){
-  const st=document.getElementById('entr-status');
-  st.className='conn-status conn-loading';st.textContent='Cargando...';
-  try{
-    const[vRows,fRows]=await Promise.all([fetchCSV('Ventas'),fetchCSV('Flex meli')]);
-    const hoy=new Date();hoy.setHours(0,0,0,0);
-
-    // Flex Meli — fecha de compra = hoy
-    const flex=fRows.filter(function(r){
-      const f=parseFecha(r['Fecha compra']||'');
-      if(!f)return false;
-      f.setHours(0,0,0,0);
-      return f.getTime()===hoy.getTime();
-    });
-
-    // Ventas directas — fecha = hoy
-    const directas=vRows.filter(function(r){
-      const f=parseFecha(r['FECHA']||r['Fecha']||'');
-      if(!f)return false;
-      f.setHours(0,0,0,0);
-      return f.getTime()===hoy.getTime();
-    });
-
-    st.className='conn-status conn-ok';
-    st.textContent=flex.length+' Flex + '+directas.length+' Directas';
-    document.getElementById('entr-panel').style.display='block';
-
-    // Render Flex Meli
-    const tbFlex=document.getElementById('entr-flex');
-    if(!flex.length){tbFlex.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin entregas Flex Meli hoy</div>';}
-    else{tbFlex.innerHTML=flex.map(function(r){
-      const nombre=(r['NOMBRE']||'').trim();
-      const tel=(r['TELEFONO']||'').toString();
-      const loc=r['LOCALIDAD']||'';
-      const prod=r['REFERNCIA']||'';
-      const zonaTag='<span class="'+(esLocal(loc)?'local-tag':'fuera-tag')+'">'+(esLocal(loc)?'local':'fuera')+'</span>';
-      const waBtn=tel?'<a class="wa-link" href="'+waLinkCamino(tel,nombre)+'" target="_blank">WA 🚚</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';
-      return '<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">'+nombre+'</span><span style="font-size:11px">'+loc+' '+zonaTag+'</span><span style="font-size:12px;color:var(--gris-dark)">'+prod+'</span>'+waBtn+'</div>';
-    }).join('');}
-
-    // Render Ventas directas
-    const tbDir=document.getElementById('entr-directas');
-    if(!directas.length){tbDir.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin entregas directas hoy</div>';}
-    else{tbDir.innerHTML=directas.map(function(r){
-      const nombre=(r['CLIENTE']||r['Cliente']||'').trim();
-      const loc=r['Barrio/Localidad']||r['Localidad']||'';
-      const marca=r['Marca']||'';
-      const prod=r['producto']||'';
-      const articulo=[marca,prod].filter(Boolean).join(' - ');
-      const zonaTag='<span class="'+(esLocal(loc)?'local-tag':'fuera-tag')+'">'+(esLocal(loc)?'local':'fuera')+'</span>';
-      // Buscar telefono en clData si existe
-      const tel=(r['TELEFONO']||r['telefono']||'').toString().trim();
-      const waBtn=tel?'<a class="wa-link" href="'+waLinkEntregaDirecta(tel,nombre)+'" target="_blank">WA 🛵</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';
-      return '<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">'+nombre+'</span><span style="font-size:11px">'+loc+' '+zonaTag+'</span><span style="font-size:12px;color:var(--gris-dark)">'+articulo+'</span>'+waBtn+'</div>';
-    }).join('');}
-
-  }catch(e){st.className='conn-status conn-err';st.textContent='Error: '+e.message;console.error(e);}
-}
-
-function waLinkEntregaDirecta(tel,nombre){
-  const num=tel.toString().replace(/\D/g,'');
-  const full=num.startsWith('54')?num:'54'+num;
-  const primer=(nombre||'').split(' ')[0];
-  const msg='Hola '+primer+' el alimento para tu perrito esta en camino, Muchas gracias por tu compra!';
-  return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);
-}
-
-
-// ── DATOS DE PRESUPUESTO ──────────────────────────────────────────────────────
-const BUDGET_DATA={
-  '2026-01':{budget:3500000,real:9661745},
-  '2026-02':{budget:11111006,real:11334800},
-  '2026-03':{budget:13035020,real:16575600},
-  '2026-04':{budget:19061940,real:19195600},
-  '2026-05':{budget:22074940,real:20079350},
-  '2026-06':{budget:23091252,real:0}  // real se actualiza desde Sheets
-};
-
-// ── GRAFICO MES VIGENTE (fac + kg por dia) ───────────────────────────────────
-function renderGraficoMesVigente(byMesDia){
-  const hoy=new Date();
-  const mesKey=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0');
-  const diasData=byMesDia[mesKey]||{};
-  const diasMes=new Date(hoy.getFullYear(),hoy.getMonth()+1,0).getDate();
-  const diaHoy=hoy.getDate();
-
-  const W=860,H=200,PAD_L=55,PAD_R=55,PAD_T=15,PAD_B=30;
-  let maxFac=0,maxKg=0;
-  for(var d=1;d<=diaHoy;d++){
-    if(diasData[d]){
-      if(diasData[d].fac>maxFac)maxFac=diasData[d].fac;
-      if(diasData[d].kg>maxKg)maxKg=diasData[d].kg;
-    }
-  }
-  if(!maxFac)return;
-
-  var html='<div style="font-size:11px;color:#888;margin-bottom:6px;display:flex;gap:20px">';
-  html+='<span style="display:inline-flex;align-items:center;gap:6px"><svg width="24" height="3"><line x1="0" y1="1.5" x2="24" y2="1.5" stroke="#1565C0" stroke-width="2.5"/></svg>Facturación</span>';
-  html+='<span style="display:inline-flex;align-items:center;gap:6px"><svg width="12" height="12"><rect width="12" height="12" fill="#74c69d" opacity="0.7" rx="2"/></svg>Kg</span></div>';
-
-  html+='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;overflow:visible" xmlns="http://www.w3.org/2000/svg">';
-
-  // Grid fac (izq)
-  for(var li=0;li<=4;li++){
-    const y=PAD_T+(H-PAD_T-PAD_B)*li/4;
-    const val=maxFac*(1-li/4);
-    html+='<line x1="'+PAD_L+'" y1="'+y+'" x2="'+(W-PAD_R)+'" y2="'+y+'" stroke="#e5e7eb" stroke-width="1"/>';
-    html+='<text x="'+(PAD_L-4)+'" y="'+(y+4)+'" text-anchor="end" font-size="9" fill="#aaa">$'+Math.round(val/1000)+'K</text>';
-  }
-  // Grid kg (der)
-  for(var li=0;li<=4;li++){
-    const y=PAD_T+(H-PAD_T-PAD_B)*li/4;
-    const val=maxKg*(1-li/4);
-    html+='<text x="'+(W-PAD_R+4)+'" y="'+(y+4)+'" text-anchor="start" font-size="9" fill="#2d6a4f">'+Math.round(val)+'kg</text>';
-  }
-
-  // Barras Kg
-  const barW=Math.max(2, Math.floor((W-PAD_L-PAD_R)/diaHoy*0.6));
-  for(var d=1;d<=diaHoy;d++){
-    const kg=(diasData[d]?diasData[d].kg:0);
-    if(!kg)continue;
-    const x=PAD_L+(d-1)*(W-PAD_L-PAD_R)/(diasMes-1);
-    const bh=(kg/maxKg)*(H-PAD_T-PAD_B);
-    const by=H-PAD_B-bh;
-    html+='<rect x="'+(x-barW/2)+'" y="'+by+'" width="'+barW+'" height="'+bh+'" fill="#74c69d" opacity="0.5" rx="2"><title>'+d+': '+kg+'kg</title></rect>';
-  }
-
-  // Línea facturación
-  var pts=[];
-  for(var d=1;d<=diaHoy;d++){
-    const fac=(diasData[d]?diasData[d].fac:0);
-    if(!fac)continue;
-    const x=PAD_L+(d-1)*(W-PAD_L-PAD_R)/(diasMes-1);
-    const y=PAD_T+(H-PAD_T-PAD_B)*(1-fac/maxFac);
-    pts.push({x,y,fac,d});
-  }
-  if(pts.length>1){
-    const pathD=pts.map(function(p,i){return(i===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' ');
-    html+='<path d="'+pathD+'" fill="none" stroke="#1565C0" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
-    pts.forEach(function(p){
-      html+='<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="3.5" fill="white" stroke="#1565C0" stroke-width="2"><title>'+p.d+': $'+Math.round(p.fac/1000)+'K</title></circle>';
-    });
-  }
-
-  // Eje X días
-  for(var d=1;d<=diaHoy;d++){
-    const x=PAD_L+(d-1)*(W-PAD_L-PAD_R)/(diasMes-1);
-    if(d===1||d%5===0||d===diaHoy){
-      html+='<text x="'+x+'" y="'+(H-PAD_B+14)+'" text-anchor="middle" font-size="9" fill="#aaa">'+d+'</text>';
-    }
-  }
-
-  html+='</svg>';
-  document.getElementById('grafico-mes-vigente').innerHTML=html;
-}
-
-// ── GRAFICO PROGRESO AL OBJETIVO ─────────────────────────────────────────────
-function renderGraficoProgreso(porMesDia){
-  const hoy=new Date();
-  const mesActual=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0');
-
-  // Tomar los ultimos 3 meses con data
-  const mesesDisp=Object.keys(porMesDia).sort().slice(-3);
-  const COLORES=['#C9A84C','#1565C0','#2e7d32'];
-  const MESES_NOM=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-
-  const W=860,H=200,PAD_L=60,PAD_R=10,PAD_T=15,PAD_B=30;
-
-  // Max objetivo para escala
-  let maxVal=0;
-  mesesDisp.forEach(function(m){
-    const bd=BUDGET_DATA[m];
-    if(bd&&bd.budget>maxVal)maxVal=bd.budget;
-    // acumulado real
-    let acum=0;
-    for(var d=1;d<=31;d++){acum+=(porMesDia[m]&&porMesDia[m][d]?porMesDia[m][d].fac:0);}
-    if(acum>maxVal)maxVal=acum;
-  });
-  if(!maxVal)return;
-  maxVal=maxVal*1.1;
-
-  var html='<div style="font-size:11px;color:#888;margin-bottom:6px;display:flex;gap:20px;flex-wrap:wrap">';
-  mesesDisp.forEach(function(m,i){
-    const[y,mo]=m.split('-');
-    html+='<span style="display:inline-flex;align-items:center;gap:6px"><svg width="24" height="3"><line x1="0" y1="1.5" x2="24" y2="1.5" stroke="'+COLORES[i]+'" stroke-width="2.5"/></svg>'+MESES_NOM[parseInt(mo)]+' '+y+'</span>';
-  });
-  html+='<span style="display:inline-flex;align-items:center;gap:6px"><svg width="24" height="3"><line x1="0" y1="1.5" x2="24" y2="1.5" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3"/></svg>Objetivo</span>';
-  html+='</div>';
-
-  html+='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;overflow:visible" xmlns="http://www.w3.org/2000/svg">';
-
-  // Grid
-  for(var li=0;li<=4;li++){
-    const y=PAD_T+(H-PAD_T-PAD_B)*li/4;
-    const val=maxVal*(1-li/4);
-    html+='<line x1="'+PAD_L+'" y1="'+y+'" x2="'+(W-PAD_R)+'" y2="'+y+'" stroke="#e5e7eb" stroke-width="1"/>';
-    html+='<text x="'+(PAD_L-4)+'" y="'+(y+4)+'" text-anchor="end" font-size="9" fill="#aaa">$'+Math.round(val/1e6).toFixed(0)+'M</text>';
-  }
-
-  // Eje X
-  for(var d=1;d<=31;d++){
-    const x=PAD_L+(d-1)*(W-PAD_L-PAD_R)/30;
-    if(d===1||d%5===0||d===31){
-      html+='<text x="'+x+'" y="'+(H-PAD_B+14)+'" text-anchor="middle" font-size="9" fill="#aaa">'+d+'</text>';
-    }
-  }
-
-  // Línea acumulada por mes
-  mesesDisp.forEach(function(m,mi){
-    const diasMes=new Date(parseInt(m.split('-')[0]),parseInt(m.split('-')[1]),0).getDate();
-    const esActual=(m===mesActual);
-    const diaMax=esActual?hoy.getDate():diasMes;
-    var acum=0,pts=[];
-    for(var d=1;d<=diaMax;d++){
-      acum+=(porMesDia[m]&&porMesDia[m][d]?porMesDia[m][d].fac:0);
-      const x=PAD_L+(d-1)*(W-PAD_L-PAD_R)/30;
-      const y=PAD_T+(H-PAD_T-PAD_B)*(1-acum/maxVal);
-      pts.push({x,y,acum,d});
-    }
-    if(pts.length>1){
-      const pathD=pts.map(function(p,i){return(i===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' ');
-      html+='<path d="'+pathD+'" fill="none" stroke="'+COLORES[mi]+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"'+(esActual?'':' opacity="0.7"')+'/>';
-      // Solo último punto con circle
-      const last=pts[pts.length-1];
-      html+='<circle cx="'+last.x.toFixed(1)+'" cy="'+last.y.toFixed(1)+'" r="4" fill="'+COLORES[mi]+'" stroke="white" stroke-width="2"><title>'+MESES_NOM[parseInt(m.split('-')[1])]+' dia '+last.d+': $'+(last.acum/1e6).toFixed(2)+'M</title></circle>';
-
-      // Label final
-      html+='<text x="'+(last.x+6)+'" y="'+(last.y+4)+'" font-size="9" fill="'+COLORES[mi]+'" font-weight="600">$'+(last.acum/1e6).toFixed(1)+'M</text>';
-    }
-
-    // Línea punteada del objetivo
-    const bd=BUDGET_DATA[m];
-    if(bd&&bd.budget){
-      const yObj=PAD_T+(H-PAD_T-PAD_B)*(1-bd.budget/maxVal);
-      html+='<line x1="'+PAD_L+'" y1="'+yObj+'" x2="'+(W-PAD_R)+'" y2="'+yObj+'" stroke="'+COLORES[mi]+'" stroke-width="1" stroke-dasharray="5,4" opacity="0.5"/>';
-      html+='<text x="'+(PAD_L-4)+'" y="'+(yObj+4)+'" text-anchor="end" font-size="8" fill="'+COLORES[mi]+'" opacity="0.7">$'+(bd.budget/1e6).toFixed(1)+'M</text>';
-    }
-  });
-
-  html+='</svg>';
-  document.getElementById('grafico-progreso').innerHTML=html;
-}
-
 </script>
 </body>
 </html>
