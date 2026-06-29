@@ -123,6 +123,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="nav-section">Clientes</div>
     <div class="nav-item" onclick="irA('clientes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</div>
     <div class="nav-item" onclick="irA('recompras')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Recompras</div>
+    <div class="nav-item" onclick="irA('resenas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Reseñas</div>
     <div class="nav-section">Marketing</div>
     <div class="nav-item" onclick="irA('marketing')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 5.61 5.61l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Agente Marketing</div>
     <div class="nav-section">Sistema</div>
@@ -349,6 +350,40 @@ Vamos Argentina!</div>
   </div>
 </div>
 
+<!-- RESEÑAS -->
+<div class="page" id="page-resenas">
+  <div class="metrics-grid" id="rs-metrics">
+    <div class="metric"><div class="metric-label">Clientes</div><div class="metric-value" id="rs-m-total">0</div></div>
+    <div class="metric"><div class="metric-label">Pedidas</div><div class="metric-value" id="rs-m-pedidas">0</div></div>
+    <div class="metric"><div class="metric-label">Dejadas</div><div class="metric-value" style="color:var(--verde-claro)" id="rs-m-dejadas">0</div></div>
+    <div class="metric"><div class="metric-label">Pendientes</div><div class="metric-value" style="color:#856404" id="rs-m-pendientes">0</div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="results-header">
+      <div class="card-title" style="margin:0">Pedido de reseñas en Google</div>
+      <div class="btn-row">
+        <div class="filtro-group"><label>Estado</label><select id="rs-filtro" onchange="resenasFiltrar()"><option value="todos">Todos</option><option value="pendiente">Sin pedir</option><option value="pedida">Pedida, sin dejar</option><option value="dejada">Ya dejada</option></select></div>
+        <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500;align-self:flex-end" id="rs-count">0</span>
+        <button class="btn btn-primary" onclick="resenasCargar()" style="align-self:flex-end">Cargar clientes</button>
+      </div>
+    </div>
+    <div class="table-wrap" id="rs-wrap" style="display:none;margin-top:12px">
+      <div class="table-head" style="grid-template-columns:1fr 120px 90px 90px 80px"><span>Cliente</span><span>Telefono</span><span>Pedida</span><span>Dejada</span><span>WA</span></div>
+      <div class="table-body" id="rs-table" style="max-height:420px"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Mensaje que se manda por WhatsApp</div>
+    <div class="msg-template">Hola [Nombre]! Te saluda Nacho de Wankun Club 🐾
+
+Nos ayudarias muchisimo si nos dejas una reseña en Google contandonos que te parecio el servicio. Te deja este link, es cortito:
+https://g.page/r/CWpl5hrUBgqFEBM/review
+
+Muchas gracias!</div>
+    <div style="font-size:12px;color:var(--gris-dark);margin-top:8px">Nota: el estado de pedida/dejada se guarda en este navegador. Si abrís el panel desde otro dispositivo, no se va a ver el mismo check.</div>
+  </div>
+</div>
+
 <!-- MARKETING -->
 <div class="page" id="page-marketing">
   <div class="card">
@@ -472,7 +507,7 @@ function irA(p){
   const el=document.getElementById('page-'+p);
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
-  const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap'};
+  const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','resenas':'Reseñas','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
 }
@@ -977,6 +1012,78 @@ function sorteoFiltrar(){
 }
 function copiarSorteoMsg(){const t=`Hola [Nombre]!\n\nSabemos lo mucho que queres a tu perrito, por eso queremos que sea parte de la fiesta mas grande del anio!\n\nEstamos sorteando 20 camisetas de la Seleccion Argentina, porque ellos tambien se merecen ponerse la 10!\n\nPara participar:\n- Seguinos en @wankunclub\n- Dale like a esta publicacion: https://www.instagram.com/p/DYk2Zi_oYgY/\n- Comentá con el talle y la raza de tu perrito\n\nEl sorteo es el 11 de junio a las 22hs.\n\nVamos Argentina!`;navigator.clipboard.writeText(t).then(()=>{const b=event.target,o=b.textContent;b.textContent='Copiado!';setTimeout(()=>b.textContent=o,2000);});}
 function clExportar(){const rows=[['Nombre','Localidad','Telefono','Articulo','Zona'],...clFiltered.map(c=>[c.nombre,c.localidad,c.telefono,c.articulo,esLocal(c.localidad)?'Local':'Fuera'])];const csv=rows.map(r=>r.map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='clientes_wankun.csv';a.click();URL.revokeObjectURL(url);}
+
+// ── RESEÑAS GOOGLE ───────────────────────────────────────────────────────────
+let resenasData=[];
+const RS_LINK='https://g.page/r/CWpl5hrUBgqFEBM/review';
+function rsKey(tel,nombre){const t=(tel||'').toString().replace(/\D/g,'');return t?('tel:'+t):('nom:'+(nombre||'').trim().toLowerCase());}
+function rsGetEstado(key){try{const raw=localStorage.getItem('wankun_resenas');const map=raw?JSON.parse(raw):{};return map[key]||{pedida:false,dejada:false};}catch(e){return{pedida:false,dejada:false};}}
+function rsSetEstado(key,estado){try{const raw=localStorage.getItem('wankun_resenas');const map=raw?JSON.parse(raw):{};map[key]=estado;localStorage.setItem('wankun_resenas',JSON.stringify(map));}catch(e){console.error(e);}}
+function resenasWaLink(tel,nombre){const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];const msg='Hola '+primer+'! Te saluda Nacho de Wankun Club 🐾\n\nNos ayudarias muchisimo si nos dejas una resena en Google contandonos que te parecio el servicio. Te dejo este link, es cortito:\n'+RS_LINK+'\n\nMuchas gracias!';return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
+async function resenasCargar(){
+  const[vRows,fRows]=await Promise.all([fetchCSV('Ventas'),fetchCSV('Flex meli')]);
+  const telPorNombre={};
+  fRows.forEach(r=>{const n=(r['NOMBRE']||'').trim().toLowerCase();const t=(getCol(r,'TELEFONO','Telefono')||'').toString().trim();if(n&&t&&!telPorNombre[n])telPorNombre[n]=t;});
+  const vistos={};
+  const lista=[];
+  fRows.forEach(r=>{
+    const nombre=(r['NOMBRE']||'').trim();if(!nombre)return;
+    const tel=(getCol(r,'TELEFONO','Telefono')||'').toString().trim();
+    const key=rsKey(tel,nombre);
+    if(vistos[key])return;vistos[key]=true;
+    lista.push({nombre,telefono:tel});
+  });
+  vRows.forEach(r=>{
+    const nombre=(r['CLIENTE']||r['Cliente']||'').trim();if(!nombre)return;
+    let tel=(getCol(r,'TELEFONO','Telefono','Celular')||'').toString().trim();
+    if(!tel)tel=telPorNombre[nombre.toLowerCase()]||'';
+    const key=rsKey(tel,nombre);
+    if(vistos[key])return;vistos[key]=true;
+    lista.push({nombre,telefono:tel});
+  });
+  lista.sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  resenasData=lista.map(c=>{const key=rsKey(c.telefono,c.nombre);const est=rsGetEstado(key);return{...c,key,pedida:est.pedida,dejada:est.dejada};});
+  document.getElementById('rs-wrap').style.display='block';
+  resenasFiltrar();
+}
+function resenasMetricas(){
+  const t=resenasData.length,p=resenasData.filter(c=>c.pedida).length,d=resenasData.filter(c=>c.dejada).length,pend=resenasData.filter(c=>!c.pedida).length;
+  document.getElementById('rs-m-total').textContent=t;
+  document.getElementById('rs-m-pedidas').textContent=p;
+  document.getElementById('rs-m-dejadas').textContent=d;
+  document.getElementById('rs-m-pendientes').textContent=pend;
+}
+function resenasToggle(key,campo){
+  const c=resenasData.find(x=>x.key===key);if(!c)return;
+  c[campo]=!c[campo];
+  if(campo==='dejada'&&c.dejada)c.pedida=true;
+  rsSetEstado(key,{pedida:c.pedida,dejada:c.dejada});
+  resenasMetricas();resenasFiltrar();
+}
+function resenasMarcarPedida(key){
+  const c=resenasData.find(x=>x.key===key);if(!c||c.pedida)return;
+  c.pedida=true;rsSetEstado(key,{pedida:c.pedida,dejada:c.dejada});resenasMetricas();resenasFiltrar();
+}
+function resenasFiltrar(){
+  const f=document.getElementById('rs-filtro').value;
+  let lista=resenasData.filter(c=>{
+    if(f==='pendiente')return !c.pedida;
+    if(f==='pedida')return c.pedida&&!c.dejada;
+    if(f==='dejada')return c.dejada;
+    return true;
+  });
+  document.getElementById('rs-count').textContent=lista.length+' clientes';
+  const tb=document.getElementById('rs-table');
+  if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin resultados</div>';resenasMetricas();return;}
+  tb.innerHTML=lista.map(c=>`<div class="table-row" style="grid-template-columns:1fr 120px 90px 90px 80px">
+    <span style="font-weight:500">${c.nombre}</span>
+    <span style="font-family:'DM Mono',monospace;font-size:12px">${c.telefono||'--'}</span>
+    <span style="text-align:center"><input type="checkbox" ${c.pedida?'checked':''} onchange="resenasToggle('${c.key}','pedida')" style="width:18px;height:18px;cursor:pointer"></span>
+    <span style="text-align:center"><input type="checkbox" ${c.dejada?'checked':''} onchange="resenasToggle('${c.key}','dejada')" style="width:18px;height:18px;cursor:pointer"></span>
+    ${c.telefono?`<a class="wa-link" href="${resenasWaLink(c.telefono,c.nombre)}" target="_blank" onclick="event.stopPropagation();resenasMarcarPedida('${c.key}')">WA</a>`:'<span style="color:var(--gris-dark);font-size:12px">--</span>'}
+  </div>`).join('');
+  resenasMetricas();
+}
 
 // ── RECOMPRAS ─────────────────────────────────────────────────────────────────
 let avTodos=[],avFiltered=[];
