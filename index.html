@@ -1021,22 +1021,12 @@ function rsGetEstado(key){try{const raw=localStorage.getItem('wankun_resenas');c
 function rsSetEstado(key,estado){try{const raw=localStorage.getItem('wankun_resenas');const map=raw?JSON.parse(raw):{};map[key]=estado;localStorage.setItem('wankun_resenas',JSON.stringify(map));}catch(e){console.error(e);}}
 function resenasWaLink(tel,nombre){const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];const msg='Hola '+primer+'! Te saluda Nacho de Wankun Club 🐾\n\nNos ayudarias muchisimo si nos dejas una resena en Google contandonos que te parecio el servicio. Te dejo este link, es cortito:\n'+RS_LINK+'\n\nMuchas gracias!';return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
 async function resenasCargar(){
-  const[vRows,fRows]=await Promise.all([fetchCSV('Ventas'),fetchCSV('Flex meli')]);
-  const telPorNombre={};
-  fRows.forEach(r=>{const n=(r['NOMBRE']||'').trim().toLowerCase();const t=(getCol(r,'TELEFONO','Telefono')||'').toString().trim();if(n&&t&&!telPorNombre[n])telPorNombre[n]=t;});
+  const vRows=await fetchCSV('Ventas');
   const vistos={};
   const lista=[];
-  fRows.forEach(r=>{
-    const nombre=(r['NOMBRE']||'').trim();if(!nombre)return;
-    const tel=(getCol(r,'TELEFONO','Telefono')||'').toString().trim();
-    const key=rsKey(tel,nombre);
-    if(vistos[key])return;vistos[key]=true;
-    lista.push({nombre,telefono:tel});
-  });
   vRows.forEach(r=>{
     const nombre=(r['CLIENTE']||r['Cliente']||'').trim();if(!nombre)return;
-    let tel=(getCol(r,'TELEFONO','Telefono','Celular')||'').toString().trim();
-    if(!tel)tel=telPorNombre[nombre.toLowerCase()]||'';
+    const tel=(getCol(r,'TELEFONO','Telefono','Celular')||'').toString().trim();
     const key=rsKey(tel,nombre);
     if(vistos[key])return;vistos[key]=true;
     lista.push({nombre,telefono:tel});
