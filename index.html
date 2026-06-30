@@ -536,9 +536,12 @@ function getCol(r,...keys){
 function parseFac(v){
   if(!v)return 0;
   if(typeof v==='number')return v;
-  let s=v.toString().replace(/\$/g,'').replace(/\s/g,'').trim();
+  let s=v.toString().replace(/["']/g,'').replace(/\$/g,'').replace(/\s/g,'').trim();
+  if(!s)return 0;
+  // Formato argentino: 74.700,00 → tiene punto Y coma
   if(s.includes(',')&&s.includes('.')){s=s.replace(/\./g,'').replace(',','.');}
-  else if(s.includes(',')){s=s.replace(',','.');}
+  // Solo coma como decimal: 74700,00
+  else if(s.includes(',')&&!s.includes('.')){s=s.replace(',','.');}
   s=s.replace(/[^0-9.]/g,'');
   return parseFloat(s)||0;
 }
@@ -597,14 +600,15 @@ async function cargarVentasLive(){
     const rows=await fetchCSV('Ventas');
     const porMes={},zonas={},marcas={};
     let total=0,totalKg=0,totalPedidos=0;
-    const hoy=new Date();hoy.setHours(23,59,59,999);
+    const hoy=new Date();
+    const mesLimite=new Date(hoy.getFullYear(),hoy.getMonth()+1,1); // primer día del mes siguiente
 
     rows.forEach(r=>{
       const f=parseFecha(r['FECHA']||r['Fecha']||'');
-      const fac=parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0);
+      const fac=parseFac(getCol(r,'Facturación','Facturacion',' Facturación','Facturaci\u00f3n')||0);
       const kg=parseFloat((r['kg']||0).toString().replace(',','.'))||0;
       if(!f||isNaN(f)||!fac)return;
-      if(f>hoy)return; // ignorar fechas futuras
+      if(f>=mesLimite)return; // ignorar meses futuros (no días futuros del mes actual)
       total+=fac;
       totalKg+=kg;
       totalPedidos++;
