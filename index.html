@@ -146,6 +146,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
   <div class="metrics-grid">
     <div class="metric"><div class="metric-label">Facturacion total</div><div class="metric-value" id="m-total">—</div><div class="metric-delta" id="m-total-rango">Sep 2025 - hoy</div></div>
     <div class="metric"><div class="metric-label" id="m-mes-label">Mes actual</div><div class="metric-value" id="m-mayo">—</div><div class="metric-delta delta-up" id="m-mes-delta">cargando...</div></div>
+    <div class="metric"><div class="metric-label">Kg vendidos (mes)</div><div class="metric-value" id="m-kg-mes">—</div><div class="metric-delta">volumen del mes actual</div></div>
     <div class="metric"><div class="metric-label">Ticket promedio</div><div class="metric-value" id="m-ticket">—</div><div class="metric-delta">por pedido</div></div>
     <div class="metric"><div class="metric-label">Radio local</div><div class="metric-value">54%</div><div class="metric-delta delta-up">de facturacion</div></div>
     <div class="metric"><div class="metric-label">Seguidores IG</div><div class="metric-value">161</div><div class="metric-delta delta-up">+21 Sorteo activo</div></div>
@@ -598,7 +599,7 @@ function renderPeq(id,data,color){
 async function cargarVentasLive(){
   try{
     const rows=await fetchCSV('Ventas');
-    const porMes={},zonas={},marcas={};
+    const porMes={},porMesKg={},zonas={},marcas={};
     let total=0,totalKg=0,totalPedidos=0;
     const hoy=new Date();
     const mesLimite=new Date(hoy.getFullYear(),hoy.getMonth()+1,1); // primer día del mes siguiente
@@ -614,6 +615,7 @@ async function cargarVentasLive(){
       totalPedidos++;
       const key=f.getFullYear()+'-'+(f.getMonth()+1).toString().padStart(2,'0');
       porMes[key]=(porMes[key]||0)+fac;
+      porMesKg[key]=(porMesKg[key]||0)+kg;
       const zona=r['Barrio/Localidad']||r['Localidad']||'';
       const marca=r['Marca']||r['marca']||'';
       if(zona)zonas[zona]=(zonas[zona]||0)+fac;
@@ -646,13 +648,25 @@ async function cargarVentasLive(){
     const idxActual=keysMes.indexOf(MES_ACTUAL_KEY);
     if(idxActual>0){
       const facAnterior=porMes[keysMes[idxActual-1]]||0;
+      const kgAnterior=porMesKg[keysMes[idxActual-1]]||0;
+      const kgActual=porMesKg[MES_ACTUAL_KEY]||0;
+      const mesAntNom=new Date(parseInt(keysMes[idxActual-1].split('-')[0]),parseInt(keysMes[idxActual-1].split('-')[1])-1,1).toLocaleDateString('es-AR',{month:'long'});
+      let deltaTxt='';
       if(facAnterior>0){
-        const pct=((facMesActual-facAnterior)/facAnterior*100).toFixed(1);
-        const mesAntNom=new Date(parseInt(keysMes[idxActual-1].split('-')[0]),parseInt(keysMes[idxActual-1].split('-')[1])-1,1).toLocaleDateString('es-AR',{month:'long'});
-        document.getElementById('m-mes-delta').textContent=(pct>0?'+':'')+pct+'% vs '+mesAntNom;
+        const pctFac=((facMesActual-facAnterior)/facAnterior*100).toFixed(1);
+        deltaTxt+=(pctFac>0?'+':'')+pctFac+'% $ vs '+mesAntNom;
       }
+      if(kgAnterior>0){
+        const pctKg=((kgActual-kgAnterior)/kgAnterior*100).toFixed(1);
+        deltaTxt+=(deltaTxt?' · ':'')+(pctKg>0?'+':'')+pctKg+'% kg';
+      }
+      document.getElementById('m-mes-delta').textContent=deltaTxt||'sin datos del mes anterior';
+      const elKg=document.getElementById('m-kg-mes');
+      if(elKg)elKg.textContent=kgActual.toLocaleString('es-AR')+' kg';
     } else {
       document.getElementById('m-mes-delta').textContent='primer mes registrado';
+      const elKg=document.getElementById('m-kg-mes');
+      if(elKg)elKg.textContent=(porMesKg[MES_ACTUAL_KEY]||0).toLocaleString('es-AR')+' kg';
     }
 
     // Ticket promedio
