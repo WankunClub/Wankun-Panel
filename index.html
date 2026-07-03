@@ -397,28 +397,42 @@ Muchas gracias!</div>
 <!-- ENVIOS -->
 <div class="page" id="page-envios">
   <div class="metrics-grid" id="env-metrics">
-    <div class="metric"><div class="metric-label">Compras hoy</div><div class="metric-value" id="env-m-total">0</div></div>
-    <div class="metric"><div class="metric-label">Avisados</div><div class="metric-value" style="color:var(--verde-claro)" id="env-m-avisados">0</div></div>
-    <div class="metric"><div class="metric-label">Pendientes</div><div class="metric-value" style="color:#856404" id="env-m-pendientes">0</div></div>
+    <div class="metric"><div class="metric-label">Compras hoy (directo)</div><div class="metric-value" id="env-m-total">0</div></div>
+    <div class="metric"><div class="metric-label">Avisados directo</div><div class="metric-value" style="color:var(--verde-claro)" id="env-m-avisados">0</div></div>
+    <div class="metric"><div class="metric-label">Flex Meli ayer</div><div class="metric-value" id="env-m-flex-total">0</div></div>
+    <div class="metric"><div class="metric-label">Avisados Flex</div><div class="metric-value" style="color:var(--verde-claro)" id="env-m-flex-avisados">0</div></div>
   </div>
+
   <div class="card" style="margin-bottom:16px">
     <div class="results-header">
-      <div class="card-title" style="margin:0">Aviso de envío - compras de hoy (canal directo)</div>
+      <div class="card-title" style="margin:0">Canal directo — compras de hoy</div>
       <div class="btn-row">
-        <div class="filtro-group"><label>Estado</label><select id="env-filtro" onchange="enviosFiltrar()"><option value="todos">Todos</option><option value="pendiente">Sin avisar</option><option value="avisado">Ya avisado</option></select></div>
+        <div class="filtro-group"><label>Estado</label><select id="env-filtro" onchange="enviosFiltrar()"><option value="pendiente">Sin avisar</option><option value="todos">Todos</option><option value="avisado">Ya avisado</option></select></div>
         <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500;align-self:flex-end" id="env-count">0</span>
-        <button class="btn btn-primary" onclick="enviosCargar()" style="align-self:flex-end">Cargar clientes</button>
+        <button class="btn btn-primary" onclick="enviosCargar()" style="align-self:flex-end">Cargar</button>
       </div>
     </div>
     <div class="table-wrap" id="env-wrap" style="display:none;margin-top:12px">
       <div class="table-head" style="grid-template-columns:1fr 1fr 120px 90px 80px"><span>Cliente</span><span>Artículo</span><span>Telefono</span><span>Avisado</span><span>WA</span></div>
-      <div class="table-body" id="env-table" style="max-height:420px"></div>
+      <div class="table-body" id="env-table" style="max-height:360px"></div>
     </div>
+    <div style="font-size:12px;color:var(--gris-dark);margin-top:12px">Mensaje: "Hola [Nombre], te saluda Nacho desde Wankun Club, el alimento para tu mascota esta en camino"</div>
   </div>
+
   <div class="card">
-    <div class="card-title">Mensaje que se manda por WhatsApp</div>
-    <div class="msg-template">Hola [Nombre], te saluda Nacho desde Wankun Club, el alimento para tu mascota esta en camino</div>
-    <div style="font-size:12px;color:var(--gris-dark);margin-top:8px">Nota: solo toma clientes de la hoja Ventas (canal directo, sin Flex Meli) cuya FECHA sea la de hoy. El estado de avisado se guarda en este navegador, no sincroniza entre dispositivos.</div>
+    <div class="results-header">
+      <div class="card-title" style="margin:0">Flex Meli — entregas de ayer</div>
+      <div class="btn-row">
+        <div class="filtro-group"><label>Estado</label><select id="env-flex-filtro" onchange="enviosFlexFiltrar()"><option value="pendiente">Sin avisar</option><option value="todos">Todos</option><option value="avisado">Ya avisado</option></select></div>
+        <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500;align-self:flex-end" id="env-flex-count">0</span>
+        <button class="btn btn-primary" onclick="enviosFlexCargar()" style="align-self:flex-end">Cargar</button>
+      </div>
+    </div>
+    <div class="table-wrap" id="env-flex-wrap" style="display:none;margin-top:12px">
+      <div class="table-head" style="grid-template-columns:1fr 1fr 120px 90px 80px"><span>Cliente</span><span>Artículo</span><span>Telefono</span><span>Avisado</span><span>WA</span></div>
+      <div class="table-body" id="env-flex-table" style="max-height:360px"></div>
+    </div>
+    <div style="font-size:12px;color:var(--gris-dark);margin-top:12px">Mensaje: "Hola [Nombre]! Te saluda Nacho de Wankun Club. ¿Cómo está tu perrito? Te escribo porque debe estar por terminarse el alimento. ¿Te gustaría coordinar la reposición? Entregamos en el día y acompañamos el alimento con unos Snacks Naturales de Filan. Nuestro precio directo es mejor que Mercado Libre. Quedamos atentos a lo que pueda necesitar tu perrito, y vos por supuesto."</div>
   </div>
 </div>
 
@@ -1189,10 +1203,12 @@ async function enviosCargar(){
   enviosFiltrar();
 }
 function enviosMetricas(){
-  const t=enviosData.length,a=enviosData.filter(c=>c.avisado).length,pend=t-a;
+  const t=enviosData.length,a=enviosData.filter(c=>c.avisado).length;
   document.getElementById('env-m-total').textContent=t;
   document.getElementById('env-m-avisados').textContent=a;
-  document.getElementById('env-m-pendientes').textContent=pend;
+  const tf=enviosFlexData.length,af=enviosFlexData.filter(c=>c.avisado).length;
+  document.getElementById('env-m-flex-total').textContent=tf;
+  document.getElementById('env-m-flex-avisados').textContent=af;
 }
 function enviosToggle(key){
   const c=enviosData.find(x=>x.key===key);if(!c)return;
@@ -1220,6 +1236,62 @@ function enviosFiltrar(){
     <span style="font-family:'DM Mono',monospace;font-size:12px">${c.telefono||'--'}</span>
     <span style="text-align:center"><input type="checkbox" ${c.avisado?'checked':''} onchange="enviosToggle('${c.key}')" style="width:18px;height:18px;cursor:pointer"></span>
     ${c.telefono?`<a class="wa-link" href="${enviosWaLink(c.telefono,c.nombre)}" target="_blank" onclick="event.stopPropagation();enviosMarcarAvisado('${c.key}')">WA</a>`:'<span style="color:var(--gris-dark);font-size:12px">--</span>'}
+  </div>`).join('');
+  enviosMetricas();
+}
+
+// ── ENVIOS FLEX MELI ──────────────────────────────────────────────────────────
+let enviosFlexData=[];
+const ENV_FLEX_KEY_PREFIX='flex:';
+function envFlexKey(tel,nombre){const t=(tel||'').toString().replace(/\D/g,'');return t?(ENV_FLEX_KEY_PREFIX+'tel:'+t):(ENV_FLEX_KEY_PREFIX+'nom:'+(nombre||'').trim().toLowerCase());}
+function envFlexGetEstado(key){try{const raw=localStorage.getItem('wankun_envios_flex');const map=raw?JSON.parse(raw):{};return map[key]||{avisado:false};}catch(e){return{avisado:false};}}
+function envFlexSetEstado(key,estado){try{const raw=localStorage.getItem('wankun_envios_flex');const map=raw?JSON.parse(raw):{};map[key]=estado;localStorage.setItem('wankun_envios_flex',JSON.stringify(map));}catch(e){console.error(e);}}
+function enviosFlexWaLink(tel,nombre){const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];const msg='Hola '+primer+'! Te saluda Nacho de Wankun Club.\n¿Cómo está tu perrito? Te escribo porque debe estar por terminarse el alimento.\n¿Te gustaría coordinar la reposición? Entregamos en el día y acompañamos el alimento con unos Snacks Naturales de Filan. Nuestro precio directo es mejor que Mercado Libre.\nQuedamos atentos a lo que pueda necesitar tu perrito, y vos por supuesto.';return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
+async function enviosFlexCargar(){
+  const fRows=await fetchCSV('Flex meli');
+  const vistos={};
+  const lista=[];
+  fRows.forEach(r=>{
+    const fecha=r['Fecha compra']||'';
+    if(!rsEsAyer(fecha))return;
+    const nombre=(r['NOMBRE']||'').trim();if(!nombre)return;
+    const tel=(r['TELEFONO']||'').toString().trim();
+    const articulo=r['REFERNCIA']||'';
+    const key=envFlexKey(tel,nombre);
+    if(vistos[key])return;vistos[key]=true;
+    lista.push({nombre,telefono:tel,articulo});
+  });
+  lista.sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  enviosFlexData=lista.map(c=>{const key=envFlexKey(c.telefono,c.nombre);const est=envFlexGetEstado(key);return{...c,key,avisado:est.avisado};});
+  document.getElementById('env-flex-wrap').style.display='block';
+  enviosFlexFiltrar();
+}
+function enviosFlexToggle(key){
+  const c=enviosFlexData.find(x=>x.key===key);if(!c)return;
+  c.avisado=!c.avisado;
+  envFlexSetEstado(key,{avisado:c.avisado});
+  enviosMetricas();enviosFlexFiltrar();
+}
+function enviosFlexMarcarAvisado(key){
+  const c=enviosFlexData.find(x=>x.key===key);if(!c||c.avisado)return;
+  c.avisado=true;envFlexSetEstado(key,{avisado:c.avisado});enviosMetricas();enviosFlexFiltrar();
+}
+function enviosFlexFiltrar(){
+  const f=document.getElementById('env-flex-filtro').value;
+  let lista=enviosFlexData.filter(c=>{
+    if(f==='pendiente')return !c.avisado;
+    if(f==='avisado')return c.avisado;
+    return true;
+  });
+  document.getElementById('env-flex-count').textContent=lista.length+' clientes';
+  const tb=document.getElementById('env-flex-table');
+  if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin resultados</div>';enviosMetricas();return;}
+  tb.innerHTML=lista.map(c=>`<div class="table-row" style="grid-template-columns:1fr 1fr 120px 90px 80px">
+    <span style="font-weight:500">${c.nombre}</span>
+    <span style="font-size:12px">${c.articulo||'--'}</span>
+    <span style="font-family:'DM Mono',monospace;font-size:12px">${c.telefono||'--'}</span>
+    <span style="text-align:center"><input type="checkbox" ${c.avisado?'checked':''} onchange="enviosFlexToggle('${c.key}')" style="width:18px;height:18px;cursor:pointer"></span>
+    ${c.telefono?`<a class="wa-link" href="${enviosFlexWaLink(c.telefono,c.nombre)}" target="_blank" onclick="event.stopPropagation();enviosFlexMarcarAvisado('${c.key}')">WA</a>`:'<span style="color:var(--gris-dark);font-size:12px">--</span>'}
   </div>`).join('');
   enviosMetricas();
 }
