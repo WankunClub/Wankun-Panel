@@ -360,7 +360,7 @@ Vamos Argentina!</div>
   </div>
   <div class="card" style="margin-bottom:16px">
     <div class="results-header">
-      <div class="card-title" style="margin:0">Pedido de reseñas — compraron hoy</div>
+      <div class="card-title" style="margin:0">Pedido de reseñas — compraron ayer</div>
       <div class="btn-row">
         <div class="filtro-group"><label>Estado</label><select id="rs-filtro" onchange="resenasFiltrar()"><option value="pendiente">Sin pedir</option><option value="todos">Todos</option><option value="pedida">Pedida, sin dejar</option><option value="dejada">Ya dejada</option></select></div>
         <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500;align-self:flex-end" id="rs-count">0</span>
@@ -380,7 +380,17 @@ Nos ayudarias muchisimo si nos dejas una reseña en Google contandonos que te pa
 https://g.page/r/CWpl5hrUBgqFEBM/review
 
 Muchas gracias!</div>
-    <div style="font-size:12px;color:var(--gris-dark);margin-top:8px">Nota: muestra solo clientes que compraron <strong>hoy</strong> por canal directo (Ventas), deduplicados por cliente. El estado pedida/dejada se guarda en este navegador y persiste entre días — si mañana ese mismo cliente compra de nuevo, ya vas a ver su estado anterior.</div>
+    <div style="font-size:12px;color:var(--gris-dark);margin-top:8px">Nota: muestra solo clientes que compraron <strong>ayer</strong> por canal directo (Ventas), deduplicados por cliente. El estado pedida/dejada se guarda en este navegador y persiste entre días — si mañana ese mismo cliente compra de nuevo, ya vas a ver su estado anterior.</div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="results-header">
+      <div class="card-title" style="margin:0">Historial de reseñas solicitadas</div>
+      <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500;align-self:center" id="rs-hist-count">0 clientes</span>
+    </div>
+    <div id="rs-hist-wrap" style="display:none;margin-top:12px">
+      <div class="table-head" style="grid-template-columns:1fr 130px 80px 80px"><span>Cliente</span><span>Telefono</span><span>Pedida</span><span>Dejada</span></div>
+      <div class="table-body" id="rs-hist-table" style="max-height:320px"></div>
+    </div>
   </div>
 </div>
 
@@ -1062,17 +1072,17 @@ function clExportar(){const rows=[['Nombre','Localidad','Telefono','Articulo','Z
 let resenasData=[];
 const RS_LINK='https://g.page/r/CWpl5hrUBgqFEBM/review';
 function rsKey(tel,nombre){const t=(tel||'').toString().replace(/\D/g,'');return t?('tel:'+t):('nom:'+(nombre||'').trim().toLowerCase());}
-function rsGetEstado(key){try{const raw=localStorage.getItem('wankun_resenas');const map=raw?JSON.parse(raw):{};return map[key]||{pedida:false,dejada:false};}catch(e){return{pedida:false,dejada:false};}}
+function rsGetEstado(key){try{const raw=localStorage.getItem('wankun_resenas');const map=raw?JSON.parse(raw):{};return map[key]||{pedida:false,dejada:false,nombre:'',telefono:''};}catch(e){return{pedida:false,dejada:false,nombre:'',telefono:''};}}
 function rsSetEstado(key,estado){try{const raw=localStorage.getItem('wankun_resenas');const map=raw?JSON.parse(raw):{};map[key]=estado;localStorage.setItem('wankun_resenas',JSON.stringify(map));}catch(e){console.error(e);}}
 function resenasWaLink(tel,nombre){const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];const msg='Hola '+primer+'! Te saluda Nacho de Wankun Club 🐾\n\nNos ayudarias muchisimo si nos dejas una resena en Google contandonos que te parecio el servicio. Te dejo este link, es cortito:\n'+RS_LINK+'\n\nMuchas gracias!';return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
-function rsEsHoy(fechaStr){const f=parseFecha(fechaStr);if(!f)return false;const h=new Date();return f.getFullYear()===h.getFullYear()&&f.getMonth()===h.getMonth()&&f.getDate()===h.getDate();}
+function rsEsAyer(fechaStr){const f=parseFecha(fechaStr);if(!f)return false;const h=new Date();const ayer=new Date(h.getFullYear(),h.getMonth(),h.getDate()-1);return f.getFullYear()===ayer.getFullYear()&&f.getMonth()===ayer.getMonth()&&f.getDate()===ayer.getDate();}
 async function resenasCargar(){
   const vRows=await fetchCSV('Ventas');
   const vistos={};
   const lista=[];
   vRows.forEach(r=>{
     const fecha=r['FECHA']||r['Fecha']||'';
-    if(!rsEsHoy(fecha))return;
+    if(!rsEsAyer(fecha))return;
     const nombre=(r['CLIENTE']||r['Cliente']||'').trim();if(!nombre)return;
     const tel=(getCol(r,'TELEFONO','Telefono','Celular')||'').toString().trim();
     const articulo=getCol(r,'ARTICULO','Articulo','Artículo')||'';
@@ -1084,6 +1094,7 @@ async function resenasCargar(){
   resenasData=lista.map(c=>{const key=rsKey(c.telefono,c.nombre);const est=rsGetEstado(key);return{...c,key,pedida:est.pedida,dejada:est.dejada};});
   document.getElementById('rs-wrap').style.display='block';
   resenasFiltrar();
+  resenasCargarHistorial();
 }
 function resenasMetricas(){
   const t=resenasData.length,p=resenasData.filter(c=>c.pedida).length,d=resenasData.filter(c=>c.dejada).length,pend=resenasData.filter(c=>!c.pedida).length;
@@ -1096,12 +1107,32 @@ function resenasToggle(key,campo){
   const c=resenasData.find(x=>x.key===key);if(!c)return;
   c[campo]=!c[campo];
   if(campo==='dejada'&&c.dejada)c.pedida=true;
-  rsSetEstado(key,{pedida:c.pedida,dejada:c.dejada});
-  resenasMetricas();resenasFiltrar();
+  rsSetEstado(key,{pedida:c.pedida,dejada:c.dejada,nombre:c.nombre,telefono:c.telefono});
+  resenasMetricas();resenasFiltrar();resenasCargarHistorial();
 }
 function resenasMarcarPedida(key){
   const c=resenasData.find(x=>x.key===key);if(!c||c.pedida)return;
-  c.pedida=true;rsSetEstado(key,{pedida:c.pedida,dejada:c.dejada});resenasMetricas();resenasFiltrar();
+  c.pedida=true;rsSetEstado(key,{pedida:c.pedida,dejada:c.dejada,nombre:c.nombre,telefono:c.telefono});resenasMetricas();resenasFiltrar();resenasCargarHistorial();
+}
+function resenasCargarHistorial(){
+  try{
+    const raw=localStorage.getItem('wankun_resenas');
+    const map=raw?JSON.parse(raw):{};
+    const entries=Object.entries(map).filter(([k,v])=>v.pedida||v.dejada).sort((a,b)=>(a[1].nombre||'').localeCompare(b[1].nombre||'','es'));
+    const tb=document.getElementById('rs-hist-table');
+    const wrap=document.getElementById('rs-hist-wrap');
+    document.getElementById('rs-hist-count').textContent=entries.length+' clientes';
+    if(!entries.length){wrap.style.display='block';tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin historial todavía</div>';return;}
+    wrap.style.display='block';
+    tb.innerHTML=entries.map(([key,v])=>{
+      const tel=(v.telefono||'').toString().replace(/\D/g,'');
+      return`<div class="table-row" style="grid-template-columns:1fr 130px 80px 80px;${v.dejada?'opacity:0.5':''}">
+      <span style="font-weight:500;${v.dejada?'text-decoration:line-through;color:var(--gris-dark)':''}">${v.nombre||key}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:12px">${v.telefono||'--'}</span>
+      <span style="text-align:center">${v.pedida?'<span style="color:#d97706;font-size:18px">✓</span>':'--'}</span>
+      <span style="text-align:center">${v.dejada?'<span style="color:var(--verde-claro);font-size:18px">✓</span>':'--'}</span>
+    </div>`;}).join('');
+  }catch(e){console.error(e);}
 }
 function resenasFiltrar(){
   const f=document.getElementById('rs-filtro').value;
