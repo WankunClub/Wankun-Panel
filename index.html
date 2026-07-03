@@ -548,6 +548,7 @@ function irA(p){
   const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','resenas':'Reseñas','envios':'Envíos','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
+  if(p==='resenas'){resenasCargarHistorial();}
 }
 
 document.getElementById('fecha-hoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
