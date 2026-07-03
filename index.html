@@ -1253,9 +1253,6 @@ function envFlexSetEstado(key,estado){try{const raw=localStorage.getItem('wankun
 function enviosFlexWaLink(tel,nombre){const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];const msg='Hola '+primer+' buen dia! Cuando llegue el momento de reponer el alimento para tu mascota, escribime en forma directa y lo coordinamos. Entregamos en el dia, el precio es mejor que en Mercado Libre y el alimento siempre va acompañado con snacks de Filan. Que tengas un gran dia! Saludos, Nacho.';return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
 async function enviosFlexCargar(){
   const fRows=await fetchCSV('Flex meli');
-  // DEBUG: ver columnas disponibles
-  if(fRows.length>0)console.log('Flex Meli columnas:', Object.keys(fRows[0]));
-  if(fRows.length>0)console.log('Flex Meli fila 1:', JSON.stringify(fRows[0]));
   const vistos={};
   const lista=[];
   fRows.forEach(r=>{
