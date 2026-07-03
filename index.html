@@ -432,7 +432,7 @@ Muchas gracias!</div>
       <div class="table-head" style="grid-template-columns:1fr 1fr 120px 90px 80px"><span>Cliente</span><span>Artículo</span><span>Telefono</span><span>Avisado</span><span>WA</span></div>
       <div class="table-body" id="env-flex-table" style="max-height:360px"></div>
     </div>
-    <div style="font-size:12px;color:var(--gris-dark);margin-top:12px">Mensaje: "Hola [Nombre]! Te saluda Nacho de Wankun Club. ¿Cómo está tu perrito? Te escribo porque debe estar por terminarse el alimento. ¿Te gustaría coordinar la reposición? Entregamos en el día y acompañamos el alimento con unos Snacks Naturales de Filan. Nuestro precio directo es mejor que Mercado Libre. Quedamos atentos a lo que pueda necesitar tu perrito, y vos por supuesto."</div>
+    <div style="font-size:12px;color:var(--gris-dark);margin-top:12px">Mensaje: "Hola [Nombre] buen dia! Cuando llegue el momento de reponer el alimento para tu mascota, escribime en forma directa y lo coordinamos. Entregamos en el dia, el precio es mejor que en Mercado Libre y el alimento siempre va acompañado con snacks de Filan. Que tengas un gran dia! Saludos, Nacho."</div>
   </div>
 </div>
 
@@ -1246,7 +1246,7 @@ const ENV_FLEX_KEY_PREFIX='flex:';
 function envFlexKey(tel,nombre){const t=(tel||'').toString().replace(/\D/g,'');return t?(ENV_FLEX_KEY_PREFIX+'tel:'+t):(ENV_FLEX_KEY_PREFIX+'nom:'+(nombre||'').trim().toLowerCase());}
 function envFlexGetEstado(key){try{const raw=localStorage.getItem('wankun_envios_flex');const map=raw?JSON.parse(raw):{};return map[key]||{avisado:false};}catch(e){return{avisado:false};}}
 function envFlexSetEstado(key,estado){try{const raw=localStorage.getItem('wankun_envios_flex');const map=raw?JSON.parse(raw):{};map[key]=estado;localStorage.setItem('wankun_envios_flex',JSON.stringify(map));}catch(e){console.error(e);}}
-function enviosFlexWaLink(tel,nombre){const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];const msg='Hola '+primer+'! Te saluda Nacho de Wankun Club.\n¿Cómo está tu perrito? Te escribo porque debe estar por terminarse el alimento.\n¿Te gustaría coordinar la reposición? Entregamos en el día y acompañamos el alimento con unos Snacks Naturales de Filan. Nuestro precio directo es mejor que Mercado Libre.\nQuedamos atentos a lo que pueda necesitar tu perrito, y vos por supuesto.';return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
+function enviosFlexWaLink(tel,nombre){const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];const msg='Hola '+primer+' buen dia! Cuando llegue el momento de reponer el alimento para tu mascota, escribime en forma directa y lo coordinamos. Entregamos en el dia, el precio es mejor que en Mercado Libre y el alimento siempre va acompañado con snacks de Filan. Que tengas un gran dia! Saludos, Nacho.';return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
 async function enviosFlexCargar(){
   const fRows=await fetchCSV('Flex meli');
   const vistos={};
