@@ -353,14 +353,14 @@ Vamos Argentina!</div>
 <!-- RESEÑAS -->
 <div class="page" id="page-resenas">
   <div class="metrics-grid" id="rs-metrics">
-    <div class="metric"><div class="metric-label">Clientes</div><div class="metric-value" id="rs-m-total">0</div></div>
+    <div class="metric"><div class="metric-label">Compraron hoy</div><div class="metric-value" id="rs-m-total">0</div></div>
     <div class="metric"><div class="metric-label">Pedidas</div><div class="metric-value" id="rs-m-pedidas">0</div></div>
     <div class="metric"><div class="metric-label">Dejadas</div><div class="metric-value" style="color:var(--verde-claro)" id="rs-m-dejadas">0</div></div>
     <div class="metric"><div class="metric-label">Pendientes</div><div class="metric-value" style="color:#856404" id="rs-m-pendientes">0</div></div>
   </div>
   <div class="card" style="margin-bottom:16px">
     <div class="results-header">
-      <div class="card-title" style="margin:0">Pedido de reseñas en Google</div>
+      <div class="card-title" style="margin:0">Pedido de reseñas — compraron hoy</div>
       <div class="btn-row">
         <div class="filtro-group"><label>Estado</label><select id="rs-filtro" onchange="resenasFiltrar()"><option value="todos">Todos</option><option value="pendiente">Sin pedir</option><option value="pedida">Pedida, sin dejar</option><option value="dejada">Ya dejada</option></select></div>
         <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500;align-self:flex-end" id="rs-count">0</span>
@@ -368,7 +368,7 @@ Vamos Argentina!</div>
       </div>
     </div>
     <div class="table-wrap" id="rs-wrap" style="display:none;margin-top:12px">
-      <div class="table-head" style="grid-template-columns:1fr 120px 90px 90px 80px"><span>Cliente</span><span>Telefono</span><span>Pedida</span><span>Dejada</span><span>WA</span></div>
+      <div class="table-head" style="grid-template-columns:1fr 1fr 120px 90px 90px 80px"><span>Cliente</span><span>Artículo</span><span>Telefono</span><span>Pedida</span><span>Dejada</span><span>WA</span></div>
       <div class="table-body" id="rs-table" style="max-height:420px"></div>
     </div>
   </div>
@@ -380,7 +380,7 @@ Nos ayudarias muchisimo si nos dejas una reseña en Google contandonos que te pa
 https://g.page/r/CWpl5hrUBgqFEBM/review
 
 Muchas gracias!</div>
-    <div style="font-size:12px;color:var(--gris-dark);margin-top:8px">Nota: el estado de pedida/dejada se guarda en este navegador. Si abrís el panel desde otro dispositivo, no se va a ver el mismo check.</div>
+    <div style="font-size:12px;color:var(--gris-dark);margin-top:8px">Nota: muestra solo clientes que compraron <strong>hoy</strong> por canal directo (Ventas), deduplicados por cliente. El estado pedida/dejada se guarda en este navegador y persiste entre días — si mañana ese mismo cliente compra de nuevo, ya vas a ver su estado anterior.</div>
   </div>
 </div>
 
@@ -1065,16 +1065,20 @@ function rsKey(tel,nombre){const t=(tel||'').toString().replace(/\D/g,'');return
 function rsGetEstado(key){try{const raw=localStorage.getItem('wankun_resenas');const map=raw?JSON.parse(raw):{};return map[key]||{pedida:false,dejada:false};}catch(e){return{pedida:false,dejada:false};}}
 function rsSetEstado(key,estado){try{const raw=localStorage.getItem('wankun_resenas');const map=raw?JSON.parse(raw):{};map[key]=estado;localStorage.setItem('wankun_resenas',JSON.stringify(map));}catch(e){console.error(e);}}
 function resenasWaLink(tel,nombre){const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];const msg='Hola '+primer+'! Te saluda Nacho de Wankun Club 🐾\n\nNos ayudarias muchisimo si nos dejas una resena en Google contandonos que te parecio el servicio. Te dejo este link, es cortito:\n'+RS_LINK+'\n\nMuchas gracias!';return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
+function rsEsHoy(fechaStr){const f=parseFecha(fechaStr);if(!f)return false;const h=new Date();return f.getFullYear()===h.getFullYear()&&f.getMonth()===h.getMonth()&&f.getDate()===h.getDate();}
 async function resenasCargar(){
   const vRows=await fetchCSV('Ventas');
   const vistos={};
   const lista=[];
   vRows.forEach(r=>{
+    const fecha=r['FECHA']||r['Fecha']||'';
+    if(!rsEsHoy(fecha))return;
     const nombre=(r['CLIENTE']||r['Cliente']||'').trim();if(!nombre)return;
     const tel=(getCol(r,'TELEFONO','Telefono','Celular')||'').toString().trim();
+    const articulo=getCol(r,'ARTICULO','Articulo','Artículo')||'';
     const key=rsKey(tel,nombre);
     if(vistos[key])return;vistos[key]=true;
-    lista.push({nombre,telefono:tel});
+    lista.push({nombre,telefono:tel,articulo});
   });
   lista.sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
   resenasData=lista.map(c=>{const key=rsKey(c.telefono,c.nombre);const est=rsGetEstado(key);return{...c,key,pedida:est.pedida,dejada:est.dejada};});
@@ -1109,14 +1113,20 @@ function resenasFiltrar(){
   });
   document.getElementById('rs-count').textContent=lista.length+' clientes';
   const tb=document.getElementById('rs-table');
-  if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin resultados</div>';resenasMetricas();return;}
-  tb.innerHTML=lista.map(c=>`<div class="table-row" style="grid-template-columns:1fr 120px 90px 90px 80px">
-    <span style="font-weight:500">${c.nombre}</span>
+  if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin compras hoy o sin resultados</div>';resenasMetricas();return;}
+  tb.innerHTML=lista.map(c=>{
+    const done=c.dejada;
+    const asked=c.pedida&&!c.dejada;
+    const rowStyle=done?'opacity:0.45;':'asked'===''?'':'';
+    const nameStyle=done?'text-decoration:line-through;color:var(--gris-dark)':asked?'color:var(--gris-dark)':'font-weight:500';
+    return `<div class="table-row" style="grid-template-columns:1fr 1fr 120px 90px 90px 80px;${done?'opacity:0.45;':''}">
+    <span style="${nameStyle}">${c.nombre}${asked?' <span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:8px;font-weight:500">pedida</span>':''}</span>
+    <span style="font-size:12px;color:var(--gris-dark)">${c.articulo||'--'}</span>
     <span style="font-family:'DM Mono',monospace;font-size:12px">${c.telefono||'--'}</span>
     <span style="text-align:center"><input type="checkbox" ${c.pedida?'checked':''} onchange="resenasToggle('${c.key}','pedida')" style="width:18px;height:18px;cursor:pointer"></span>
     <span style="text-align:center"><input type="checkbox" ${c.dejada?'checked':''} onchange="resenasToggle('${c.key}','dejada')" style="width:18px;height:18px;cursor:pointer"></span>
     ${c.telefono?`<a class="wa-link" href="${resenasWaLink(c.telefono,c.nombre)}" target="_blank" onclick="event.stopPropagation();resenasMarcarPedida('${c.key}')">WA</a>`:'<span style="color:var(--gris-dark);font-size:12px">--</span>'}
-  </div>`).join('');
+  </div>`;}).join('');
   resenasMetricas();
 }
 
