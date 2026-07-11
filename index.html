@@ -955,10 +955,13 @@ function clVerFicha(nombre){
   if(!registros.length)return;
   const tel=registros.find(r=>r.telefono)?.telefono||'';
   const loc=registros[0].localidad||'';
+  const dir=(registros.find(r=>r.fuente==='Flex Meli'&&r.direccion)||registros.find(r=>r.direccion))?.direccion||'';
   const compras=registros.filter(r=>r.fecha).sort((a,b)=>{const fa=parseFecha(a.fecha),fb=parseFecha(b.fecha);return fb&&fa?fb-fa:0;});
   const totalFac=registros.reduce((s,r)=>s+(r.fac||0),0);
   const totalKg=registros.reduce((s,r)=>s+(r.kg||0),0);
   const fechas=compras.map(r=>parseFecha(r.fecha)).filter(f=>f&&!isNaN(f)).sort((a,b)=>a-b);
+
+  // Frecuencia
   let frecuencia=null;
   if(fechas.length>=2){
     const diffs=[];
@@ -970,44 +973,80 @@ function clVerFicha(nombre){
   const proxDias=frecuencia&&diasDesde!==null?frecuencia-diasDesde:null;
   const proxColor=proxDias===null?'var(--gris-dark)':proxDias<0?'#c0392b':proxDias<=5?'#856404':'var(--verde)';
   const proxLabel=proxDias===null?'Sin datos':proxDias<0?`Vencio hace ${Math.abs(proxDias)}d`:proxDias===0?'Hoy':`En ${proxDias} dias`;
+
+  // Producto mas comprado
+  const prodCount={};
+  compras.forEach(c=>{if(c.articulo){prodCount[c.articulo]=(prodCount[c.articulo]||0)+1;}});
+  const prodTop=Object.entries(prodCount).sort((a,b)=>b[1]-a[1])[0];
+  const prodHabitual=prodTop?prodTop[0]:'--';
+
+  // Ultimo producto
+  const ultimoProd=compras[0]?.articulo||'--';
+
+  const waMsg=tel?`https://wa.me/54${tel.toString().replace(/\D/g,'')}?text=${encodeURIComponent('Hola '+(nombre.split(' ')[0])+', cómo está tu perrito? Te escribo porque debe estar por terminarse el alimento. ¿Te gustaría que coordinemos la reposición? Entregamos en el día y como siempre van los snacks de Filan.')}`:null;
+
   const modal=document.createElement('div');
   modal.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  modal.innerHTML=`<div style="background:#fff;border-radius:16px;padding:24px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+  modal.innerHTML=`<div style="background:#fff;border-radius:16px;padding:24px;max-width:660px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
-      <div><div style="font-size:20px;font-weight:700">${nombre}</div><div style="font-size:13px;color:var(--gris-dark);margin-top:4px">${loc} <span class="${esLocal(loc)?'local-tag':'fuera-tag'}">${esLocal(loc)?'local':'fuera'}</span></div></div>
-      <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--gris-dark)">x</button>
+      <div>
+        <div style="font-size:22px;font-weight:700">${nombre}</div>
+        <div style="font-size:13px;color:var(--gris-dark);margin-top:4px">${loc} <span class="${esLocal(loc)?'local-tag':'fuera-tag'}">${esLocal(loc)?'local':'fuera'}</span></div>
+      </div>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--gris-dark)">×</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;grid-template-rows:auto auto">
-      <div style="background:var(--gris);border-radius:8px;padding:12px">
-        <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:4px">Telefono</div>
-        <div style="font-family:'DM Mono',monospace;font-size:13px">${tel||'Sin telefono'}</div>
-        ${tel?`<a class="wa-link" style="margin-top:8px;display:inline-block" href="${waLink(tel,nombre)}" target="_blank">Enviar WA sorteo</a>`:''}
+
+    <!-- Metricas principales -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+      <div style="background:var(--verde-bg);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:var(--verde)">${registros.length}</div>
+        <div style="font-size:11px;color:var(--verde);font-weight:500">Compras</div>
       </div>
-      <div style="background:var(--gris);border-radius:8px;padding:12px">
-        <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:4px">ID Cliente</div>
-        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--azul-med)">${registros.find(r=>r.id)?.id||'Sin ID'}</div>
-        ${registros.find(r=>r.id)?`<button onclick="navigator.clipboard.writeText('${registros.find(r=>r.id)?.id||''}');this.textContent='Copiado!';setTimeout(()=>this.textContent='Copiar ID',1500)" style="margin-top:8px;font-size:11px;padding:4px 10px;border-radius:6px;background:#dbeafe;color:#1d4ed8;border:none;cursor:pointer;font-weight:600">Copiar ID</button>`:''}
+      <div style="background:#dbeafe;border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:18px;font-weight:700;color:#1d4ed8">${totalFac>0?'$'+(totalFac/1000).toFixed(0)+'K':'--'}</div>
+        <div style="font-size:11px;color:#1d4ed8;font-weight:500">Facturado</div>
       </div>
-      <div style="background:var(--gris);border-radius:8px;padding:12px;grid-column:span 2">
-        <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:4px">Direccion</div>
-        <div style="font-size:13px">${(registros.find(r=>r.fuente==='Flex Meli'&&r.direccion)||registros.find(r=>r.direccion))?.direccion||'Sin direccion registrada'}</div>
+      <div style="background:#f3e8ff;border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:18px;font-weight:700;color:#7c3aed">${totalKg>0?totalKg+'kg':'--'}</div>
+        <div style="font-size:11px;color:#7c3aed;font-weight:500">Kg totales</div>
       </div>
-      <div style="background:var(--gris);border-radius:8px;padding:12px">
-        <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:4px">Proxima recompra</div>
-        <div style="font-size:15px;font-weight:600;color:${proxColor}">${proxLabel}</div>
-        <div style="font-size:11px;color:var(--gris-dark);margin-top:2px">${frecuencia?'Frecuencia: '+frecuencia+'d':'Frecuencia: --'}</div>
+      <div style="background:${proxDias!==null&&proxDias<0?'#ffe5e5':proxDias!==null&&proxDias<=5?'#fff3cd':'var(--gris)'};border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:16px;font-weight:700;color:${proxColor}">${proxLabel}</div>
+        <div style="font-size:11px;color:var(--gris-dark);font-weight:500">Próxima compra</div>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
-      <div style="background:var(--verde-bg);border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--verde)">${registros.length}</div><div style="font-size:11px;color:var(--verde)">Compras</div></div>
-      <div style="background:#dbeafe;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:700;color:#1d4ed8">${totalFac>0?'$'+(totalFac/1000).toFixed(0)+'K':'--'}</div><div style="font-size:11px;color:#1d4ed8">Facturacion total</div></div>
-      <div style="background:#f3e8ff;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:700;color:#7c3aed">${totalKg>0?totalKg+'kg':'--'}</div><div style="font-size:11px;color:#7c3aed">Kilos totales</div></div>
+
+    <!-- Datos de contacto y producto -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <div style="background:var(--gris);border-radius:8px;padding:14px">
+        <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:6px">Teléfono</div>
+        <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600">${tel||'Sin teléfono'}</div>
+        ${waMsg?`<a href="${waMsg}" target="_blank" style="display:inline-block;margin-top:8px;font-size:11px;padding:5px 12px;border-radius:6px;background:var(--verde-bg);color:var(--verde);font-weight:600;text-decoration:none">WA Reposición 🐾</a>`:''}
+      </div>
+      <div style="background:var(--gris);border-radius:8px;padding:14px">
+        <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:6px">Frecuencia de compra</div>
+        <div style="font-size:20px;font-weight:700;color:var(--azul-med)">${frecuencia?frecuencia+' días':'Sin datos'}</div>
+        <div style="font-size:11px;color:var(--gris-dark);margin-top:2px">${ultima?'Última: '+ultima.toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'2-digit'}):''}</div>
+      </div>
+      <div style="background:var(--gris);border-radius:8px;padding:14px">
+        <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:6px">Producto habitual</div>
+        <div style="font-size:13px;font-weight:600">${prodHabitual}</div>
+        ${prodHabitual!==ultimoProd?`<div style="font-size:11px;color:var(--gris-dark);margin-top:4px">Último: ${ultimoProd}</div>`:''}
+      </div>
+      <div style="background:var(--gris);border-radius:8px;padding:14px">
+        <div style="font-size:11px;color:var(--gris-dark);font-weight:600;text-transform:uppercase;margin-bottom:6px">Dirección</div>
+        <div style="font-size:12px">${dir||'Sin dirección'}</div>
+      </div>
     </div>
+
+    <!-- Historial -->
     <div style="font-size:13px;font-weight:600;margin-bottom:10px">Historial de compras</div>
     <div style="border:1px solid var(--gris-med);border-radius:8px;overflow:hidden">
-      <div style="display:grid;grid-template-columns:90px 1fr 60px 80px;padding:8px 12px;background:var(--gris);font-size:11px;font-weight:600;color:var(--gris-dark);text-transform:uppercase"><span>Fecha</span><span>Producto</span><span>Kg</span><span>Monto</span></div>
-      ${compras.length?compras.map(c=>{const f=parseFecha(c.fecha);return`<div style="display:grid;grid-template-columns:90px 1fr 60px 80px;padding:8px 12px;border-top:1px solid var(--gris-med);font-size:12px;align-items:center"><span style="font-family:'DM Mono',monospace">${f?f.toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'2-digit'}):c.fecha}</span><span>${c.articulo||'--'}</span><span>${c.kg||'--'}</span><span style="font-weight:500">${c.fac?'$'+(c.fac/1000).toFixed(0)+'K':'--'}</span></div>`;}).join(''):'<div style="padding:16px;text-align:center;color:var(--gris-dark)">Sin historial detallado</div>'}
+      <div style="display:grid;grid-template-columns:90px 1fr 60px 80px;padding:8px 12px;background:var(--gris);font-size:11px;font-weight:600;color:var(--gris-dark);text-transform:uppercase">
+        <span>Fecha</span><span>Producto</span><span>Kg</span><span>Monto</span>
+      </div>
+      ${compras.length?compras.map((c,i)=>{const f=parseFecha(c.fecha);return`<div style="display:grid;grid-template-columns:90px 1fr 60px 80px;padding:8px 12px;border-top:1px solid var(--gris-med);font-size:12px;align-items:center;background:${i%2===0?'var(--gris)':'#fff'}"><span style="font-family:'DM Mono',monospace">${f?f.toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'2-digit'}):c.fecha}</span><span>${c.articulo||'--'}</span><span>${c.kg||'--'}</span><span style="font-weight:500">${c.fac?'$'+(c.fac/1000).toFixed(0)+'K':'--'}</span></div>`;}).join(''):'<div style="padding:16px;text-align:center;color:var(--gris-dark)">Sin historial</div>'}
     </div>
   </div>`;
   document.body.appendChild(modal);
