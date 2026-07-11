@@ -1341,7 +1341,7 @@ function waLinkCamino(tel,nombre){const num=tel.toString().replace(/\D/g,'');con
 function avMostrarEntregasHoy(){
   const hoy=new Date();hoy.setHours(0,0,0,0);
   const lista=avTodos.filter(function(c){if(c.fuente!=='Flex Meli')return false;if(!c.ultima)return false;const f=new Date(c.ultima);f.setHours(0,0,0,0);return f.getTime()===hoy.getTime();});
-  const tb=document.getElementById('av-entregas-hoy');
+  const tb=document.getElementById('av-entregas-hoy');if(!tb)return;
   if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin entregas hoy</div>';return;}
   tb.innerHTML=lista.map(function(c){const tel=c.telefono||'';const waBtn=tel?'<a class="wa-link" href="'+waLinkCamino(tel,c.nombre)+'" target="_blank">WA 🚚</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';return '<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span><span style="font-size:12px;color:var(--gris-dark)">'+(c.ultimoProd||'--')+'</span>'+waBtn+'</div>';}).join('');
 }
@@ -1351,7 +1351,7 @@ function avWaLinkAyer(tel,nombre){const num=tel.toString().replace(/\D/g,'');con
 function avMostrarReactivar(){
   const hoy=new Date();hoy.setHours(0,0,0,0);
   const lista=avTodos.filter(function(c){if(c.fuente!=='Directa')return false;if(!c.ultima)return false;var f=new Date(c.ultima);f.setHours(0,0,0,0);var dias=Math.round((hoy-f)/(1000*60*60*24));return dias>=90&&dias<=150;}).sort(function(a,b){return(b.dias||0)-(a.dias||0);});
-  const tb=document.getElementById('av-reactivar');
+  const tb=document.getElementById('av-reactivar');if(!tb)return;
   if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin clientes en este rango</div>';return;}
   tb.innerHTML=lista.map(function(c){const tel=c.telefono||'';const hoyD=new Date();hoyD.setHours(0,0,0,0);const ult=new Date(c.ultima);ult.setHours(0,0,0,0);const dias=Math.round((hoyD-ult)/(1000*60*60*24));const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,c.nombre,c.ultimoProd)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';return '<div class="table-row" style="grid-template-columns:1fr 130px 60px 80px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span><span style="font-size:12px;color:#9333ea;font-weight:600">'+dias+'d</span>'+waBtn+'</div>';}).join('');
 }
@@ -1373,7 +1373,7 @@ function avMostrarVentasHoy(){
 function avMostrarAyer(){
   const hoy=new Date();hoy.setHours(0,0,0,0);const ayer=new Date(hoy);ayer.setDate(ayer.getDate()-1);
   const lista=avTodos.filter(function(c){if(c.fuente!=='Flex Meli')return false;if(!c.ultima)return false;var f=new Date(c.ultima);f.setHours(0,0,0,0);return f.getTime()===ayer.getTime();});
-  const tb=document.getElementById('av-ayer');
+  const tb=document.getElementById('av-ayer');if(!tb)return;
   if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin compras de ayer</div>';return;}
   tb.innerHTML=lista.map(function(c){const tel=c.telefono||'';const waBtn=tel?'<a class="wa-link" href="'+avWaLinkAyer(tel,c.nombre)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';return '<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span><span style="font-size:12px;color:var(--gris-dark)">'+(c.ultimoProd||'--')+'</span>'+waBtn+'</div>';}).join('');
 }
@@ -1395,7 +1395,7 @@ function avFiltrar(){
     return true;
   });
   document.getElementById('av-count').textContent=avFiltered.length+' clientes';
-  const tb=document.getElementById('av-table');
+  const tb=document.getElementById('av-table');if(!tb)return;
   if(!avFiltered.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin resultados</div>';return;}
   tb.innerHTML=avFiltered.slice(0,500).map(c=>{
     const tel=c.telefono||clData.find(x=>(x.nombre||'').toLowerCase().startsWith((c.nombre||'').toLowerCase().split(' ')[0])&&x.telefono)?.telefono||'';
