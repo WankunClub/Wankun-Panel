@@ -1439,7 +1439,7 @@ function avFiltrar(){
 
 function avWaLink(tel,nombre,prod){
   const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];
-  const msg=['Hola '+primer+'! Te saluda Nacho de Wankun Club.','¿Cómo está tu perrito? Te escribo porque debe estar por terminarse el alimento.','Si querés te coordino una reposición para hoy mismo — entregamos en el día y te mandamos unos Snacks de Filan de regalo.','¿Te viene bien?'].join('\n');
+  const msg='Hola '+primer+', cómo está tu perrito? Te escribo porque debe estar por terminarse el alimento. ¿Te gustaría que coordinemos la reposición? Entregamos en el día y como siempre van los snacks de Filan.';
   return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);
 }
 
