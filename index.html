@@ -514,9 +514,31 @@ Vamos Argentina!</div>
       <button class="btn btn-primary" onclick="skReg('ing')" style="width:100%">Registrar ingreso</button>
     </div>
 
-    <!-- Ventas -->
+    <!-- WC automatico -->
+    <div class="card" style="border-top:3px solid var(--verde)">
+      <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Ventas WC <span style="font-size:11px;font-weight:400;color:var(--gris-dark);margin-left:6px">— desde Google Sheets</span></div>
+      <p style="font-size:12px;color:var(--gris-dark);margin-bottom:14px">Se sincronizan automáticamente desde tu planilla de ventas.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Desde</label>
+          <input id="sk-wc-desde" type="date" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Hasta</label>
+          <input id="sk-wc-hasta" type="date" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="skSincWC()" style="width:100%;margin-bottom:10px">Sincronizar ventas WC</button>
+      <div id="sk-wc-status" style="font-size:12px;color:var(--gris-dark)"></div>
+      <div id="sk-wc-noMatch" style="display:none;margin-top:10px">
+        <p style="font-size:12px;color:#856404;font-weight:500;margin-bottom:6px">Sin match de SKU (no afectan el stock):</p>
+        <div id="sk-wc-noMatchList" style="font-size:11px;color:var(--gris-dark);max-height:120px;overflow-y:auto"></div>
+      </div>
+    </div>
+
+    <!-- Meli manual -->
     <div class="card" style="border-top:3px solid var(--azul-med)">
-      <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Registrar venta</div>
+      <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Venta Meli <span style="font-size:11px;font-weight:400;color:var(--gris-dark);margin-left:6px">— carga manual</span></div>
       <div style="position:relative;margin-bottom:10px">
         <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Producto</label>
         <input id="sk-vta-q" type="text" placeholder="Nombre o SKU..." oninput="skAc('vta')" autocomplete="off"
@@ -524,14 +546,7 @@ Vamos Argentina!</div>
         <div id="sk-vta-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--gris-med);border-radius:8px;z-index:100;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);margin-top:2px"></div>
       </div>
       <div id="sk-vta-tag" style="min-height:22px;margin-bottom:10px"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
-        <div>
-          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Canal</label>
-          <select id="sk-vta-canal" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-            <option value="wc">WC</option>
-            <option value="meli">Meli</option>
-          </select>
-        </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div>
           <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Cantidad</label>
           <input id="sk-vta-n" type="number" min="1" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
@@ -541,7 +556,7 @@ Vamos Argentina!</div>
           <input id="sk-vta-d" type="date" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
         </div>
       </div>
-      <button class="btn btn-primary" onclick="skReg('vta')" style="width:100%;background:var(--azul-med);border-color:var(--azul-med)">Registrar venta</button>
+      <button class="btn btn-primary" onclick="skReg('vta')" style="width:100%;background:var(--azul-med);border-color:var(--azul-med)">Registrar venta Meli</button>
     </div>
   </div>
 
@@ -1603,8 +1618,12 @@ var skMovs=[];
 
 function skLoad(){try{var r=localStorage.getItem('wankun_stock');if(r)skMovs=JSON.parse(r);}catch(e){skMovs=[];}
   var hoy=new Date().toISOString().slice(0,10);
+  var hace30=new Date();hace30.setDate(hace30.getDate()-30);
+  var h30=hace30.toISOString().slice(0,10);
   var di=document.getElementById('sk-ing-d'),dv=document.getElementById('sk-vta-d');
   if(di)di.value=hoy;if(dv)dv.value=hoy;
+  var wd=document.getElementById('sk-wc-desde'),wh=document.getElementById('sk-wc-hasta');
+  if(wd)wd.value=h30;if(wh)wh.value=hoy;
 }
 
 function skSave(){try{localStorage.setItem('wankun_stock',JSON.stringify(skMovs));}catch(e){}}
@@ -1633,7 +1652,7 @@ function skReg(pfx){
   var n=parseInt((document.getElementById('sk-'+pfx+'-n')||{}).value||'0');
   if(n<1){alert('Ingresá una cantidad');return;}
   var d=(document.getElementById('sk-'+pfx+'-d')||{}).value||new Date().toISOString().slice(0,10);
-  var canal=pfx==='ing'?'ing':(document.getElementById('sk-vta-canal')||{}).value||'wc';
+  var canal=pfx==='ing'?'ing':'meli';
   skMovs.push({type:canal==='ing'?'ing':'vta',canal:canal,sku:p.sku,nombre:p.nombre,kg:p.kg,qty:n,date:d,ts:Date.now()});
   skSave();
   document.getElementById('sk-'+pfx+'-q').value='';
@@ -1698,6 +1717,84 @@ function skRenderTabla(){
   }).join('');
 
   skRenderMetricas();
+}
+
+
+function skSincWC(){
+  var desde=document.getElementById('sk-wc-desde').value;
+  var hasta=document.getElementById('sk-wc-hasta').value;
+  var st=document.getElementById('sk-wc-status');
+  st.textContent='Cargando ventas...';st.style.color='var(--azul-med)';
+  fetchCSV('Ventas').then(function(rows){
+    // Eliminar ventas WC previas del rango para no duplicar
+    if(desde||hasta){
+      skMovs=skMovs.filter(function(m){
+        if(m.canal!=='wc')return true;
+        if(desde&&m.date<desde)return true;
+        if(hasta&&m.date>hasta)return true;
+        return false;
+      });
+    } else {
+      skMovs=skMovs.filter(function(m){return m.canal!=='wc';});
+    }
+    var matched=0,noMatch=[];
+    rows.forEach(function(r){
+      var fecha=r['FECHA']||r['Fecha']||'';
+      var fParsed=parseFecha(fecha);
+      if(!fParsed)return;
+      var fStr=fParsed.getFullYear()+'-'+String(fParsed.getMonth()+1).padStart(2,'0')+'-'+String(fParsed.getDate()).padStart(2,'0');
+      if(desde&&fStr<desde)return;
+      if(hasta&&fStr>hasta)return;
+      var marca=(r['Marca']||r['marca']||'').trim().toLowerCase();
+      var prod=(r['producto']||r['Producto']||'').trim().toLowerCase();
+      var kg=parseFloat((r['kg']||'0').toString().replace(',','.'))||0;
+      if(!prod&&!marca)return;
+      // Buscar match en SKU_PRODUCTS por kg + palabras clave del producto
+      var p=skMatchProduct(marca,prod,kg);
+      if(p){
+        skMovs.push({type:'vta',canal:'wc',sku:p.sku,nombre:p.nombre,kg:p.kg,qty:1,date:fStr,ts:Date.now()});
+        matched++;
+      } else {
+        noMatch.push((marca?marca+' - ':'')+prod+(kg?' ('+kg+'kg)':''));
+      }
+    });
+    skSave();
+    st.textContent=matched+' ventas sincronizadas.';st.style.color='var(--verde)';
+    var nmDiv=document.getElementById('sk-wc-noMatch');
+    var nmList=document.getElementById('sk-wc-noMatchList');
+    if(noMatch.length){
+      nmDiv.style.display='block';
+      // Deduplicar
+      var uniq=[...new Set(noMatch)];
+      nmList.innerHTML=uniq.map(function(x){return'<div style="padding:2px 0;border-bottom:1px solid #f0f0f0">'+x+'</div>';}).join('');
+    } else {
+      nmDiv.style.display='none';
+    }
+    skRenderTabla();skRenderMetricas();
+  }).catch(function(e){st.textContent='Error: '+e.message;st.style.color='#c0392b';});
+}
+
+function skMatchProduct(marca,prod,kg){
+  // Normalizar texto para comparar
+  function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').trim();}
+  var mn=norm(marca),pn=norm(prod);
+  var combined=mn+' '+pn;
+  var best=null,bestScore=0;
+  SK_PRODUCTS.forEach(function(p){
+    var pnorm=norm(p.nombre);
+    var score=0;
+    // Match exacto de kg: peso doble
+    if(kg>0&&Math.abs(p.kg-kg)<0.1)score+=4;
+    // Palabras del nombre del producto que aparecen en el SKU name
+    var words=pnorm.split(' ').filter(function(w){return w.length>3;});
+    words.forEach(function(w){if(combined.indexOf(w)>=0)score+=2;});
+    // Palabras inversas: palabras del SKU name en el producto
+    var skuWords=pnorm.split(' ').filter(function(w){return w.length>3;});
+    skuWords.forEach(function(w){if(combined.indexOf(w)>=0)score+=1;});
+    if(score>bestScore){bestScore=score;best=p;}
+  });
+  // Umbral mínimo: al menos kg match + 1 palabra, o 3 palabras sin kg
+  return bestScore>=5?best:null;
 }
 
 function skBorrarTodo(){if(confirm('¿Borrar todos los movimientos de stock?')){skMovs=[];skSave();skRenderTabla();skRenderMetricas();}}
