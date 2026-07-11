@@ -1318,7 +1318,7 @@ async function avConectar(){
     avTodos.sort((a,b)=>(a.prox!==null?a.prox:999)-(b.prox!==null?b.prox:999));
     st.className='conn-status conn-ok';st.textContent=avTodos.length+' clientes';
     document.getElementById('av-panel').style.display='block';
-    avMetricas();avMostrarHoy();avMostrarManana();avMostrarStockProx();avMostrarVentasHoy();avMostrarReactivar();avMostrarEntregasHoy();avMostrarAyer();avFiltrar();avProyeccion();
+    avMetricas();avMostrarHoy();avMostrarManana();avMostrarStockProx();avMostrarVentasHoy();avProyeccion();
   }catch(e){st.className='conn-status conn-err';st.textContent='Error: '+e.message;console.error(e);}
 }
 
