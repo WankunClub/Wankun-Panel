@@ -128,6 +128,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="nav-section">Marketing</div>
     <div class="nav-item" onclick="irA('marketing')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 5.61 5.61l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Agente Marketing</div>
     <div class="nav-section">Sistema</div>
+    <div class="nav-item" onclick="irA('stock')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>Stock</div>
     <div class="nav-item" onclick="irA('roadmap')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Roadmap</div>
   </nav>
   <div class="sidebar-footer">v2.2 - Junio 2026</div>
@@ -481,6 +482,94 @@ Vamos Argentina!</div>
   </div>
 </div>
 
+<!-- STOCK -->
+<div class="page" id="page-stock">
+  <div class="metrics-grid" id="sk-metrics">
+    <div class="metric"><div class="metric-label">Con stock</div><div class="metric-value" id="sk-m-con">—</div></div>
+    <div class="metric"><div class="metric-label">Sin stock</div><div class="metric-value" id="sk-m-sin">—</div></div>
+    <div class="metric"><div class="metric-label">Mov. hoy</div><div class="metric-value" id="sk-m-hoy">—</div></div>
+  </div>
+
+  <div class="card-grid" style="margin-bottom:16px">
+    <!-- Ingreso -->
+    <div class="card" style="border-top:3px solid var(--verde)">
+      <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Ingreso de mercadería</div>
+      <div style="position:relative;margin-bottom:10px">
+        <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Producto</label>
+        <input id="sk-ing-q" type="text" placeholder="Nombre o SKU..." oninput="skAc('ing')" autocomplete="off"
+          style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+        <div id="sk-ing-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--gris-med);border-radius:8px;z-index:100;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);margin-top:2px"></div>
+      </div>
+      <div id="sk-ing-tag" style="min-height:22px;margin-bottom:10px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Cantidad</label>
+          <input id="sk-ing-n" type="number" min="1" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Fecha</label>
+          <input id="sk-ing-d" type="date" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="skReg('ing')" style="width:100%">Registrar ingreso</button>
+    </div>
+
+    <!-- Ventas -->
+    <div class="card" style="border-top:3px solid var(--azul-med)">
+      <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Registrar venta</div>
+      <div style="position:relative;margin-bottom:10px">
+        <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Producto</label>
+        <input id="sk-vta-q" type="text" placeholder="Nombre o SKU..." oninput="skAc('vta')" autocomplete="off"
+          style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+        <div id="sk-vta-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--gris-med);border-radius:8px;z-index:100;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);margin-top:2px"></div>
+      </div>
+      <div id="sk-vta-tag" style="min-height:22px;margin-bottom:10px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Canal</label>
+          <select id="sk-vta-canal" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+            <option value="wc">WC</option>
+            <option value="meli">Meli</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Cantidad</label>
+          <input id="sk-vta-n" type="number" min="1" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Fecha</label>
+          <input id="sk-vta-d" type="date" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="skReg('vta')" style="width:100%;background:var(--azul-med);border-color:var(--azul-med)">Registrar venta</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div class="card-title" style="margin:0">Stock actual</div>
+      <div class="btn-row">
+        <input id="sk-filtro" type="text" placeholder="Filtrar..." oninput="skRenderTabla()"
+          style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;width:160px">
+        <select id="sk-estado" onchange="skRenderTabla()" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+          <option value="">Todos</option>
+          <option value="1">Con stock</option>
+          <option value="0">Sin stock</option>
+        </select>
+        <button class="btn" onclick="skBorrarTodo()" style="color:#c0392b;font-size:12px">Borrar todo</button>
+      </div>
+    </div>
+    <div id="sk-recientes" style="margin-bottom:12px"></div>
+    <div class="table-wrap">
+      <div class="table-head" style="grid-template-columns:2fr 1fr 60px 80px 80px 80px 80px">
+        <span>Producto</span><span>SKU</span><span>Kg</span><span>Ingr.</span><span>V.WC</span><span>V.Meli</span><span>Stock</span>
+      </div>
+      <div class="table-body" id="sk-tabla" style="max-height:500px"></div>
+    </div>
+  </div>
+</div>
+
+
 <!-- ROADMAP -->
 <div class="page" id="page-roadmap">
   <div class="card">
@@ -527,7 +616,7 @@ function irA(p){
   const el=document.getElementById('page-'+p);
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
-  const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','resenas':'Reseñas','envios':'Envíos','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap'};
+  const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','resenas':'Reseñas','envios':'Envíos','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','stock':'Control de Stock'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
   if(p==='resenas'){resenasCargarHistorial();}
@@ -1505,6 +1594,124 @@ function mktTyping(show){
 function mktQuick(t){document.getElementById('mkt-input').value=t;mktSend();}
 function mktKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();mktSend();}}
 function mktResize(el){el.style.height='40px';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+
+// ── STOCK ─────────────────────────────────────────────────────────────────────
+const SK_PRODUCTS=[{"nombre":"PRO PLAN KITTEN PROTECTION","sku":"PPCATKITT1","kg":1},{"nombre":"PRO PLAN KITTEN PROTECTION","sku":"PPCATKITT3","kg":3},{"nombre":"PRO PLAN GATO ADULTO","sku":"PPCATADU3","kg":3},{"nombre":"PRO PLAN GATO ADULTO","sku":"PPCATADU75","kg":7.5},{"nombre":"PRO PLAN ADULT CAT 7+","sku":"PPCATADU+775","kg":7.5},{"nombre":"PRO PLAN URINARY CAT","sku":"PPCATURI75","kg":7.5},{"nombre":"PRO PLAN STERILIZED CAT","sku":"PPCATSTER3","kg":3},{"nombre":"EXCELLENT GATO KITTEN","sku":"EXCCATKITT75","kg":7.5},{"nombre":"EXCELLENT GATO ADULTO","sku":"EXCCATADU3","kg":3},{"nombre":"EXCELLENT GATO ADULTO","sku":"EXCCATADU75","kg":7.5},{"nombre":"EXCELLENT GATO ADULTO","sku":"EXCCATADU15","kg":15},{"nombre":"EXCELLENT GATO STERELIZED","sku":"EXCECATSTERE7","kg":7.5},{"nombre":"EXCELLENT URINARY CAT","sku":"EXCCATURINARY7","kg":7.5},{"nombre":"FAWNA ADULT CAT","sku":"FWCATADU75","kg":7.5},{"nombre":"FAWNA URINARY CAT","sku":"FWCATURI75","kg":7.5},{"nombre":"FAWNA ADULT CAT STERILIZED","sku":"FWCATADUSTE75","kg":7.5},{"nombre":"OLD PRINCE EQUILIBRIUM CATS COMPLETE CARE","sku":"OPCATEQCC75","kg":7.5},{"nombre":"OLD PRINCE EQUILIBRIUM CATS INDOOR CARE","sku":"OPCATEQIND75","kg":7.5},{"nombre":"OLD PRINCE EQUILIBRIUM CATS URINARY CARE","sku":"OPCATEQURI75","kg":7.5},{"nombre":"OLD PRINCE GATO ADULTO CORDERO","sku":"OPCATADUCOR75","kg":7.5},{"nombre":"OLD PRINCE NOVEL GATOS ADULTOS","sku":"OPCATADUNOV75","kg":7.5},{"nombre":"OLD PRINCE NOVEL ADULT CAT STERILIZED","sku":"OPCATADUNOVSTE75","kg":7.5},{"nombre":"EUKANUBA ADULTO TOP CONDITION","sku":"EUKACATADU3","kg":3},{"nombre":"EUKANUBA ADULTO TOP CONDITION","sku":"EUKACATADU7","kg":7.5},{"nombre":"OPTIMUS GATO","sku":"OSCATADU75","kg":7.5},{"nombre":"UNIK KITTEN","sku":"UKKITTEN","kg":2},{"nombre":"UNIK GATO CASTRADO","sku":"UKCATCAS2","kg":2},{"nombre":"UNIK GATO CASTRADO","sku":"UKCATCAS7","kg":7},{"nombre":"PERSIAN","sku":"RCCATPER1","kg":1.5},{"nombre":"PERSIAN","sku":"RCCATPER7","kg":7.5},{"nombre":"SIAMESE","sku":"RCCATSIAM7","kg":7.5},{"nombre":"URINARY CARE","sku":"RCCATURIC1","kg":1.5},{"nombre":"URINARY CARE","sku":"RCCATURIC7","kg":7.5},{"nombre":"FIT","sku":"RCCATFIT1","kg":1.5},{"nombre":"FIT","sku":"RCCATFIT3","kg":3},{"nombre":"FIT","sku":"RCCATFIT7","kg":7.5},{"nombre":"FIT","sku":"RCCATFIT15","kg":15},{"nombre":"INDOOR","sku":"RCCATIND1","kg":1.5},{"nombre":"INDOOR","sku":"RCCATIND7","kg":7.5},{"nombre":"INDOOR 7+","sku":"RCCATIND71","kg":1.5},{"nombre":"INDOOR 7+","sku":"RCCATIND77","kg":7.5},{"nombre":"KITTEN","sku":"RCCATKITT1","kg":1.5},{"nombre":"KITTEN","sku":"RCCATKITT7","kg":7.5},{"nombre":"SENSIBLE","sku":"RCCATSEN1","kg":1.5},{"nombre":"SENSIBLE","sku":"RCCATSEN7","kg":7.5},{"nombre":"GASTRO INTESTINAL FELINO","sku":"RCCATGAS2","kg":2},{"nombre":"RENAL FELINE","sku":"RCCATREN2","kg":2},{"nombre":"URINARY S/O HIGH DILUTION","sku":"RCCATURISO1","kg":1.5},{"nombre":"URINARY S/O HIGH DILUTION","sku":"RCCATURISO7","kg":7.5},{"nombre":"CLUB PERFORMANCE CAT ADULTO","sku":"CPCATADU7","kg":7.5},{"nombre":"CLUB PERFORMANCE KITTEN","sku":"CPCATKITT7","kg":7.5},{"nombre":"GATO CASTRADO WEIGHT CONTROL","sku":"RCCATCASWC1","kg":1.5},{"nombre":"GATO CASTRADO WEIGHT CONTROL","sku":"RCCATCASWC3","kg":3},{"nombre":"GATO CASTRADO WEIGHT CONTROL","sku":"RCCATCASWC7","kg":7.5},{"nombre":"GATO CASTRADO WEIGHT CONTROL","sku":"RCCATCASWC12","kg":12},{"nombre":"OPTIMUS PERRO ADULTO","sku":"OPTDOGADUL20","kg":20},{"nombre":"OPTIMUS CACHORRO","sku":"OPTDOGCACH15","kg":15},{"nombre":"UNIK PERRO CACHORRO PEQUE\u00d1O","sku":"UKDOGCACHSMALL3","kg":3},{"nombre":"UNIK PERRO CACHORRO MEDIANO Y GRANDE","sku":"UKDOGCACHMED15","kg":15},{"nombre":"UNIK PERRO ADULTO PEQUE\u00d1O CASTRADO","sku":"UKDIGADUPEQCAS76","kg":7.5},{"nombre":"UNIK PERRO ADULTO MEDIANO CASTRADO","sku":"UKDOGCAS15","kg":15},{"nombre":"UNIK PERRO ADULTO PEQUE\u00d1O","sku":"UKDGOSMALL7","kg":7.5},{"nombre":"UNIK PERRO MEDIANO Y GRANDE","sku":"UKDOGMED15","kg":15},{"nombre":"FAWNA CACHORRO MEDIANO Y GRANDE","sku":"FWDOGCACHMED15","kg":15},{"nombre":"FAWNA ADULTO MEDIANO Y GRANDE","sku":"FWDOGADUMED15","kg":15},{"nombre":"FAWNA PERRO ADULTO LIGHT","sku":"FWDOGADULIGHT15","kg":15},{"nombre":"FAWNA PERRO ADULTO SENIOR","sku":"FWDOGSENIOR15","kg":15},{"nombre":"PRO PLAN PUPPY SMALL BREED","sku":"PRODOGPUPPYSM3","kg":3},{"nombre":"PRO PLAN PUPPY SMALL BREED","sku":"PRODOGPUPPYSM7","kg":7.5},{"nombre":"PRO PLAN PUPPY MEDIUM BREED","sku":"PRODOGPUPPYMED15","kg":15},{"nombre":"PRO PLAN PUPPY LARGE BREED","sku":"PRODOGPUPPYLARGE15","kg":15},{"nombre":"PRO PLAN ADULTO SMALL BREED","sku":"PRODOGADUSMALL7","kg":7.5},{"nombre":"PRO PLAN ADULTO MEDIUM BREED","sku":"PRODOGADUMED3","kg":3},{"nombre":"PRO PLAN ADULTO MEDIUM BREED","sku":"PRODOGADUMED15","kg":15},{"nombre":"PRO PLAN ADULTO LARGE","sku":"PRODOGADULARGE15","kg":15},{"nombre":"PRO PLAN REDUCED CALORIES","sku":"PRODOGRC12","kg":12},{"nombre":"OLD PRINCE NOVEL CACHORRO ALL BREEDS","sku":"OPDOGCACHNOVEL15","kg":15},{"nombre":"OLD PRINCE EQUILIBRIUM ADULTO WEIGHT CONTROL","sku":"OPDOGADUEQWC15","kg":15},{"nombre":"OLD PRINCE NOVEL ADULTO SMALL BREED","sku":"OPDOGADUSMALLNOV15","kg":15},{"nombre":"OLD PRINCE NOVEL ADULTO MEDIANO Y GRANDE","sku":"OPDOGADUMEDNOV15","kg":15},{"nombre":"OLD PRINCE NOVEL CORDERO SENIOR","sku":"OPDOGSENNOV15","kg":15},{"nombre":"OLD PRINCE SPECIAL RECIPE WEIGHT CONTROL","sku":"OPDOGSRWC15","kg":15},{"nombre":"OLD PRINCE NOVEL LIGHT","sku":"OPDOGLIGHTNOV15","kg":15},{"nombre":"MAXI WEIGHT CARE","sku":"RCDOGMAXWC10","kg":10},{"nombre":"MEDIUM WEIGHT CARE","sku":"RCDOGMEDWC3","kg":3},{"nombre":"MEDIUM WEIGHT CARE","sku":"RCDOGMEDWC10","kg":10},{"nombre":"MINI WEIGHT CARE","sku":"RCDOGMINIWC3","kg":3},{"nombre":"MINI DERMACOMFORT","sku":"RCDOGMINIDERMA3","kg":3},{"nombre":"MEDIUM DERMACONFORT","sku":"RCDOGMEDDERMA3","kg":3},{"nombre":"MEDIUM DERMACONFORT","sku":"RCDOGMEDDERMA10","kg":10},{"nombre":"MAXI DERMACOMFORT","sku":"RCDOGMAXIDERMA10","kg":10},{"nombre":"HYPOALLERGENIC CANINE PUPPY","sku":"RCDOGHYPOPUPPY2","kg":2},{"nombre":"HYPOALLERGENIC CANINE PUPPY","sku":"RCDOGHYPOPUPPY10","kg":10},{"nombre":"ANALLERGENIC CANINE","sku":"RCDOGANAL8","kg":8},{"nombre":"CARDIAC CANINE","sku":"RCDOGCARDIAC10","kg":10},{"nombre":"DIABETIC CANINE","sku":"RCDOGDIABETIC2","kg":2},{"nombre":"DIABETIC CANINE","sku":"RCDOGDIABETIC10","kg":10},{"nombre":"GASTRO INTESTINAL MC","sku":"RCDOGGASTROMC10","kg":10},{"nombre":"GASTRO INTESTINAL","sku":"RCDOGGASTRO2","kg":2},{"nombre":"GASTRO INTESTINAL","sku":"RCDOGGASTRO10","kg":10},{"nombre":"HEPATIC CANINE","sku":"RCDOGHEPATIC1","kg":1.5},{"nombre":"HEPATIC CANINE","sku":"RCDOGHEPATIC10","kg":10},{"nombre":"HYPOALLERGENIC CANINE","sku":"RCDOGHYPO2","kg":2},{"nombre":"HYPOALLERGENIC CANINE","sku":"RCDOGHYPO110","kg":10},{"nombre":"MOBILITY CANINE","sku":"RCDOGMOBILITY10","kg":10},{"nombre":"MOBILITY LARGER DOG","sku":"RCDOGMOBILITYLD15","kg":15},{"nombre":"RENAL CANINE","sku":"RCDOGRENAL1","kg":1.5},{"nombre":"RENAL CANINE","sku":"RCDOGRENAL10","kg":10},{"nombre":"SATIETY CANINE","sku":"RCDOGSATIETY7","kg":7.5},{"nombre":"SATIETY CANINE","sku":"RCDOGSATIETY15","kg":15},{"nombre":"URINARY AGEING 7+","sku":"RCDOGURI710","kg":10},{"nombre":"URINARY CARE S/O","sku":"RCDOGURISO7","kg":10},{"nombre":"CLUB PERFORMANCE JUNIOR","sku":"CPDOGJUN15","kg":15},{"nombre":"CLUB PERFORMANCE DOG ADULTO","sku":"CPDOGADU15","kg":15},{"nombre":"CLUB PERFORMANCE DOG ADULTO","sku":"CPDOGADU20","kg":20},{"nombre":"CLUB PERFORMANCE WEIGHT CONTROL","sku":"CPDOGWC15","kg":15},{"nombre":"BOXER ADULTO","sku":"RCDOGADUBOXER12","kg":12},{"nombre":"BULLDOG FRANCES ADULTO","sku":"RCDOGADUBULL7","kg":7.5},{"nombre":"CANICHE ADULTO","sku":"RCDOGADUCANICHE3","kg":3},{"nombre":"CANICHE ADULTO","sku":"RCDOGADUCANICHE7","kg":7.5},{"nombre":"DACHSHUND ADULTO","sku":"RCDOGADUDASCH3","kg":3},{"nombre":"GOLDEN RETRIEVER ADULTO","sku":"RCDOGADUGOLDEN12","kg":12},{"nombre":"JACK RUSELL ADULTO","sku":"RCDOGADUJACK3","kg":3},{"nombre":"LABRADOR RETRIEVER ADULTO","sku":"RCDOGADULABRADOR12","kg":12},{"nombre":"OVEJERO ALEMAN CACHORRO","sku":"RCDOGADUOVEJEROpuppy12","kg":12},{"nombre":"OVEJERO ALEMAN ADULTO","sku":"RCDOGADUOVEJERO12","kg":12},{"nombre":"PUG ADULTO","sku":"RCDOGADUPUG7","kg":7.5},{"nombre":"GIANT PUPPY","sku":"RCDOGPUPYGIANT15","kg":15},{"nombre":"MAXI PUPPY","sku":"RCDOGMAXIPUPY3","kg":3},{"nombre":"MAXI PUPPY","sku":"RCDOGMAXIPUPY15","kg":15},{"nombre":"MEDIUM PUPPY","sku":"RCDOGMEDPUPY3","kg":3},{"nombre":"MEDIUM PUPPY","sku":"RCDOGMEDPUPY15","kg":15},{"nombre":"MINI PUPPY","sku":"RCDOGMINIPUPY3","kg":3},{"nombre":"GIANT JUNIOR","sku":"RCDOGGIANTJUN15","kg":15},{"nombre":"GIANT ADULT","sku":"RCDOGGIANTADU15","kg":15},{"nombre":"MAXI ADULT","sku":"RCDOGMAXIADU15","kg":15},{"nombre":"MAXI ADULT 5+","sku":"RCDOGMAXIADU515","kg":15},{"nombre":"MAXI AGEING+8","sku":"RCDOGMAXAGEING815","kg":15},{"nombre":"MEDIUM ADULT","sku":"RCDOGMEDADU3","kg":3},{"nombre":"MEDIUM ADULT","sku":"RCDOGMEDADU7","kg":7.5},{"nombre":"MEDIUM ADULT","sku":"RCDOGMEDADU15","kg":15},{"nombre":"MEDIUM ADULT +7","sku":"RCDOGMEDADU73","kg":3},{"nombre":"MEDIUM ADULT +7","sku":"RCDOGMEDADU715","kg":15},{"nombre":"MEDIUM ADULT+10","sku":"RCDOGMEDADU1016","kg":15},{"nombre":"MINI ADULT","sku":"RCDOGMINIADU3","kg":3},{"nombre":"MINI ADULT","sku":"RCDOGMINIADU7","kg":7.5},{"nombre":"MINI ADULT","sku":"RCDOGMINIADU15","kg":15},{"nombre":"MINI AGEING +12","sku":"RCDOGMINIADU123","kg":3},{"nombre":"MINI ADULT +8","sku":"RCDOGMINIADU83","kg":3},{"nombre":"EXCELLENT PUPPY SMALL BREED","sku":"EXDOGPUPYSMALL7","kg":7.5},{"nombre":"EXCELLENT PUPPY MEDIANO Y GRANDE","sku":"EXDOGPUPYMED15","kg":15},{"nombre":"EXCELLENT PERRO ADULTO SMALL","sku":"EXDOGADUSMALL3","kg":3},{"nombre":"EXCELLENT PERRO ADULTO SMALL","sku":"EXDOGADUSMALL7","kg":7.5},{"nombre":"EXCELLENT PERRO ADULTO SMALL","sku":"EXDOGADUSMALL15","kg":15},{"nombre":"EXCELLENT PERRO ADULTO MEDIANO","sku":"EXDOGADUMED3","kg":3},{"nombre":"EXCELLENT PERRO ADULTO MEDIANO","sku":"EXDOGADUMED15","kg":15},{"nombre":"EXCELLENT PERRO SENIOR","sku":"EXDOGSEN15","kg":15},{"nombre":"EXCELLENT ADULT SKIN CARE CORDERO","sku":"EXDOGSKIN15","kg":15},{"nombre":"EXCELLENT PERRO ADULTO REDUCED CALORIES","sku":"EXDOGADURC15","kg":15},{"nombre":"EUKANUBA PUPPY LAMB","sku":"EKDOGPUPYLAMB3","kg":3},{"nombre":"EUKANUBA PUPPY LAMB","sku":"EKDOGPUPYLAMB15","kg":15},{"nombre":"EUKANUBA PUPPY SMALL BREED","sku":"EKDOGPUPSMALL3","kg":3},{"nombre":"EUKANUBA PUPPY MEDIUM","sku":"EKDOGPUPMED3","kg":3},{"nombre":"EUKANUBA PUPPY MEDIUM","sku":"EKDOGPUPYMED15","kg":15},{"nombre":"EUKANUBA PUPPY LARGE BREED","sku":"EKDOGPUPYLARGE3","kg":3},{"nombre":"EUKANUBA PUPPY LARGE BREED","sku":"EKDOGPUPYLARGE15","kg":15},{"nombre":"EUKANUBA ADULT SMALL BREED","sku":"EKDOGADUSMALL3","kg":3},{"nombre":"EUKANUBA ADULT MEDIUM BREED","sku":"EKDOGADUMED3","kg":3},{"nombre":"EUKANUBA ADULT MEDIUM BREED","sku":"EKDOGADUMED15","kg":15},{"nombre":"EUKANUBA ADULTO LARGE BREED","sku":"EKDOGADULARG15","kg":15},{"nombre":"EUKANUBA ADULTO LAMB","sku":"EKDOGADULAMB15","kg":15},{"nombre":"EUKANUBA SENIOR SMALL BREED","sku":"EKDOGSENSMALL3","kg":3},{"nombre":"EUKANUBA SENIOR MEDIUM BREED","sku":"EKDOGSENMED3","kg":3},{"nombre":"EUKANUBA SENIOR MEDIUM BREED","sku":"EKDOGSENMED15","kg":15},{"nombre":"EUKANUBA SENIOR LARGE BREED","sku":"EKDOGSENLARGE15","kg":15},{"nombre":"EUKANUBA FIT BODY MEDIUM BREED","sku":"EKDOGFITMED3","kg":3},{"nombre":"EUKANUBA FIT BODY MEDIUM BREED","sku":"EKDOGFBMED15","kg":15},{"nombre":"EUKANUBA FIT BODY LARGE BREED","sku":"EKDOGFBLARGE15","kg":15},{"nombre":"BALANCED PERRO ADULTO RAZA GRANDE","sku":"BALDOGRG20","kg":20},{"nombre":"BALANCED PERRO ADULTO RAZA MEDIANA","sku":"BALDOGMED20","kg":20},{"nombre":"BALANCED PERRO SENIOR RAZA PEQUE\u00d1A","sku":"BALDOGSENIORRP75","kg":7.5},{"nombre":"MON AMI CORDERO","sku":"MONDOGCOR12","kg":12},{"nombre":"MON AMI CORDERO","sku":"MONDOGCOR7","kg":7.5},{"nombre":"MON AMI POLLO","sku":"MONDOGPOLLO12","kg":12},{"nombre":"MON AMI RAZAS PEQUE\u00d1AS Y MEDIANAS","sku":"MONDOGPYM6","kg":6},{"nombre":"MON AMI SUPERFOOD MYG","sku":"MONSUPERMYG5","kg":5},{"nombre":"MON AMI SUPERFOOD MYG","sku":"MONSUPERMYG12","kg":12},{"nombre":"NUTRIQUE LARGE PUPPY","sku":"NURDOGLARGEPUPPY15","kg":15},{"nombre":"NUTRIQUE LARGE YOUNG ADULT DOG","sku":"nutdoglargeY15","kg":15},{"nombre":"NUTRIQUE MEDIUM YOUNG ADULT DOG","sku":"nutdogmedyoung12","kg":12},{"nombre":"NUTRIQUE MEDIUM PUPPY","sku":"nutdogmedpuppy12","kg":12},{"nombre":"NUTRIQUE TOY MINI YOUNG ADULT DOG","sku":"NUTDOGTOYADU75","kg":7.5},{"nombre":"NUTRIQUE MEDIUM ADULT +7","sku":"NUTDOGMEDADU+712","kg":12},{"nombre":"NUTRIQUE LARGE YOUNG ADULT DOG +6","sku":"NUTDOGLAR+615","kg":15},{"nombre":"BALANCED MEDIUM ADULT","sku":"BALDOGMEDADU20","kg":20},{"nombre":"BALANCED LARGE ADULT","sku":"BALDOGLARADU20","kg":20},{"nombre":"PROF VET NUTRICION","sku":"PROFDOGNUTRI20","kg":20},{"nombre":"PROF VET PREMIUM","sku":"PROFDOGPRE20","kg":20},{"nombre":"PROF VET CORDERO","sku":"PROFVETCOR15","kg":15}];
+
+var skSel={ing:null,vta:null};
+var skMovs=[];
+
+function skLoad(){try{var r=localStorage.getItem('wankun_stock');if(r)skMovs=JSON.parse(r);}catch(e){skMovs=[];}
+  var hoy=new Date().toISOString().slice(0,10);
+  var di=document.getElementById('sk-ing-d'),dv=document.getElementById('sk-vta-d');
+  if(di)di.value=hoy;if(dv)dv.value=hoy;
+}
+
+function skSave(){try{localStorage.setItem('wankun_stock',JSON.stringify(skMovs));}catch(e){}}
+
+function skAc(pfx){
+  var q=(document.getElementById('sk-'+pfx+'-q')||{}).value;
+  var dd=document.getElementById('sk-'+pfx+'-dd');
+  if(!q||q.length<2){dd.style.display='none';return;}
+  var ql=q.toLowerCase();
+  var hits=SK_PRODUCTS.filter(function(p){return p.nombre.toLowerCase().indexOf(ql)>=0||p.sku.toLowerCase().indexOf(ql)>=0;}).slice(0,10);
+  if(!hits.length){dd.style.display='none';return;}
+  dd.innerHTML=hits.map(function(p){return'<div onclick="skPick(\''+pfx+'\',\''+p.sku+'\')" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:13px" onmouseover="this.style.background=\'#f8f8f8\'" onmouseout="this.style.background=\'\'">'+'<span style="font-weight:500">'+p.nombre+'</span> <span style="color:#aaa">'+p.kg+'kg</span><div style="font-size:11px;color:#aaa;font-family:monospace;margin-top:2px">'+p.sku+'</div></div>';}).join('');
+  dd.style.display='block';
+}
+
+function skPick(pfx,sku){
+  var p=SK_PRODUCTS.filter(function(x){return x.sku===sku;})[0];if(!p)return;
+  skSel[pfx]=p;
+  document.getElementById('sk-'+pfx+'-q').value=p.nombre+' '+p.kg+'kg';
+  document.getElementById('sk-'+pfx+'-dd').style.display='none';
+  document.getElementById('sk-'+pfx+'-tag').innerHTML='<span style="background:#dbeafe;color:#1d4ed8;font-family:monospace;font-size:11px;padding:2px 8px;border-radius:4px">'+p.sku+'</span>';
+}
+
+function skReg(pfx){
+  var p=skSel[pfx];if(!p){alert('Seleccioná un producto');return;}
+  var n=parseInt((document.getElementById('sk-'+pfx+'-n')||{}).value||'0');
+  if(n<1){alert('Ingresá una cantidad');return;}
+  var d=(document.getElementById('sk-'+pfx+'-d')||{}).value||new Date().toISOString().slice(0,10);
+  var canal=pfx==='ing'?'ing':(document.getElementById('sk-vta-canal')||{}).value||'wc';
+  skMovs.push({type:canal==='ing'?'ing':'vta',canal:canal,sku:p.sku,nombre:p.nombre,kg:p.kg,qty:n,date:d,ts:Date.now()});
+  skSave();
+  document.getElementById('sk-'+pfx+'-q').value='';
+  document.getElementById('sk-'+pfx+'-tag').innerHTML='';
+  document.getElementById('sk-'+pfx+'-n').value='';
+  skSel[pfx]=null;
+  skRenderTabla();
+  skRenderMetricas();
+}
+
+function skCalc(){
+  var map={};
+  SK_PRODUCTS.forEach(function(p){if(!map[p.sku])map[p.sku]={sku:p.sku,nombre:p.nombre,kg:p.kg,i:0,wc:0,ml:0};});
+  skMovs.forEach(function(mv){
+    if(!map[mv.sku])map[mv.sku]={sku:mv.sku,nombre:mv.nombre,kg:mv.kg,i:0,wc:0,ml:0};
+    if(mv.type==='ing')map[mv.sku].i+=mv.qty;
+    else if(mv.canal==='wc')map[mv.sku].wc+=mv.qty;
+    else if(mv.canal==='meli')map[mv.sku].ml+=mv.qty;
+  });
+  return Object.values(map);
+}
+
+function skRenderMetricas(){
+  var rows=skCalc();
+  var con=rows.filter(function(r){return r.i-r.wc-r.ml>0;}).length;
+  var sin=rows.filter(function(r){return r.i-r.wc-r.ml<=0&&r.i>0;}).length;
+  var hoy=new Date().toISOString().slice(0,10);
+  var movHoy=skMovs.filter(function(m){return m.date===hoy;}).length;
+  var e1=document.getElementById('sk-m-con'),e2=document.getElementById('sk-m-sin'),e3=document.getElementById('sk-m-hoy');
+  if(e1)e1.textContent=con;if(e2)e2.textContent=sin;if(e3)e3.textContent=movHoy;
+}
+
+function skRenderTabla(){
+  var rows=skCalc();
+  var q=((document.getElementById('sk-filtro')||{}).value||'').toLowerCase();
+  var estado=((document.getElementById('sk-estado')||{}).value)||'';
+  var filtered=rows.filter(function(r){
+    var a=r.i-r.wc-r.ml;
+    if(q&&r.nombre.toLowerCase().indexOf(q)<0&&r.sku.toLowerCase().indexOf(q)<0)return false;
+    if(estado==='1'&&a<=0)return false;
+    if(estado==='0'&&(a>0||r.i===0))return false;
+    return true;
+  });
+  var tb=document.getElementById('sk-tabla');if(!tb)return;
+  if(!filtered.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin resultados</div>';return;}
+  tb.innerHTML=filtered.map(function(r){
+    var a=r.i-r.wc-r.ml;
+    var color=a>2?'var(--verde)':a>0?'#d97706':r.i>0?'#c0392b':'var(--gris-dark)';
+    var disp=r.i>0?('<span style="font-weight:600;color:'+color+'">'+a+'</span>'):'<span style="color:var(--gris-dark)">—</span>';
+    return'<div class="table-row" style="grid-template-columns:2fr 1fr 60px 80px 80px 80px 80px"><span style="font-size:12px" title="'+r.nombre+'">'+r.nombre+'</span><span style="font-family:monospace;font-size:11px;color:var(--gris-dark)">'+r.sku+'</span><span style="font-size:12px">'+r.kg+'</span><span style="font-size:12px;text-align:center">'+(r.i||'—')+'</span><span style="font-size:12px;text-align:center">'+(r.wc||'—')+'</span><span style="font-size:12px;text-align:center">'+(r.ml||'—')+'</span><span style="text-align:center">'+disp+'</span></div>';
+  }).join('');
+
+  // Recientes
+  var rec=[].concat(skMovs).sort(function(a,b){return b.ts-a.ts;}).slice(0,5);
+  var rdiv=document.getElementById('sk-recientes');if(!rdiv)return;
+  if(!rec.length){rdiv.innerHTML='';return;}
+  rdiv.innerHTML='<p style="font-size:11px;color:var(--gris-dark);margin-bottom:6px">Últimos movimientos</p>'+rec.map(function(m){
+    var s=m.type==='ing'?'color:var(--verde)':'color:#c0392b';
+    var lbl=m.type==='ing'?'+'+m.qty:'-'+m.qty;
+    var ch=m.type==='ing'?'Ingreso':m.canal==='wc'?'WC':'Meli';
+    return'<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--gris-med);font-size:12px"><span>'+m.nombre+' <span style="color:var(--gris-dark);font-size:11px">'+m.kg+'kg</span></span><span><span style="font-weight:600;'+s+'">'+lbl+'</span> <span style="font-size:11px;color:var(--gris-dark)">'+ch+' · '+m.date+'</span></span></div>';
+  }).join('');
+
+  skRenderMetricas();
+}
+
+function skBorrarTodo(){if(confirm('¿Borrar todos los movimientos de stock?')){skMovs=[];skSave();skRenderTabla();skRenderMetricas();}}
+
+document.addEventListener('click',function(e){
+  ['sk-ing-dd','sk-vta-dd'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el&&!el.contains(e.target)&&e.target.id!==id.replace('-dd','-q'))el.style.display='none';
+  });
+});
+
+skLoad();
+
 </script>
 </body>
 </html>
+
