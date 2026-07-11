@@ -1346,7 +1346,7 @@ function avMostrarEntregasHoy(){
   tb.innerHTML=lista.map(function(c){const tel=c.telefono||'';const waBtn=tel?'<a class="wa-link" href="'+waLinkCamino(tel,c.nombre)+'" target="_blank">WA 🚚</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';return '<div class="table-row" style="grid-template-columns:1fr 130px 120px 80px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span><span style="font-size:12px;color:var(--gris-dark)">'+(c.ultimoProd||'--')+'</span>'+waBtn+'</div>';}).join('');
 }
 
-function avWaLinkAyer(tel,nombre){const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];const msg='Hola '+primer+' buen dia! Cuando llegue el momento de reponer el alimento para tu mascota, escribime en forma directa y lo coordinamos. Entregamos en el dia, el precio es mejor que en Mercado Libre y el alimento siempre va acompanado con snacks de Filan. Que tengas un gran dia! Saludos, Nacho.';return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
+function avWaLinkAyer(tel,nombre){const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];const msg='Hola '+primer+', cómo está tu perrito? Te escribo porque debe estar por terminarse el alimento. ¿Te gustaría que coordinemos la reposición? Entregamos en el día y como siempre van los snacks de Filan.';return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
 
 function avMostrarReactivar(){
   const hoy=new Date();hoy.setHours(0,0,0,0);
