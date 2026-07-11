@@ -1750,9 +1750,9 @@ function skSincWC(){
       var kg=parseFloat((r['kg']||'0').toString().replace(',','.'))||0;
       if(!prod&&!marca)return;
       // Buscar match en SKU_PRODUCTS por kg + palabras clave del producto
-      var p=skMatchProduct(marca,prod,kg);
-      if(p){
-        skMovs.push({type:'vta',canal:'wc',sku:p.sku,nombre:p.nombre,kg:p.kg,qty:1,date:fStr,ts:Date.now()});
+      var res=skMatchProduct(marca,prod,kg);
+      if(res){
+        skMovs.push({type:'vta',canal:'wc',sku:res.product.sku,nombre:res.product.nombre,kg:res.product.kg,qty:res.qty,date:fStr,ts:Date.now()});
         matched++;
       } else {
         noMatch.push((marca?marca+' - ':'')+prod+(kg?' ('+kg+'kg)':''));
@@ -1775,26 +1775,39 @@ function skSincWC(){
 }
 
 function skMatchProduct(marca,prod,kg){
-  // Normalizar texto para comparar
-  function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').trim();}
-  var mn=norm(marca),pn=norm(prod);
-  var combined=mn+' '+pn;
-  var best=null,bestScore=0;
+  function norm(s){return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 +]/g,' ').replace(/\s+/g,' ').trim();}
+  // Aliases: palabras del sheets -> palabras del catalogo
+  var ALIAS={'mini adult':'mini adult','mini adulto':'mini adult','med adu':'medium adult','medium adu':'medium adult','mediano adulto':'medium adult','maxi adu':'maxi adult','maxi adulto':'maxi adult','giant jun':'giant junior','giant junior':'giant junior','mob':'mobility','mobilty':'mobility','mobility':'mobility','mobil':'mobility','persian':'persian','persa':'persian','dachshund':'dachshund','dachs':'dachshund','dasch':'dachshund','duchshand':'dachshund','hypo':'hypoallergenic','hypoallargenic':'hypoallergenic','hypoalerg':'hypoallergenic','anallerg':'anallergenic','anal':'anallergenic','satiety':'satiety','urinary':'urinary','urinary s/o':'urinary s/o','indoor':'indoor','kitten':'kitten','gato adulto':'gato adulto','gastro':'gastro intestinal','gastroenteric':'gastro intestinal','gato castrado':'gato castrado weight control','castrado':'gato castrado weight control','fit':'fit','renal':'renal','cardiac':'cardiac','diabetic':'diabetic','hepatic':'hepatic','labrador':'labrador','golden':'golden','boxer':'boxer','caniche':'caniche','pug':'pug','ovejero':'ovejero','bulldog':'bulldog','corded':'cordero','cordero':'cordero','puppy':'puppy','cachorro':'puppy','junior':'junior','senior':'senior','light':'light','weight control':'weight control','adulto':'adult','adult':'adult','small':'small','large':'large','medium':'medium','maxi':'maxi','mini':'mini','giant':'giant','slim':'satiety','sf myg':'superfood myg','superfood':'superfood myg','excellent':'excellent','eukanuba':'eukanuba','proplan':'pro plan','pro plan':'pro plan','old prince':'old prince','fawna':'fawna','nutrique':'nutrique','mon ami':'mon ami','balanced':'balanced','prof vet':'prof vet','club perf':'club performance','club performance':'club performance','unik':'unik','optimus':'optimus'};
+  function expand(s){
+    var r=norm(s);
+    Object.keys(ALIAS).forEach(function(k){r=r.replace(new RegExp(k,'g'),ALIAS[k]);});
+    return r;
+  }
+  var mn=expand(marca),pn=expand(prod);
+  var combined=(mn+' '+pn).replace(/\s+/g,' ').trim();
+  var best=null,bestScore=0,bestQty=1;
   SK_PRODUCTS.forEach(function(p){
-    var pnorm=norm(p.nombre);
+    var skuNorm=expand(p.nombre);
     var score=0;
-    // Match exacto de kg: peso doble
-    if(kg>0&&Math.abs(p.kg-kg)<0.1)score+=4;
-    // Palabras del nombre del producto que aparecen en el SKU name
-    var words=pnorm.split(' ').filter(function(w){return w.length>3;});
-    words.forEach(function(w){if(combined.indexOf(w)>=0)score+=2;});
-    // Palabras inversas: palabras del SKU name en el producto
-    var skuWords=pnorm.split(' ').filter(function(w){return w.length>3;});
-    skuWords.forEach(function(w){if(combined.indexOf(w)>=0)score+=1;});
-    if(score>bestScore){bestScore=score;best=p;}
+    var qty=1;
+    // Match de kg: tolerancia amplia para 7.5->8, y multiplos (6kg de 3kg = 2 uds)
+    if(kg>0){
+      if(Math.abs(p.kg-kg)<=1.0)score+=5;  // 7.5 vs 8, 10 vs 10, etc
+      else if(p.kg>0&&kg>0&&Math.abs(Math.round(kg/p.kg)*p.kg-kg)<=0.5){
+        qty=Math.round(kg/p.kg);if(qty>1)score+=3;  // 6kg de 3kg = 2 uds
+      }
+    }
+    // Palabras del catalogo que aparecen en lo que escribio el usuario
+    var skuWords=skuNorm.split(' ').filter(function(w){return w.length>=3;});
+    var matchedWords=0;
+    skuWords.forEach(function(w){if(combined.indexOf(w)>=0){score+=2;matchedWords++;}});
+    // Palabras del usuario en el catalogo
+    var userWords=combined.split(' ').filter(function(w){return w.length>=3;});
+    userWords.forEach(function(w){if(skuNorm.indexOf(w)>=0)score+=1;});
+    if(score>bestScore){bestScore=score;best=p;bestQty=qty;}
   });
-  // Umbral mínimo: al menos kg match + 1 palabra, o 3 palabras sin kg
-  return bestScore>=5?best:null;
+  if(!best||bestScore<4)return null;
+  return {product:best,qty:bestQty};
 }
 
 function skBorrarTodo(){if(confirm('¿Borrar todos los movimientos de stock?')){skMovs=[];skSave();skRenderTabla();skRenderMetricas();}}
