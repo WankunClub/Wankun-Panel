@@ -126,6 +126,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="nav-section">Clientes</div>
     <div class="nav-item" onclick="irA('clientes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</div>
     <div class="nav-item" onclick="irA('recompras')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Recompras</div>
+    <div class="nav-item" onclick="irA('analisis')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Análisis clientes</div>
     <div class="nav-item" onclick="irA('resenas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Reseñas</div>
     <div class="nav-item" onclick="irA('envios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Envíos</div>
     <div class="nav-section">Marketing</div>
@@ -404,6 +405,41 @@ Muchas gracias!</div>
   </div>
 </div>
 
+<!-- ANALISIS -->
+<div class="page" id="page-analisis">
+  <div class="conn-card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span style="font-size:14px;font-weight:600">Google Sheets</span>
+      <span class="conn-status conn-err" id="anal-status">Sin conectar</span>
+    </div>
+    <button class="btn btn-primary" onclick="analCargar()">Cargar análisis</button>
+  </div>
+  <div id="anal-panel" style="display:none">
+    <div class="metrics-grid" id="anal-metrics"></div>
+    <div class="card" style="border-left:4px solid #c0392b">
+      <div class="card-title" style="color:#c0392b">🔴 Urgente — compraron 3+ veces y no volvieron este mes</div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:1fr 100px 120px 80px"><span>Cliente</span><span>Compras</span><span>Último producto</span><span>WA</span></div>
+        <div class="table-body" id="anal-urgente" style="max-height:320px"></div>
+      </div>
+    </div>
+    <div class="card" style="border-left:4px solid #856404">
+      <div class="card-title" style="color:#856404">🟡 Seguimiento — compraron 2 veces y no volvieron</div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:1fr 100px 120px 80px"><span>Cliente</span><span>Compras</span><span>Último producto</span><span>WA</span></div>
+        <div class="table-body" id="anal-seguimiento" style="max-height:320px"></div>
+      </div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--gris-dark)">
+      <div class="card-title" style="color:var(--gris-dark)">⚪ Primera vez — compraron 1 vez y no volvieron</div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:1fr 100px 120px 80px"><span>Cliente</span><span>Compras</span><span>Último producto</span><span>WA</span></div>
+        <div class="table-body" id="anal-primera" style="max-height:320px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MARKETING -->
 <div class="page" id="page-marketing">
   <div class="card">
@@ -630,7 +666,7 @@ function irA(p){
   const el=document.getElementById('page-'+p);
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
-  const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','resenas':'Reseñas','envios':'Envíos','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','stock':'Control de Stock'};
+  const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','stock':'Control de Stock'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
   if(p==='resenas'){resenasCargarHistorial();}
@@ -1893,6 +1929,95 @@ document.addEventListener('click',function(e){
 });
 
 skLoad();
+
+
+// ── ANALISIS DE CLIENTES ──────────────────────────────────────────────────────
+async function analCargar(){
+  const st=document.getElementById('anal-status');
+  st.className='conn-status conn-loading';st.textContent='Calculando...';
+  try{
+    const rows=await fetchCSV('Ventas');
+    const hoy=new Date();
+    const mesActual=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0');
+    const diaHoy=hoy.getDate();
+
+    // Historial completo por cliente
+    const hist={};
+    rows.forEach(function(r){
+      const nom=(r['CLIENTE']||r['Cliente']||'').trim();
+      if(!nom)return;
+      const f=parseFecha(r['FECHA']||r['Fecha']||'');
+      if(!f||isNaN(f))return;
+      const key=nom.toLowerCase();
+      if(!hist[key])hist[key]={nombre:nom,compras:[],tel:(r['TELEFONO']||'').toString()};
+      hist[key].compras.push({
+        fecha:f,
+        producto:[r['Marca']||'',r['producto']||''].filter(Boolean).join(' - '),
+        mes:f.getFullYear()+'-'+(f.getMonth()+1).toString().padStart(2,'0'),
+        dia:f.getDate()
+      });
+      if(r['TELEFONO']&&!hist[key].tel)hist[key].tel=(r['TELEFONO']||'').toString();
+    });
+
+    // Mes anterior (el mes antes del actual)
+    const mesAnterior=new Date(hoy.getFullYear(),hoy.getMonth()-1,1);
+    const mesAntKey=mesAnterior.getFullYear()+'-'+(mesAnterior.getMonth()+1).toString().padStart(2,'0');
+
+    // Clientes que compraron en mes anterior (dias 1 a diaHoy) pero NO en mes actual
+    const noVolvieron=[];
+    Object.values(hist).forEach(function(c){
+      const enMesAnt=c.compras.filter(function(x){return x.mes===mesAntKey&&x.dia<=diaHoy;});
+      const enMesAct=c.compras.filter(function(x){return x.mes===mesActual&&x.dia<=diaHoy;});
+      if(enMesAnt.length>0&&enMesAct.length===0){
+        // Total de compras históricas
+        const totalCompras=c.compras.length;
+        const ultimoProd=c.compras.sort(function(a,b){return b.fecha-a.fecha;})[0].producto||'--';
+        noVolvieron.push({
+          nombre:c.nombre,
+          tel:c.tel,
+          totalCompras:totalCompras,
+          ultimoProd:ultimoProd
+        });
+      }
+    });
+
+    // Clasificar
+    const urgente=noVolvieron.filter(function(c){return c.totalCompras>=3;}).sort(function(a,b){return b.totalCompras-a.totalCompras;});
+    const seguimiento=noVolvieron.filter(function(c){return c.totalCompras===2;});
+    const primera=noVolvieron.filter(function(c){return c.totalCompras===1;});
+
+    st.className='conn-status conn-ok';
+    st.textContent=noVolvieron.length+' clientes';
+    document.getElementById('anal-panel').style.display='block';
+
+    // Metricas
+    document.getElementById('anal-metrics').innerHTML=
+      '<div class="metric"><div class="metric-label">No volvieron</div><div class="metric-value" style="color:#c0392b">'+noVolvieron.length+'</div></div>'+
+      '<div class="metric"><div class="metric-label">Urgente</div><div class="metric-value" style="color:#c0392b">'+urgente.length+'</div></div>'+
+      '<div class="metric"><div class="metric-label">Seguimiento</div><div class="metric-value" style="color:#856404">'+seguimiento.length+'</div></div>'+
+      '<div class="metric"><div class="metric-label">Primera vez</div><div class="metric-value">'+primera.length+'</div></div>';
+
+    // Render tablas
+    function renderAnalTabla(lista,elId){
+      const tb=document.getElementById(elId);
+      if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin clientes en este grupo</div>';return;}
+      tb.innerHTML=lista.map(function(c){
+        const tel=c.tel||'';
+        const num=tel.toString().replace(/\D/g,'');
+        const full=num.startsWith('54')?num:'54'+num;
+        const primer=c.nombre.split(' ')[0];
+        const msg='Hola '+primer+', cómo está tu perrito? Te escribo porque debe estar por terminarse el alimento. ¿Te gustaría que coordinemos la reposición? Entregamos en el día y como siempre van los snacks de Filan.';
+        const waBtn=tel?'<a class="wa-link" href="https://wa.me/'+full+'?text='+encodeURIComponent(msg)+'" target="_blank">WA</a>':' <span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';
+        return '<div class="table-row" style="grid-template-columns:1fr 100px 120px 80px"><span style="font-weight:500">'+c.nombre+'</span><span style="text-align:center;font-size:12px">'+c.totalCompras+'</span><span style="font-size:11px;color:var(--gris-dark)">'+c.ultimoProd.substring(0,25)+'</span>'+waBtn+'</div>';
+      }).join('');
+    }
+
+    renderAnalTabla(urgente,'anal-urgente');
+    renderAnalTabla(seguimiento,'anal-seguimiento');
+    renderAnalTabla(primera,'anal-primera');
+
+  }catch(e){st.className='conn-status conn-err';st.textContent='Error: '+e.message;console.error(e);}
+}
 
 </script>
 </body>
