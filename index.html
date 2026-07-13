@@ -596,25 +596,55 @@ Vamos Argentina!</div>
   </div>
 
   <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-      <div class="card-title" style="margin:0">Stock actual</div>
-      <div class="btn-row">
-        <input id="sk-filtro" type="text" placeholder="Filtrar..." oninput="skRenderTabla()"
-          style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;width:160px">
-        <select id="sk-estado" onchange="skRenderTabla()" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-          <option value="">Todos</option>
-          <option value="1">Con stock</option>
-          <option value="0">Sin stock</option>
-        </select>
-        <button class="btn" onclick="skBorrarTodo()" style="color:#c0392b;font-size:12px">Borrar todo</button>
+    <!-- Sub-tabs -->
+    <div style="display:flex;gap:4px;border-bottom:1px solid var(--gris-med);margin-bottom:16px">
+      <button id="sktab-stock" onclick="skSubTab('stock')" style="padding:7px 14px;font-size:13px;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--text-primary);font-weight:600;color:var(--text-primary);font-family:'DM Sans',sans-serif">Stock actual</button>
+      <button id="sktab-movs" onclick="skSubTab('movs')" style="padding:7px 14px;font-size:13px;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gris-dark);font-family:'DM Sans',sans-serif">Movimientos</button>
+    </div>
+
+    <!-- Vista: Stock actual -->
+    <div id="skview-stock">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div class="btn-row">
+          <input id="sk-filtro" type="text" placeholder="Filtrar producto..." oninput="skRenderTabla()"
+            style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;width:180px">
+          <select id="sk-estado" onchange="skRenderTabla()" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+            <option value="">Todos</option>
+            <option value="1">Con stock</option>
+            <option value="0">Sin stock</option>
+          </select>
+          <button class="btn" onclick="skBorrarTodo()" style="color:#c0392b;font-size:12px">Borrar todo</button>
+        </div>
+      </div>
+      <div id="sk-recientes" style="margin-bottom:12px"></div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:2fr 1fr 60px 80px 80px 80px 80px">
+          <span>Producto</span><span>SKU</span><span>Kg</span><span>Ingr.</span><span>V.WC</span><span>V.Meli</span><span>Stock</span>
+        </div>
+        <div class="table-body" id="sk-tabla" style="max-height:500px"></div>
       </div>
     </div>
-    <div id="sk-recientes" style="margin-bottom:12px"></div>
-    <div class="table-wrap">
-      <div class="table-head" style="grid-template-columns:2fr 1fr 60px 80px 80px 80px 80px">
-        <span>Producto</span><span>SKU</span><span>Kg</span><span>Ingr.</span><span>V.WC</span><span>V.Meli</span><span>Stock</span>
+
+    <!-- Vista: Movimientos -->
+    <div id="skview-movs" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <input type="date" id="sk-mov-desde" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+        <input type="date" id="sk-mov-hasta" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+        <select id="sk-mov-tipo" onchange="skRenderMovs()" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+          <option value="">Todos</option>
+          <option value="ing">Ingresos</option>
+          <option value="wc">Ventas WC</option>
+          <option value="meli">Ventas Meli</option>
+        </select>
+        <button class="btn btn-primary" onclick="skRenderMovs()" style="font-size:12px">Filtrar</button>
       </div>
-      <div class="table-body" id="sk-tabla" style="max-height:500px"></div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:90px 2fr 1fr 60px 80px 80px 60px">
+          <span>Fecha</span><span>Producto</span><span>SKU</span><span>Kg</span><span>Canal</span><span>Cantidad</span><span></span>
+        </div>
+        <div class="table-body" id="sk-mov-tabla" style="max-height:500px"></div>
+      </div>
+      <div id="sk-mov-total" style="font-size:13px;color:var(--gris-dark);margin-top:10px;text-align:right"></div>
     </div>
   </div>
 </div>
@@ -1915,6 +1945,61 @@ function skMatchProduct(marca,prod,kg){
   });
   if(!best||bestScore<5)return null;
   return{product:best,qty:bestQty};
+}
+
+function skSubTab(tab){
+  document.getElementById('skview-stock').style.display=tab==='stock'?'':'none';
+  document.getElementById('skview-movs').style.display=tab==='movs'?'':'none';
+  var ts=document.getElementById('sktab-stock'),tm=document.getElementById('sktab-movs');
+  ts.style.borderBottomColor=tab==='stock'?'var(--text-primary)':'transparent';
+  ts.style.fontWeight=tab==='stock'?'600':'400';
+  ts.style.color=tab==='stock'?'var(--text-primary)':'var(--gris-dark)';
+  tm.style.borderBottomColor=tab==='movs'?'var(--text-primary)':'transparent';
+  tm.style.fontWeight=tab==='movs'?'600':'400';
+  tm.style.color=tab==='movs'?'var(--text-primary)':'var(--gris-dark)';
+  if(tab==='movs'){
+    var hoy=new Date().toISOString().slice(0,10);
+    var d=document.getElementById('sk-mov-desde'),h=document.getElementById('sk-mov-hasta');
+    if(d&&!d.value)d.value=hoy;
+    if(h&&!h.value)h.value=hoy;
+    skRenderMovs();
+  }
+}
+
+function skRenderMovs(){
+  var desde=(document.getElementById('sk-mov-desde')||{}).value||'';
+  var hasta=(document.getElementById('sk-mov-hasta')||{}).value||'';
+  var tipo=(document.getElementById('sk-mov-tipo')||{}).value||'';
+  var filtered=skMovs.filter(function(m){
+    if(desde&&m.date<desde)return false;
+    if(hasta&&m.date>hasta)return false;
+    if(tipo==='ing'&&m.type!=='ing')return false;
+    if(tipo==='wc'&&m.canal!=='wc')return false;
+    if(tipo==='meli'&&m.canal!=='meli')return false;
+    return true;
+  }).sort(function(a,b){return b.ts-a.ts;});
+  var tb=document.getElementById('sk-mov-tabla');
+  if(!tb)return;
+  if(!filtered.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin movimientos para ese período</div>';document.getElementById('sk-mov-total').textContent='';return;}
+  tb.innerHTML=filtered.map(function(m,i){
+    var realIdx=skMovs.indexOf(m);
+    var tipoLabel=m.type==='ing'?'<span style="color:var(--verde);font-weight:600">Ingreso</span>':m.canal==='wc'?'<span style="color:var(--azul-med);font-weight:500">V. WC</span>':'<span style="color:#8b5cf6;font-weight:500">V. Meli</span>';
+    var cantColor=m.type==='ing'?'color:var(--verde)':'color:#c0392b';
+    var cantSign=m.type==='ing'?'+':'-';
+    return'<div class="table-row" style="grid-template-columns:90px 2fr 1fr 60px 80px 80px 60px"><span style="font-size:12px">'+m.date+'</span><span style="font-size:12px" title="'+m.nombre+'">'+m.nombre+'</span><span style="font-family:monospace;font-size:11px;color:var(--gris-dark)">'+m.sku+'</span><span style="font-size:12px">'+m.kg+'</span><span>'+tipoLabel+'</span><span style="font-weight:600;'+cantColor+'">'+cantSign+m.qty+'</span><span><button onclick="skEliminarMov('+realIdx+')" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:16px;line-height:1" title="Eliminar">×</button></span></div>';
+  }).join('');
+  var totalIng=filtered.filter(function(m){return m.type==='ing';}).reduce(function(s,m){return s+m.qty;},0);
+  var totalVta=filtered.filter(function(m){return m.type!=='ing';}).reduce(function(s,m){return s+m.qty;},0);
+  document.getElementById('sk-mov-total').textContent=filtered.length+' movimientos · '+totalIng+' unid. ingresadas · '+totalVta+' unid. vendidas';
+}
+
+function skEliminarMov(idx){
+  if(!confirm('¿Eliminar este movimiento?'))return;
+  skMovs.splice(idx,1);
+  skSave();
+  skRenderMovs();
+  skRenderTabla();
+  skRenderMetricas();
 }
 
 function skBorrarTodo(){if(confirm('¿Borrar todos los movimientos de stock?')){skMovs=[];skSave();skRenderTabla();skRenderMetricas();}}
