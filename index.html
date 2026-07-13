@@ -1941,47 +1941,42 @@ async function analCargar(){
     const mesActual=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0');
     const diaHoy=hoy.getDate();
 
-    // Historial completo por cliente
+    // Solo usar registros CON telefono (desde 16 jun en adelante)
+    // ID unico = telefono
     const hist={};
     rows.forEach(function(r){
-      const nom=(r['CLIENTE']||r['Cliente']||'').trim();
-      if(!nom)return;
+      const tel=(r['TELEFONO']||r['telefono']||'').toString().replace(/\D/g,'');
+      if(!tel||tel.length<8)return; // solo con telefono valido
       const f=parseFecha(r['FECHA']||r['Fecha']||'');
       if(!f||isNaN(f))return;
-      const key=nom.toLowerCase();
-      if(!hist[key])hist[key]={nombre:nom,compras:[],tel:(r['TELEFONO']||'').toString()};
-      hist[key].compras.push({
+      const nom=(r['CLIENTE']||r['Cliente']||'').trim();
+      if(!nom)return;
+      if(!hist[tel])hist[tel]={nombre:nom,tel:tel,compras:[]};
+      hist[tel].compras.push({
         fecha:f,
         producto:[r['Marca']||'',r['producto']||''].filter(Boolean).join(' - '),
         mes:f.getFullYear()+'-'+(f.getMonth()+1).toString().padStart(2,'0'),
         dia:f.getDate()
       });
-      if(r['TELEFONO']&&!hist[key].tel)hist[key].tel=(r['TELEFONO']||'').toString();
     });
 
-    // Mes anterior (el mes antes del actual)
+    // Mes anterior
     const mesAnterior=new Date(hoy.getFullYear(),hoy.getMonth()-1,1);
     const mesAntKey=mesAnterior.getFullYear()+'-'+(mesAnterior.getMonth()+1).toString().padStart(2,'0');
 
-    // Clientes que compraron en mes anterior (dias 1 a diaHoy) pero NO en mes actual
+    // Clientes con tel que compraron en mes anterior (dias 1 a diaHoy) pero NO en mes actual
     const noVolvieron=[];
     Object.values(hist).forEach(function(c){
       const enMesAnt=c.compras.filter(function(x){return x.mes===mesAntKey&&x.dia<=diaHoy;});
       const enMesAct=c.compras.filter(function(x){return x.mes===mesActual&&x.dia<=diaHoy;});
       if(enMesAnt.length>0&&enMesAct.length===0){
-        // Total de compras históricas
         const totalCompras=c.compras.length;
-        const ultimoProd=c.compras.sort(function(a,b){return b.fecha-a.fecha;})[0].producto||'--';
-        noVolvieron.push({
-          nombre:c.nombre,
-          tel:c.tel,
-          totalCompras:totalCompras,
-          ultimoProd:ultimoProd
-        });
+        const ultimoProd=c.compras.slice().sort(function(a,b){return b.fecha-a.fecha;})[0].producto||'--';
+        noVolvieron.push({nombre:c.nombre,tel:c.tel,totalCompras:totalCompras,ultimoProd:ultimoProd});
       }
     });
 
-    // Clasificar
+    // Clasificar por total de compras historicas con tel
     const urgente=noVolvieron.filter(function(c){return c.totalCompras>=3;}).sort(function(a,b){return b.totalCompras-a.totalCompras;});
     const seguimiento=noVolvieron.filter(function(c){return c.totalCompras===2;});
     const primera=noVolvieron.filter(function(c){return c.totalCompras===1;});
