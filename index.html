@@ -184,12 +184,8 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="bar-chart" id="bar-ventas"></div>
   </div>
   <div class="card">
-    <div class="card-title">Facturación diaria — últimos 3 meses</div>
-    <div id="grafico-diario-fac" style="overflow-x:auto;padding-top:8px"></div>
-  </div>
-  <div class="card">
-    <div class="card-title">Kg vendidos por día — últimos 3 meses</div>
-    <div id="grafico-diario-kg" style="overflow-x:auto;padding-top:8px"></div>
+    <div class="card-title">Comparativo al mismo día — últimos 3 meses</div>
+    <div id="comparativo-tabla"></div>
   </div>
   <div class="card-grid">
     <div class="card"><div class="card-title">Top zonas</div><div id="zonas-bars"></div></div>
@@ -861,7 +857,71 @@ function buildGraficoDiario(rows){
   });
   const meses=Object.keys(byMesDia).sort().slice(-3);
   diarioData={meses,byMesDia};
-  renderGraficoDiario();
+  renderComparativoTabla(byMesDia);
+}
+
+function renderComparativoTabla(byMesDia){
+  const el=document.getElementById('comparativo-tabla');
+  if(!el)return;
+  const hoy=new Date();
+  const diaHoy=hoy.getDate();
+  const meses=Object.keys(byMesDia).sort().slice(-3);
+  const MESES_NOM=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  // Calcular acumulado hasta diaHoy para cada mes
+  const datos=meses.map(function(m){
+    let facAcum=0,kgAcum=0;
+    for(var d=1;d<=diaHoy;d++){
+      if(byMesDia[m]&&byMesDia[m][d]){
+        facAcum+=byMesDia[m][d].fac;
+        kgAcum+=byMesDia[m][d].kg;
+      }
+    }
+    const[y,mo]=m.split('-');
+    return{mes:MESES_NOM[parseInt(mo)]+' '+y,fac:facAcum,kg:kgAcum,key:m};
+  });
+
+  const mesActual=hoy.getFullYear()+'-'+(hoy.getMonth()+1).toString().padStart(2,'0');
+  
+  let html='<div style="margin-top:8px">';
+  html+='<div style="font-size:12px;color:var(--gris-dark);margin-bottom:12px">Acumulado al día <strong>'+diaHoy+'</strong> de cada mes</div>';
+  
+  // Tabla
+  html+='<table style="width:100%;border-collapse:collapse;font-size:13px">';
+  html+='<thead><tr style="background:var(--gris)">';
+  html+='<th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--gris-dark);text-transform:uppercase;border-bottom:2px solid var(--gris-med)">Métrica</th>';
+  datos.forEach(function(d){
+    const isActual=d.key===mesActual;
+    html+='<th style="padding:10px 14px;text-align:right;font-size:11px;font-weight:600;color:'+(isActual?'var(--verde)':'var(--gris-dark)')+';text-transform:uppercase;border-bottom:2px solid var(--gris-med)">'+(isActual?'★ ':'')+d.mes+'</th>';
+  });
+  html+='</tr></thead><tbody>';
+
+  // Fila facturación
+  html+='<tr style="border-bottom:1px solid var(--gris-med)">';
+  html+='<td style="padding:14px;font-weight:600">Facturación</td>';
+  datos.forEach(function(d,i){
+    const isActual=d.key===mesActual;
+    const prev=i>0?datos[i-1].fac:null;
+    const diff=prev&&prev>0?Math.round((d.fac-prev)/prev*100):null;
+    const diffStr=diff!==null?(' <span style="font-size:11px;color:'+(diff>=0?'var(--verde)':'#c0392b')+'">'+(diff>=0?'+':'')+diff+'%</span>'):'';
+    html+='<td style="padding:14px;text-align:right;font-weight:'+(isActual?'700':'500')+';color:'+(isActual?'var(--verde)':'var(--texto)')+'">$'+(d.fac/1e6).toFixed(2)+'M'+diffStr+'</td>';
+  });
+  html+='</tr>';
+
+  // Fila kg
+  html+='<tr>';
+  html+='<td style="padding:14px;font-weight:600">Kg vendidos</td>';
+  datos.forEach(function(d,i){
+    const isActual=d.key===mesActual;
+    const prev=i>0?datos[i-1].kg:null;
+    const diff=prev&&prev>0?Math.round((d.kg-prev)/prev*100):null;
+    const diffStr=diff!==null?(' <span style="font-size:11px;color:'+(diff>=0?'var(--verde)':'#c0392b')+'">'+(diff>=0?'+':'')+diff+'%</span>'):'';
+    html+='<td style="padding:14px;text-align:right;font-weight:'+(isActual?'700':'500')+';color:'+(isActual?'var(--verde)':'var(--texto)')+'">'+d.kg.toLocaleString('es-AR')+'kg'+diffStr+'</td>';
+  });
+  html+='</tr>';
+
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
 }
 
 function renderGraficoDiario(){
