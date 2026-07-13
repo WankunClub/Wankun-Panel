@@ -600,6 +600,7 @@ Vamos Argentina!</div>
     <div style="display:flex;gap:4px;border-bottom:1px solid var(--gris-med);margin-bottom:16px">
       <button id="sktab-stock" onclick="skSubTab('stock')" style="padding:7px 14px;font-size:13px;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--text-primary);font-weight:600;color:var(--text-primary);font-family:'DM Sans',sans-serif">Stock actual</button>
       <button id="sktab-movs" onclick="skSubTab('movs')" style="padding:7px 14px;font-size:13px;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gris-dark);font-family:'DM Sans',sans-serif">Movimientos</button>
+      <button id="sktab-ajuste" onclick="skSubTab('ajuste')" style="padding:7px 14px;font-size:13px;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gris-dark);font-family:'DM Sans',sans-serif">Ajustes</button>
     </div>
 
     <!-- Vista: Stock actual -->
@@ -645,6 +646,53 @@ Vamos Argentina!</div>
         <div class="table-body" id="sk-mov-tabla" style="max-height:500px"></div>
       </div>
       <div id="sk-mov-total" style="font-size:13px;color:var(--gris-dark);margin-top:10px;text-align:right"></div>
+    </div>
+
+    <!-- Vista: Ajustes de stock -->
+    <div id="skview-ajuste" style="display:none">
+      <p style="font-size:13px;color:var(--gris-dark);margin-bottom:16px">Usá esta sección para corregir diferencias entre el stock del sistema y el conteo real del depósito.</p>
+      <div class="card" style="border-top:3px solid #f59e0b;margin-bottom:16px">
+        <div class="card-title" style="margin-bottom:12px">Nuevo ajuste</div>
+        <div style="position:relative;margin-bottom:10px">
+          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Producto</label>
+          <input id="sk-aj-q" type="text" placeholder="Nombre o SKU..." oninput="skAc('aj')" autocomplete="off"
+            style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+          <div id="sk-aj-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--gris-med);border-radius:8px;z-index:100;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);margin-top:2px"></div>
+        </div>
+        <div id="sk-aj-tag" style="min-height:22px;margin-bottom:10px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Tipo</label>
+            <select id="sk-aj-tipo" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+              <option value="suma">Sumar unidades</option>
+              <option value="resta">Restar unidades</option>
+              <option value="fija">Fijar cantidad exacta</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Cantidad</label>
+            <input id="sk-aj-n" type="number" min="0" placeholder="0"
+              style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+          </div>
+          <div>
+            <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Fecha</label>
+            <input id="sk-aj-d" type="date"
+              style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Motivo</label>
+          <input id="sk-aj-motivo" type="text" placeholder="Ej: diferencia en conteo, producto dañado..."
+            style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;margin-bottom:10px">
+        </div>
+        <button class="btn btn-primary" onclick="skRegistrarAjuste()" style="width:100%;background:#f59e0b;border-color:#f59e0b">Registrar ajuste</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:90px 2fr 80px 80px 1fr 60px">
+          <span>Fecha</span><span>Producto</span><span>Tipo</span><span>Cantidad</span><span>Motivo</span><span></span>
+        </div>
+        <div class="table-body" id="sk-aj-tabla" style="max-height:400px"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1742,7 +1790,7 @@ function mktResize(el){el.style.height='40px';el.style.height=Math.min(el.scroll
 // ── STOCK ─────────────────────────────────────────────────────────────────────
 const SK_PRODUCTS=[{"nombre":"PRO PLAN KITTEN PROTECTION","sku":"PPCATKITT1","kg":1},{"nombre":"PRO PLAN KITTEN PROTECTION","sku":"PPCATKITT3","kg":3},{"nombre":"PRO PLAN GATO ADULTO","sku":"PPCATADU3","kg":3},{"nombre":"PRO PLAN GATO ADULTO","sku":"PPCATADU75","kg":7.5},{"nombre":"PRO PLAN ADULT CAT 7+","sku":"PPCATADU+775","kg":7.5},{"nombre":"PRO PLAN URINARY CAT","sku":"PPCATURI75","kg":7.5},{"nombre":"PRO PLAN STERILIZED CAT","sku":"PPCATSTER3","kg":3},{"nombre":"EXCELLENT GATO KITTEN","sku":"EXCCATKITT75","kg":7.5},{"nombre":"EXCELLENT GATO ADULTO","sku":"EXCCATADU3","kg":3},{"nombre":"EXCELLENT GATO ADULTO","sku":"EXCCATADU75","kg":7.5},{"nombre":"EXCELLENT GATO ADULTO","sku":"EXCCATADU15","kg":15},{"nombre":"EXCELLENT GATO STERELIZED","sku":"EXCECATSTERE7","kg":7.5},{"nombre":"EXCELLENT URINARY CAT","sku":"EXCCATURINARY7","kg":7.5},{"nombre":"FAWNA ADULT CAT","sku":"FWCATADU75","kg":7.5},{"nombre":"FAWNA URINARY CAT","sku":"FWCATURI75","kg":7.5},{"nombre":"FAWNA ADULT CAT STERILIZED","sku":"FWCATADUSTE75","kg":7.5},{"nombre":"OLD PRINCE EQUILIBRIUM CATS COMPLETE CARE","sku":"OPCATEQCC75","kg":7.5},{"nombre":"OLD PRINCE EQUILIBRIUM CATS INDOOR CARE","sku":"OPCATEQIND75","kg":7.5},{"nombre":"OLD PRINCE EQUILIBRIUM CATS URINARY CARE","sku":"OPCATEQURI75","kg":7.5},{"nombre":"OLD PRINCE GATO ADULTO CORDERO","sku":"OPCATADUCOR75","kg":7.5},{"nombre":"OLD PRINCE NOVEL GATOS ADULTOS","sku":"OPCATADUNOV75","kg":7.5},{"nombre":"OLD PRINCE NOVEL ADULT CAT STERILIZED","sku":"OPCATADUNOVSTE75","kg":7.5},{"nombre":"EUKANUBA ADULTO TOP CONDITION","sku":"EUKACATADU3","kg":3},{"nombre":"EUKANUBA ADULTO TOP CONDITION","sku":"EUKACATADU7","kg":7.5},{"nombre":"OPTIMUS GATO","sku":"OSCATADU75","kg":7.5},{"nombre":"UNIK KITTEN","sku":"UKKITTEN","kg":2},{"nombre":"UNIK GATO CASTRADO","sku":"UKCATCAS2","kg":2},{"nombre":"UNIK GATO CASTRADO","sku":"UKCATCAS7","kg":7},{"nombre":"PERSIAN","sku":"RCCATPER1","kg":1.5},{"nombre":"PERSIAN","sku":"RCCATPER7","kg":7.5},{"nombre":"SIAMESE","sku":"RCCATSIAM7","kg":7.5},{"nombre":"URINARY CARE","sku":"RCCATURIC1","kg":1.5},{"nombre":"URINARY CARE","sku":"RCCATURIC7","kg":7.5},{"nombre":"FIT","sku":"RCCATFIT1","kg":1.5},{"nombre":"FIT","sku":"RCCATFIT3","kg":3},{"nombre":"FIT","sku":"RCCATFIT7","kg":7.5},{"nombre":"FIT","sku":"RCCATFIT15","kg":15},{"nombre":"INDOOR","sku":"RCCATIND1","kg":1.5},{"nombre":"INDOOR","sku":"RCCATIND7","kg":7.5},{"nombre":"INDOOR 7+","sku":"RCCATIND71","kg":1.5},{"nombre":"INDOOR 7+","sku":"RCCATIND77","kg":7.5},{"nombre":"KITTEN","sku":"RCCATKITT1","kg":1.5},{"nombre":"KITTEN","sku":"RCCATKITT7","kg":7.5},{"nombre":"SENSIBLE","sku":"RCCATSEN1","kg":1.5},{"nombre":"SENSIBLE","sku":"RCCATSEN7","kg":7.5},{"nombre":"GASTRO INTESTINAL FELINO","sku":"RCCATGAS2","kg":2},{"nombre":"RENAL FELINE","sku":"RCCATREN2","kg":2},{"nombre":"URINARY S/O HIGH DILUTION","sku":"RCCATURISO1","kg":1.5},{"nombre":"URINARY S/O HIGH DILUTION","sku":"RCCATURISO7","kg":7.5},{"nombre":"CLUB PERFORMANCE CAT ADULTO","sku":"CPCATADU7","kg":7.5},{"nombre":"CLUB PERFORMANCE KITTEN","sku":"CPCATKITT7","kg":7.5},{"nombre":"GATO CASTRADO WEIGHT CONTROL","sku":"RCCATCASWC1","kg":1.5},{"nombre":"GATO CASTRADO WEIGHT CONTROL","sku":"RCCATCASWC3","kg":3},{"nombre":"GATO CASTRADO WEIGHT CONTROL","sku":"RCCATCASWC7","kg":7.5},{"nombre":"GATO CASTRADO WEIGHT CONTROL","sku":"RCCATCASWC12","kg":12},{"nombre":"OPTIMUS PERRO ADULTO","sku":"OPTDOGADUL20","kg":20},{"nombre":"OPTIMUS CACHORRO","sku":"OPTDOGCACH15","kg":15},{"nombre":"UNIK PERRO CACHORRO PEQUE\u00d1O","sku":"UKDOGCACHSMALL3","kg":3},{"nombre":"UNIK PERRO CACHORRO MEDIANO Y GRANDE","sku":"UKDOGCACHMED15","kg":15},{"nombre":"UNIK PERRO ADULTO PEQUE\u00d1O CASTRADO","sku":"UKDIGADUPEQCAS76","kg":7.5},{"nombre":"UNIK PERRO ADULTO MEDIANO CASTRADO","sku":"UKDOGCAS15","kg":15},{"nombre":"UNIK PERRO ADULTO PEQUE\u00d1O","sku":"UKDGOSMALL7","kg":7.5},{"nombre":"UNIK PERRO MEDIANO Y GRANDE","sku":"UKDOGMED15","kg":15},{"nombre":"FAWNA CACHORRO MEDIANO Y GRANDE","sku":"FWDOGCACHMED15","kg":15},{"nombre":"FAWNA ADULTO MEDIANO Y GRANDE","sku":"FWDOGADUMED15","kg":15},{"nombre":"FAWNA PERRO ADULTO LIGHT","sku":"FWDOGADULIGHT15","kg":15},{"nombre":"FAWNA PERRO ADULTO SENIOR","sku":"FWDOGSENIOR15","kg":15},{"nombre":"PRO PLAN PUPPY SMALL BREED","sku":"PRODOGPUPPYSM3","kg":3},{"nombre":"PRO PLAN PUPPY SMALL BREED","sku":"PRODOGPUPPYSM7","kg":7.5},{"nombre":"PRO PLAN PUPPY MEDIUM BREED","sku":"PRODOGPUPPYMED15","kg":15},{"nombre":"PRO PLAN PUPPY LARGE BREED","sku":"PRODOGPUPPYLARGE15","kg":15},{"nombre":"PRO PLAN ADULTO SMALL BREED","sku":"PRODOGADUSMALL7","kg":7.5},{"nombre":"PRO PLAN ADULTO MEDIUM BREED","sku":"PRODOGADUMED3","kg":3},{"nombre":"PRO PLAN ADULTO MEDIUM BREED","sku":"PRODOGADUMED15","kg":15},{"nombre":"PRO PLAN ADULTO LARGE","sku":"PRODOGADULARGE15","kg":15},{"nombre":"PRO PLAN REDUCED CALORIES","sku":"PRODOGRC12","kg":12},{"nombre":"OLD PRINCE NOVEL CACHORRO ALL BREEDS","sku":"OPDOGCACHNOVEL15","kg":15},{"nombre":"OLD PRINCE EQUILIBRIUM ADULTO WEIGHT CONTROL","sku":"OPDOGADUEQWC15","kg":15},{"nombre":"OLD PRINCE NOVEL ADULTO SMALL BREED","sku":"OPDOGADUSMALLNOV15","kg":15},{"nombre":"OLD PRINCE NOVEL ADULTO MEDIANO Y GRANDE","sku":"OPDOGADUMEDNOV15","kg":15},{"nombre":"OLD PRINCE NOVEL CORDERO SENIOR","sku":"OPDOGSENNOV15","kg":15},{"nombre":"OLD PRINCE SPECIAL RECIPE WEIGHT CONTROL","sku":"OPDOGSRWC15","kg":15},{"nombre":"OLD PRINCE NOVEL LIGHT","sku":"OPDOGLIGHTNOV15","kg":15},{"nombre":"MAXI WEIGHT CARE","sku":"RCDOGMAXWC10","kg":10},{"nombre":"MEDIUM WEIGHT CARE","sku":"RCDOGMEDWC3","kg":3},{"nombre":"MEDIUM WEIGHT CARE","sku":"RCDOGMEDWC10","kg":10},{"nombre":"MINI WEIGHT CARE","sku":"RCDOGMINIWC3","kg":3},{"nombre":"MINI DERMACOMFORT","sku":"RCDOGMINIDERMA3","kg":3},{"nombre":"MEDIUM DERMACONFORT","sku":"RCDOGMEDDERMA3","kg":3},{"nombre":"MEDIUM DERMACONFORT","sku":"RCDOGMEDDERMA10","kg":10},{"nombre":"MAXI DERMACOMFORT","sku":"RCDOGMAXIDERMA10","kg":10},{"nombre":"HYPOALLERGENIC CANINE PUPPY","sku":"RCDOGHYPOPUPPY2","kg":2},{"nombre":"HYPOALLERGENIC CANINE PUPPY","sku":"RCDOGHYPOPUPPY10","kg":10},{"nombre":"ANALLERGENIC CANINE","sku":"RCDOGANAL8","kg":8},{"nombre":"CARDIAC CANINE","sku":"RCDOGCARDIAC10","kg":10},{"nombre":"DIABETIC CANINE","sku":"RCDOGDIABETIC2","kg":2},{"nombre":"DIABETIC CANINE","sku":"RCDOGDIABETIC10","kg":10},{"nombre":"GASTRO INTESTINAL MC","sku":"RCDOGGASTROMC10","kg":10},{"nombre":"GASTRO INTESTINAL","sku":"RCDOGGASTRO2","kg":2},{"nombre":"GASTRO INTESTINAL","sku":"RCDOGGASTRO10","kg":10},{"nombre":"HEPATIC CANINE","sku":"RCDOGHEPATIC1","kg":1.5},{"nombre":"HEPATIC CANINE","sku":"RCDOGHEPATIC10","kg":10},{"nombre":"HYPOALLERGENIC CANINE","sku":"RCDOGHYPO2","kg":2},{"nombre":"HYPOALLERGENIC CANINE","sku":"RCDOGHYPO110","kg":10},{"nombre":"MOBILITY CANINE","sku":"RCDOGMOBILITY10","kg":10},{"nombre":"MOBILITY LARGER DOG","sku":"RCDOGMOBILITYLD15","kg":15},{"nombre":"RENAL CANINE","sku":"RCDOGRENAL1","kg":1.5},{"nombre":"RENAL CANINE","sku":"RCDOGRENAL10","kg":10},{"nombre":"SATIETY CANINE","sku":"RCDOGSATIETY7","kg":7.5},{"nombre":"SATIETY CANINE","sku":"RCDOGSATIETY15","kg":15},{"nombre":"URINARY AGEING 7+","sku":"RCDOGURI710","kg":10},{"nombre":"URINARY CARE S/O","sku":"RCDOGURISO7","kg":10},{"nombre":"CLUB PERFORMANCE JUNIOR","sku":"CPDOGJUN15","kg":15},{"nombre":"CLUB PERFORMANCE DOG ADULTO","sku":"CPDOGADU15","kg":15},{"nombre":"CLUB PERFORMANCE DOG ADULTO","sku":"CPDOGADU20","kg":20},{"nombre":"CLUB PERFORMANCE WEIGHT CONTROL","sku":"CPDOGWC15","kg":15},{"nombre":"BOXER ADULTO","sku":"RCDOGADUBOXER12","kg":12},{"nombre":"BULLDOG FRANCES ADULTO","sku":"RCDOGADUBULL7","kg":7.5},{"nombre":"CANICHE ADULTO","sku":"RCDOGADUCANICHE3","kg":3},{"nombre":"CANICHE ADULTO","sku":"RCDOGADUCANICHE7","kg":7.5},{"nombre":"DACHSHUND ADULTO","sku":"RCDOGADUDASCH3","kg":3},{"nombre":"GOLDEN RETRIEVER ADULTO","sku":"RCDOGADUGOLDEN12","kg":12},{"nombre":"JACK RUSELL ADULTO","sku":"RCDOGADUJACK3","kg":3},{"nombre":"LABRADOR RETRIEVER ADULTO","sku":"RCDOGADULABRADOR12","kg":12},{"nombre":"OVEJERO ALEMAN CACHORRO","sku":"RCDOGADUOVEJEROpuppy12","kg":12},{"nombre":"OVEJERO ALEMAN ADULTO","sku":"RCDOGADUOVEJERO12","kg":12},{"nombre":"PUG ADULTO","sku":"RCDOGADUPUG7","kg":7.5},{"nombre":"GIANT PUPPY","sku":"RCDOGPUPYGIANT15","kg":15},{"nombre":"MAXI PUPPY","sku":"RCDOGMAXIPUPY3","kg":3},{"nombre":"MAXI PUPPY","sku":"RCDOGMAXIPUPY15","kg":15},{"nombre":"MEDIUM PUPPY","sku":"RCDOGMEDPUPY3","kg":3},{"nombre":"MEDIUM PUPPY","sku":"RCDOGMEDPUPY15","kg":15},{"nombre":"MINI PUPPY","sku":"RCDOGMINIPUPY3","kg":3},{"nombre":"GIANT JUNIOR","sku":"RCDOGGIANTJUN15","kg":15},{"nombre":"GIANT ADULT","sku":"RCDOGGIANTADU15","kg":15},{"nombre":"MAXI ADULT","sku":"RCDOGMAXIADU15","kg":15},{"nombre":"MAXI ADULT 5+","sku":"RCDOGMAXIADU515","kg":15},{"nombre":"MAXI AGEING+8","sku":"RCDOGMAXAGEING815","kg":15},{"nombre":"MEDIUM ADULT","sku":"RCDOGMEDADU3","kg":3},{"nombre":"MEDIUM ADULT","sku":"RCDOGMEDADU7","kg":7.5},{"nombre":"MEDIUM ADULT","sku":"RCDOGMEDADU15","kg":15},{"nombre":"MEDIUM ADULT +7","sku":"RCDOGMEDADU73","kg":3},{"nombre":"MEDIUM ADULT +7","sku":"RCDOGMEDADU715","kg":15},{"nombre":"MEDIUM ADULT+10","sku":"RCDOGMEDADU1016","kg":15},{"nombre":"MINI ADULT","sku":"RCDOGMINIADU3","kg":3},{"nombre":"MINI ADULT","sku":"RCDOGMINIADU7","kg":7.5},{"nombre":"MINI ADULT","sku":"RCDOGMINIADU15","kg":15},{"nombre":"MINI AGEING +12","sku":"RCDOGMINIADU123","kg":3},{"nombre":"MINI ADULT +8","sku":"RCDOGMINIADU83","kg":3},{"nombre":"EXCELLENT PUPPY SMALL BREED","sku":"EXDOGPUPYSMALL7","kg":7.5},{"nombre":"EXCELLENT PUPPY MEDIANO Y GRANDE","sku":"EXDOGPUPYMED15","kg":15},{"nombre":"EXCELLENT PERRO ADULTO SMALL","sku":"EXDOGADUSMALL3","kg":3},{"nombre":"EXCELLENT PERRO ADULTO SMALL","sku":"EXDOGADUSMALL7","kg":7.5},{"nombre":"EXCELLENT PERRO ADULTO SMALL","sku":"EXDOGADUSMALL15","kg":15},{"nombre":"EXCELLENT PERRO ADULTO MEDIANO","sku":"EXDOGADUMED3","kg":3},{"nombre":"EXCELLENT PERRO ADULTO MEDIANO","sku":"EXDOGADUMED15","kg":15},{"nombre":"EXCELLENT PERRO SENIOR","sku":"EXDOGSEN15","kg":15},{"nombre":"EXCELLENT ADULT SKIN CARE CORDERO","sku":"EXDOGSKIN15","kg":15},{"nombre":"EXCELLENT PERRO ADULTO REDUCED CALORIES","sku":"EXDOGADURC15","kg":15},{"nombre":"EUKANUBA PUPPY LAMB","sku":"EKDOGPUPYLAMB3","kg":3},{"nombre":"EUKANUBA PUPPY LAMB","sku":"EKDOGPUPYLAMB15","kg":15},{"nombre":"EUKANUBA PUPPY SMALL BREED","sku":"EKDOGPUPSMALL3","kg":3},{"nombre":"EUKANUBA PUPPY MEDIUM","sku":"EKDOGPUPMED3","kg":3},{"nombre":"EUKANUBA PUPPY MEDIUM","sku":"EKDOGPUPYMED15","kg":15},{"nombre":"EUKANUBA PUPPY LARGE BREED","sku":"EKDOGPUPYLARGE3","kg":3},{"nombre":"EUKANUBA PUPPY LARGE BREED","sku":"EKDOGPUPYLARGE15","kg":15},{"nombre":"EUKANUBA ADULT SMALL BREED","sku":"EKDOGADUSMALL3","kg":3},{"nombre":"EUKANUBA ADULT MEDIUM BREED","sku":"EKDOGADUMED3","kg":3},{"nombre":"EUKANUBA ADULT MEDIUM BREED","sku":"EKDOGADUMED15","kg":15},{"nombre":"EUKANUBA ADULTO LARGE BREED","sku":"EKDOGADULARG15","kg":15},{"nombre":"EUKANUBA ADULTO LAMB","sku":"EKDOGADULAMB15","kg":15},{"nombre":"EUKANUBA SENIOR SMALL BREED","sku":"EKDOGSENSMALL3","kg":3},{"nombre":"EUKANUBA SENIOR MEDIUM BREED","sku":"EKDOGSENMED3","kg":3},{"nombre":"EUKANUBA SENIOR MEDIUM BREED","sku":"EKDOGSENMED15","kg":15},{"nombre":"EUKANUBA SENIOR LARGE BREED","sku":"EKDOGSENLARGE15","kg":15},{"nombre":"EUKANUBA FIT BODY MEDIUM BREED","sku":"EKDOGFITMED3","kg":3},{"nombre":"EUKANUBA FIT BODY MEDIUM BREED","sku":"EKDOGFBMED15","kg":15},{"nombre":"EUKANUBA FIT BODY LARGE BREED","sku":"EKDOGFBLARGE15","kg":15},{"nombre":"BALANCED PERRO ADULTO RAZA GRANDE","sku":"BALDOGRG20","kg":20},{"nombre":"BALANCED PERRO ADULTO RAZA MEDIANA","sku":"BALDOGMED20","kg":20},{"nombre":"BALANCED PERRO SENIOR RAZA PEQUE\u00d1A","sku":"BALDOGSENIORRP75","kg":7.5},{"nombre":"MON AMI CORDERO","sku":"MONDOGCOR12","kg":12},{"nombre":"MON AMI CORDERO","sku":"MONDOGCOR7","kg":7.5},{"nombre":"MON AMI POLLO","sku":"MONDOGPOLLO12","kg":12},{"nombre":"MON AMI RAZAS PEQUE\u00d1AS Y MEDIANAS","sku":"MONDOGPYM6","kg":6},{"nombre":"MON AMI SUPERFOOD MYG","sku":"MONSUPERMYG5","kg":5},{"nombre":"MON AMI SUPERFOOD MYG","sku":"MONSUPERMYG12","kg":12},{"nombre":"NUTRIQUE LARGE PUPPY","sku":"NURDOGLARGEPUPPY15","kg":15},{"nombre":"NUTRIQUE LARGE YOUNG ADULT DOG","sku":"nutdoglargeY15","kg":15},{"nombre":"NUTRIQUE MEDIUM YOUNG ADULT DOG","sku":"nutdogmedyoung12","kg":12},{"nombre":"NUTRIQUE MEDIUM PUPPY","sku":"nutdogmedpuppy12","kg":12},{"nombre":"NUTRIQUE TOY MINI YOUNG ADULT DOG","sku":"NUTDOGTOYADU75","kg":7.5},{"nombre":"NUTRIQUE MEDIUM ADULT +7","sku":"NUTDOGMEDADU+712","kg":12},{"nombre":"NUTRIQUE LARGE YOUNG ADULT DOG +6","sku":"NUTDOGLAR+615","kg":15},{"nombre":"BALANCED MEDIUM ADULT","sku":"BALDOGMEDADU20","kg":20},{"nombre":"BALANCED LARGE ADULT","sku":"BALDOGLARADU20","kg":20},{"nombre":"PROF VET NUTRICION","sku":"PROFDOGNUTRI20","kg":20},{"nombre":"PROF VET PREMIUM","sku":"PROFDOGPRE20","kg":20},{"nombre":"PROF VET CORDERO","sku":"PROFVETCOR15","kg":15}];
 
-var skSel={ing:null,vta:null};
+var skSel={ing:null,vta:null,aj:null};
 var skMovs=[];
 
 function skLoad(){try{var r=localStorage.getItem('wankun_stock');if(r)skMovs=JSON.parse(r);}catch(e){skMovs=[];}
@@ -1948,21 +1996,22 @@ function skMatchProduct(marca,prod,kg){
 }
 
 function skSubTab(tab){
-  document.getElementById('skview-stock').style.display=tab==='stock'?'':'none';
-  document.getElementById('skview-movs').style.display=tab==='movs'?'':'none';
-  var ts=document.getElementById('sktab-stock'),tm=document.getElementById('sktab-movs');
-  ts.style.borderBottomColor=tab==='stock'?'var(--text-primary)':'transparent';
-  ts.style.fontWeight=tab==='stock'?'600':'400';
-  ts.style.color=tab==='stock'?'var(--text-primary)':'var(--gris-dark)';
-  tm.style.borderBottomColor=tab==='movs'?'var(--text-primary)':'transparent';
-  tm.style.fontWeight=tab==='movs'?'600':'400';
-  tm.style.color=tab==='movs'?'var(--text-primary)':'var(--gris-dark)';
+  ['stock','movs','ajuste'].forEach(function(t){
+    var view=document.getElementById('skview-'+t);
+    var btn=document.getElementById('sktab-'+t);
+    if(view)view.style.display=t===tab?'':'none';
+    if(btn){btn.style.borderBottomColor=t===tab?'var(--text-primary)':'transparent';btn.style.fontWeight=t===tab?'600':'400';btn.style.color=t===tab?'var(--text-primary)':'var(--gris-dark)';}
+  });
   if(tab==='movs'){
     var hoy=new Date().toISOString().slice(0,10);
     var d=document.getElementById('sk-mov-desde'),h=document.getElementById('sk-mov-hasta');
-    if(d&&!d.value)d.value=hoy;
-    if(h&&!h.value)h.value=hoy;
+    if(d&&!d.value)d.value=hoy;if(h&&!h.value)h.value=hoy;
     skRenderMovs();
+  }
+  if(tab==='ajuste'){
+    var hoy=new Date().toISOString().slice(0,10);
+    var da=document.getElementById('sk-aj-d');if(da&&!da.value)da.value=hoy;
+    skRenderAjustes();
   }
 }
 
@@ -1993,6 +2042,47 @@ function skRenderMovs(){
   document.getElementById('sk-mov-total').textContent=filtered.length+' movimientos · '+totalIng+' unid. ingresadas · '+totalVta+' unid. vendidas';
 }
 
+function skRegistrarAjuste(){
+  if(!skSel['aj']){alert('Seleccioná un producto');return;}
+  var n=parseInt((document.getElementById('sk-aj-n')||{}).value||'0');
+  if(isNaN(n)||n<0){alert('Ingresá una cantidad válida');return;}
+  var tipo=document.getElementById('sk-aj-tipo').value;
+  var motivo=(document.getElementById('sk-aj-motivo')||{}).value||'Sin motivo';
+  var d=(document.getElementById('sk-aj-d')||{}).value||new Date().toISOString().slice(0,10);
+  var p=skSel['aj'];
+  // Para 'fija': calculamos el stock actual y hacemos el ajuste necesario
+  if(tipo==='fija'){
+    var calc=skCalc();
+    var cur=calc.filter(function(r){return r.sku===p.sku;})[0];
+    var actual=cur?(cur.i-cur.wc-cur.ml):0;
+    var diff=n-actual;
+    if(diff===0){alert('El stock ya está en '+n+' unidades. No hay ajuste necesario.');return;}
+    skMovs.push({type:diff>0?'ing':'vta',canal:diff>0?'ing':'ajuste',sku:p.sku,nombre:p.nombre,kg:p.kg,qty:Math.abs(diff),date:d,ts:Date.now(),ajuste:true,motivo:motivo});
+  } else {
+    skMovs.push({type:tipo==='suma'?'ing':'vta',canal:tipo==='suma'?'ing':'ajuste',sku:p.sku,nombre:p.nombre,kg:p.kg,qty:n,date:d,ts:Date.now(),ajuste:true,motivo:motivo});
+  }
+  skSave();
+  skSel['aj']=null;
+  document.getElementById('sk-aj-q').value='';
+  document.getElementById('sk-aj-tag').innerHTML='';
+  document.getElementById('sk-aj-n').value='';
+  document.getElementById('sk-aj-motivo').value='';
+  skRenderAjustes();skRenderTabla();skRenderMetricas();
+  alert('Ajuste registrado');
+}
+
+function skRenderAjustes(){
+  var ajustes=skMovs.filter(function(m){return m.ajuste;}).sort(function(a,b){return b.ts-a.ts;});
+  var tb=document.getElementById('sk-aj-tabla');if(!tb)return;
+  if(!ajustes.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin ajustes registrados</div>';return;}
+  tb.innerHTML=ajustes.map(function(m){
+    var realIdx=skMovs.indexOf(m);
+    var tipoLabel=m.type==='ing'?'<span style="color:var(--verde)">+'+m.qty+'</span>':'<span style="color:#c0392b">-'+m.qty+'</span>';
+    var tipoStr=m.type==='ing'?'Suma':'Resta';
+    return'<div class="table-row" style="grid-template-columns:90px 2fr 80px 80px 1fr 60px"><span style="font-size:12px">'+m.date+'</span><span style="font-size:12px" title="'+m.nombre+'">'+m.nombre+'</span><span style="font-size:12px">'+tipoStr+'</span><span>'+tipoLabel+'</span><span style="font-size:11px;color:var(--gris-dark)">'+m.motivo+'</span><span><button onclick="skEliminarMov('+realIdx+')" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:16px" title="Eliminar">×</button></span></div>';
+  }).join('');
+}
+
 function skEliminarMov(idx){
   if(!confirm('¿Eliminar este movimiento?'))return;
   skMovs.splice(idx,1);
@@ -2005,7 +2095,7 @@ function skEliminarMov(idx){
 function skBorrarTodo(){if(confirm('¿Borrar todos los movimientos de stock?')){skMovs=[];skSave();skRenderTabla();skRenderMetricas();}}
 
 document.addEventListener('click',function(e){
-  ['sk-ing-dd','sk-vta-dd'].forEach(function(id){
+  ['sk-ing-dd','sk-vta-dd','sk-aj-dd'].forEach(function(id){
     var el=document.getElementById(id);
     if(el&&!el.contains(e.target)&&e.target.id!==id.replace('-dd','-q'))el.style.display='none';
   });
