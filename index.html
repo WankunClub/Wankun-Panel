@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<!-- v2.4.1 -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1195,8 +1196,8 @@ function renderTopProductos(){
     var partes=p.nombre.split(' - ');
     var marca=partes.length>1?partes[0]:'';
     var prod=partes.length>1?partes.slice(1).join(' - '):partes[0];
-    var kgMatch=prod.match(/(\d+[.,]?\d*)\s*kg/i);
-    var kg=kgMatch?parseFloat(kgMatch[1].replace(',','.')):0;
+    // Usar kg promedio por venta para detectar el tamaño de bolsa
+    var kg=p.ventas>0?Math.round(p.kg/p.ventas*2)/2:0;
     var res=skMatchProduct(marca,prod,kg);
     var skuKey=res?res.product.sku:'__NOMATCH__'+p.nombre;
     var displayNombre=res?res.product.nombre:p.nombre;
@@ -2055,7 +2056,7 @@ function skMatchProduct(marca,prod,kg){
     });
     if(score>bestScore){bestScore=score;best=p;bestQty=qty;}
   });
-  if(!best||bestScore<5)return null;
+  if(!best||bestScore<4)return null;
   return{product:best,qty:bestQty};
 }
 
