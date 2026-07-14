@@ -2002,6 +2002,7 @@ function skSubTab(tab){
     if(view)view.style.display=t===tab?'':'none';
     if(btn){btn.style.borderBottomColor=t===tab?'var(--text-primary)':'transparent';btn.style.fontWeight=t===tab?'600':'400';btn.style.color=t===tab?'var(--text-primary)':'var(--gris-dark)';}
   });
+  if(tab==='stock'){skRenderTabla();skRenderMetricas();}
   if(tab==='movs'){
     var hoy=new Date().toISOString().slice(0,10);
     var d=document.getElementById('sk-mov-desde'),h=document.getElementById('sk-mov-hasta');
@@ -2105,7 +2106,7 @@ document.addEventListener('click',function(e){
   });
 });
 
-skLoad();
+skLoad();skRenderTabla();skRenderMetricas();
 
 
 // ── ANALISIS DE CLIENTES ──────────────────────────────────────────────────────
