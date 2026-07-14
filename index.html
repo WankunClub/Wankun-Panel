@@ -1179,7 +1179,7 @@ function renderTopProductos(){
   const lista=Object.values(agg).sort(function(a,b){return b.fac-a.fac;}).slice(0,50);
   const tb=document.getElementById('top-productos');
   if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark)">Sin datos</div>';return;}
-  // Calcular stock actual desde skMovs (misma logica que skCalc)
+  // Calcular stock actual desde skMovs
   var stockMap={};
   if(typeof skMovs!=='undefined'){
     skMovs.forEach(function(mv){
@@ -1188,27 +1188,32 @@ function renderTopProductos(){
       else stockMap[mv.sku]-=mv.qty;
     });
   }
-  // Función para matchear nombre de producto a SKU (reutiliza lógica de skMatchProduct)
-  function matchSKU(nombre){
-    if(typeof skMatchProduct==='undefined'||typeof SK_PRODUCTS==='undefined')return null;
-    var partes=nombre.split(' - ');
+  // Matchear cada item a su SKU y reagrupar por SKU para eliminar duplicados
+  var bySku={};
+  lista.forEach(function(p){
+    if(typeof skMatchProduct==='undefined')return;
+    var partes=p.nombre.split(' - ');
     var marca=partes.length>1?partes[0]:'';
     var prod=partes.length>1?partes.slice(1).join(' - '):partes[0];
-    // Extraer kg del nombre si está presente
     var kgMatch=prod.match(/(\d+[.,]?\d*)\s*kg/i);
     var kg=kgMatch?parseFloat(kgMatch[1].replace(',','.')):0;
     var res=skMatchProduct(marca,prod,kg);
-    return res?res.product:null;
-  }
-  tb.innerHTML=lista.map(function(p,i){
+    var skuKey=res?res.product.sku:'__NOMATCH__'+p.nombre;
+    var displayNombre=res?res.product.nombre:p.nombre;
+    if(!bySku[skuKey])bySku[skuKey]={nombre:displayNombre,sku:res?res.product.sku:null,ventas:0,kg:0,fac:0};
+    bySku[skuKey].ventas+=p.ventas;
+    bySku[skuKey].kg+=p.kg;
+    bySku[skuKey].fac+=p.fac;
+  });
+  var listaFinal=Object.values(bySku).sort(function(a,b){return b.fac-a.fac;});
+  tb.innerHTML=listaFinal.map(function(p,i){
     const bg=i%2===0?'var(--gris)':'transparent';
-    var skuProd=matchSKU(p.nombre);
-    var skuStr=skuProd?'<span style="font-family:monospace;font-size:10px;color:var(--azul-med)">'+skuProd.sku+'</span>':'<span style="font-size:11px;color:var(--gris-dark)">—</span>';
-    var stockActual=skuProd&&stockMap[skuProd.sku]!==undefined?stockMap[skuProd.sku]:null;
+    var skuStr=p.sku?'<span style="font-family:monospace;font-size:10px;color:var(--azul-med)">'+p.sku+'</span>':'<span style="font-size:11px;color:var(--gris-dark)">—</span>';
+    var stockActual=p.sku&&stockMap[p.sku]!==undefined?stockMap[p.sku]:null;
     var stockStr=stockActual!==null?'<span style="font-weight:600;color:'+(stockActual>2?'var(--verde)':stockActual>0?'#d97706':'#c0392b')+'">'+stockActual+'</span>':'<span style="color:var(--gris-dark)">—</span>';
     var reponer=stockActual!==null?p.ventas-stockActual:null;
     var reponerStr=reponer!==null&&reponer>0?'<span style="font-weight:700;color:#c0392b">+'+reponer+'</span>':'<span style="color:var(--verde)">✓</span>';
-    return'<div class="table-row" style="grid-template-columns:2fr 110px 70px 70px 100px 80px 80px;background:'+bg+'"><span style="font-size:12px;font-weight:'+(i<3?'700':'500')+'">'+p.nombre+'</span><span>'+skuStr+'</span><span style="text-align:center;font-size:12px">'+p.ventas+'</span><span style="text-align:center;font-size:12px">'+p.kg.toLocaleString('es-AR')+'kg</span><span style="text-align:right;font-size:12px;font-weight:600">$'+Math.round(p.fac/1000).toLocaleString('es-AR')+'K</span><span style="text-align:center">'+stockStr+'</span><span style="text-align:center">'+reponerStr+'</span></div>';
+    return'<div class="table-row" style="grid-template-columns:2fr 110px 70px 70px 100px 80px 80px;background:'+bg+'"><span style="font-size:12px;font-weight:'+(i<3?'700':'500')+'" title="'+p.nombre+'">'+p.nombre+'</span><span>'+skuStr+'</span><span style="text-align:center;font-size:12px">'+p.ventas+'</span><span style="text-align:center;font-size:12px">'+p.kg.toLocaleString('es-AR')+'kg</span><span style="text-align:right;font-size:12px;font-weight:600">$'+Math.round(p.fac/1000).toLocaleString('es-AR')+'K</span><span style="text-align:center">'+stockStr+'</span><span style="text-align:center">'+reponerStr+'</span></div>';
   }).join('');
 }
 
