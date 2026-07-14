@@ -1113,67 +1113,81 @@ function renderGraficoDiario(){
 // ── TOP PRODUCTOS ─────────────────────────────────────────────────────────────
 let prodData={};
 function buildTopProductos(vRows){
-  const byMesProd={};
-  var prodRows=[];
+  // Normalizar nombre para agrupar: minusc, sin tildes, colapsar espacios, aliases
+  function normProd(s){
+    var n=(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9+]/g,' ').replace(/\s+/g,' ').trim();
+    var W={'adulto':'adult','adu':'adult','cachorro':'puppy','peque':'small','mediano':'medium','med ':'medium ','grande':'large','maxi ':'maxi ','mini ':'mini ','perro':'perro','gato':'gato','cordero':'cordero','castrado':'castrado'};
+    Object.keys(W).forEach(function(k){n=n.replace(new RegExp('\\b'+k+'\\b','g'),W[k]);});
+    return n;
+  }
+  function toTitleCase(s){return(s||'').split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase();}).join(' ');}
+
+  var byMesProd={};
+  var prodRowsArr=[];
+
   vRows.forEach(function(r){
-    const fecha=parseFecha(r['FECHA']||r['Fecha']||'');
+    var fecha=parseFecha(r['FECHA']||r['Fecha']||'');
     if(!fecha)return;
-    const mes=fecha.getFullYear()+'-'+(fecha.getMonth()+1).toString().padStart(2,'0');
-    const fechaStr=fecha.getFullYear()+'-'+(fecha.getMonth()+1).toString().padStart(2,'0')+'-'+fecha.getDate().toString().padStart(2,'0');
-    const marca=(r['Marca']||'').trim();
-    const prod=(r['producto']||'').trim();
-    const kg=parseFloat((r['kg']||0).toString().replace(',','.'))||0;
-    const fac=parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0);
+    var mes=fecha.getFullYear()+'-'+(fecha.getMonth()+1).toString().padStart(2,'0');
+    var fechaStr=fecha.getFullYear()+'-'+(fecha.getMonth()+1).toString().padStart(2,'0')+'-'+fecha.getDate().toString().padStart(2,'0');
+    var marca=(r['Marca']||'').trim();
+    var prod=(r['producto']||'').trim();
+    var kg=parseFloat((r['kg']||0).toString().replace(',','.'))||0;
+    var fac=parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0);
     if(!marca&&!prod)return;
-    prodRows.push({fecha:fechaStr,mes:mes,marca:marca,prod:prod,kg:kg,fac:fac});
-    // Normalizar key: lowercase + trim + colapsar espacios para evitar duplicados
-    function normKey(s){return s.toLowerCase().replace(/\s+/g,' ').trim();}
-    const rawNombre=marca+(marca&&prod?' - ':'')+prod;
-    const key=normKey(marca)+(marca&&prod?' - ':'')+normKey(prod);
-    // Display name: capitalizar primera letra de cada palabra
-    const displayNombre=rawNombre.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase();}).join(' ');
+
+    // Key normalizado para agrupar sin duplicados
+    var normKey=normProd(marca)+'||'+normProd(prod);
+    // Nombre display: title case
+    var displayNombre=toTitleCase(marca)+(marca&&prod?' - ':'')+toTitleCase(prod);
+
     if(!byMesProd[mes])byMesProd[mes]={};
-    if(!byMesProd[mes][key])byMesProd[mes][key]={nombre:displayNombre,key:key,ventas:0,kg:0,fac:0};
-    byMesProd[mes][key].ventas++;
-    byMesProd[mes][key].kg+=kg;
-    byMesProd[mes][key].fac+=fac;
+    if(!byMesProd[mes][normKey])byMesProd[mes][normKey]={nombre:displayNombre,normKey:normKey,ventas:0,kg:0,fac:0};
+    else{
+      // Preferir el nombre más corto/limpio como display
+      if(displayNombre.length<byMesProd[mes][normKey].nombre.length)byMesProd[mes][normKey].nombre=displayNombre;
+    }
+    byMesProd[mes][normKey].ventas++;
+    byMesProd[mes][normKey].kg+=kg;
+    byMesProd[mes][normKey].fac+=fac;
+
+    prodRowsArr.push({fecha:fechaStr,mes:mes,marca:marca,prod:prod,normKey:normKey,displayNombre:displayNombre,kg:kg,fac:fac});
   });
+
   prodData=byMesProd;
-  window.prodRows=prodRows;
-  const sel=document.getElementById('prod-mes-sel');
-  const meses=Object.keys(byMesProd).sort().reverse();
+  window.prodRows=prodRowsArr;
+
+  var sel=document.getElementById('prod-mes-sel');
+  var meses=Object.keys(byMesProd).sort().reverse();
   sel.innerHTML='<option value="todos">Todos los meses</option>'+meses.map(function(m){
-    const[y,mo]=m.split('-');
-    const nom=MESES_NOM_ES[parseInt(mo)-1]+' '+y;
+    var parts=m.split('-');
+    var nom=MESES_NOM_ES[parseInt(parts[1])-1]+' '+parts[0];
     return'<option value="'+m+'">'+nom+'</option>';
   }).join('');
   renderTopProductos();
 }
 function renderTopProductos(){
-  const sel=document.getElementById('prod-mes-sel').value;
-  const desde=(document.getElementById('prod-desde')||{}).value||'';
-  const hasta=(document.getElementById('prod-hasta')||{}).value||'';
-  const usarRango=desde||hasta;
-  const agg={};
-  function normKey(s){return s.toLowerCase().replace(/\s+/g,' ').trim();}
-  function displayNombre(marca,prod){var r=marca+(marca&&prod?' - ':'')+prod;return r.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase();}).join(' ');}
+  var sel=document.getElementById('prod-mes-sel').value;
+  var desde=(document.getElementById('prod-desde')||{}).value||'';
+  var hasta=(document.getElementById('prod-hasta')||{}).value||'';
+  var usarRango=desde||hasta;
+  var agg={};
+
   if(usarRango&&window.prodRows){
     window.prodRows.forEach(function(r){
       if(desde&&r.fecha<desde)return;
       if(hasta&&r.fecha>hasta)return;
-      const key=normKey(r.marca)+(r.marca&&r.prod?' - ':'')+normKey(r.prod);
-      const nombre=displayNombre(r.marca,r.prod);
-      if(!agg[key])agg[key]={nombre:nombre,ventas:0,kg:0,fac:0};
-      agg[key].ventas++;agg[key].kg+=r.kg;agg[key].fac+=r.fac;
+      if(!agg[r.normKey])agg[r.normKey]={nombre:r.displayNombre,normKey:r.normKey,ventas:0,kg:0,fac:0};
+      agg[r.normKey].ventas++;agg[r.normKey].kg+=r.kg;agg[r.normKey].fac+=r.fac;
     });
   } else {
     Object.keys(prodData).forEach(function(mes){
       if(sel!=='todos'&&mes!==sel)return;
       Object.values(prodData[mes]).forEach(function(p){
-        if(!agg[p.key||p.nombre])agg[p.key||p.nombre]={nombre:p.nombre,ventas:0,kg:0,fac:0};
-        agg[p.key||p.nombre].ventas+=p.ventas;
-        agg[p.key||p.nombre].kg+=p.kg;
-        agg[p.key||p.nombre].fac+=p.fac;
+        if(!agg[p.normKey])agg[p.normKey]={nombre:p.nombre,normKey:p.normKey,ventas:0,kg:0,fac:0};
+        agg[p.normKey].ventas+=p.ventas;
+        agg[p.normKey].kg+=p.kg;
+        agg[p.normKey].fac+=p.fac;
       });
     });
   }
@@ -1189,24 +1203,16 @@ function renderTopProductos(){
       else stockMap[mv.sku]-=mv.qty;
     });
   }
-  // Matchear cada item a su SKU y reagrupar por SKU para eliminar duplicados
-  var bySku={};
-  lista.forEach(function(p){
-    if(typeof skMatchProduct==='undefined')return;
+  // Intentar match de SKU (solo display, no afecta agrupacion)
+  var listaFinal=lista.map(function(p){
+    if(typeof skMatchProduct==='undefined')return Object.assign({},p,{sku:null});
     var partes=p.nombre.split(' - ');
     var marca=partes.length>1?partes[0]:'';
     var prod=partes.length>1?partes.slice(1).join(' - '):partes[0];
-    // Usar kg promedio por venta para detectar el tamaño de bolsa
     var kg=p.ventas>0?Math.round(p.kg/p.ventas*2)/2:0;
     var res=skMatchProduct(marca,prod,kg);
-    var skuKey=res?res.product.sku:'__NM__'+(p.nombre.toLowerCase().trim());
-    var displayNombre=res?res.product.nombre:p.nombre;
-    if(!bySku[skuKey])bySku[skuKey]={nombre:displayNombre,sku:res?res.product.sku:null,ventas:0,kg:0,fac:0};
-    bySku[skuKey].ventas+=p.ventas;
-    bySku[skuKey].kg+=p.kg;
-    bySku[skuKey].fac+=p.fac;
+    return Object.assign({},p,{sku:res?res.product.sku:null});
   });
-  var listaFinal=Object.values(bySku).sort(function(a,b){return b.fac-a.fac;});
   tb.innerHTML=listaFinal.map(function(p,i){
     const bg=i%2===0?'var(--gris)':'transparent';
     var skuStr=p.sku?'<span style="font-family:monospace;font-size:10px;color:var(--azul-med)">'+p.sku+'</span>':'<span style="font-size:11px;color:var(--gris-dark)">—</span>';
