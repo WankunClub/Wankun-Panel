@@ -744,6 +744,7 @@ function irA(p){
   const el=document.getElementById('page-'+p);
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
+  if(p==='stock'){setTimeout(function(){skRenderTabla();skRenderMetricas();},50);}
   const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','stock':'Control de Stock'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
