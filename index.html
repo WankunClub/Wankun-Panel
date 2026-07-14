@@ -197,9 +197,15 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
       <div class="card-title" style="margin:0">Productos más vendidos</div>
       <div class="filtro-group">
         <label>Mes</label>
-        <select id="prod-mes-sel" onchange="renderTopProductos()">
+        <select id="prod-mes-sel" onchange="document.getElementById('prod-desde').value='';document.getElementById('prod-hasta').value='';renderTopProductos()">
           <option value="todos">Todos</option>
         </select>
+      </div>
+      <div class="filtro-group" style="display:flex;align-items:center;gap:6px">
+        <label>Desde</label>
+        <input type="date" id="prod-desde" style="padding:5px 8px;border:1px solid var(--gris-med);border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif" onchange="document.getElementById('prod-mes-sel').value='todos';renderTopProductos()">
+        <label>Hasta</label>
+        <input type="date" id="prod-hasta" style="padding:5px 8px;border:1px solid var(--gris-med);border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif" onchange="document.getElementById('prod-mes-sel').value='todos';renderTopProductos()">
       </div>
     </div>
     <div class="table-wrap" style="margin-top:12px">
@@ -1107,23 +1113,32 @@ function renderGraficoDiario(){
 let prodData={};
 function buildTopProductos(vRows){
   const byMesProd={};
+  var prodRows=[];
   vRows.forEach(function(r){
     const fecha=parseFecha(r['FECHA']||r['Fecha']||'');
     if(!fecha)return;
     const mes=fecha.getFullYear()+'-'+(fecha.getMonth()+1).toString().padStart(2,'0');
+    const fechaStr=fecha.getFullYear()+'-'+(fecha.getMonth()+1).toString().padStart(2,'0')+'-'+fecha.getDate().toString().padStart(2,'0');
     const marca=(r['Marca']||'').trim();
     const prod=(r['producto']||'').trim();
     const kg=parseFloat((r['kg']||0).toString().replace(',','.'))||0;
     const fac=parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0);
     if(!marca&&!prod)return;
-    const key=marca+(marca&&prod?' - ':'')+prod;
+    prodRows.push({fecha:fechaStr,mes:mes,marca:marca,prod:prod,kg:kg,fac:fac});
+    // Normalizar key: lowercase + trim + colapsar espacios para evitar duplicados
+    function normKey(s){return s.toLowerCase().replace(/\s+/g,' ').trim();}
+    const rawNombre=marca+(marca&&prod?' - ':'')+prod;
+    const key=normKey(marca)+(marca&&prod?' - ':'')+normKey(prod);
+    // Display name: capitalizar primera letra de cada palabra
+    const displayNombre=rawNombre.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase();}).join(' ');
     if(!byMesProd[mes])byMesProd[mes]={};
-    if(!byMesProd[mes][key])byMesProd[mes][key]={nombre:key,ventas:0,kg:0,fac:0};
+    if(!byMesProd[mes][key])byMesProd[mes][key]={nombre:displayNombre,key:key,ventas:0,kg:0,fac:0};
     byMesProd[mes][key].ventas++;
     byMesProd[mes][key].kg+=kg;
     byMesProd[mes][key].fac+=fac;
   });
   prodData=byMesProd;
+  window.prodRows=prodRows;
   const sel=document.getElementById('prod-mes-sel');
   const meses=Object.keys(byMesProd).sort().reverse();
   sel.innerHTML='<option value="todos">Todos los meses</option>'+meses.map(function(m){
@@ -1135,16 +1150,32 @@ function buildTopProductos(vRows){
 }
 function renderTopProductos(){
   const sel=document.getElementById('prod-mes-sel').value;
+  const desde=(document.getElementById('prod-desde')||{}).value||'';
+  const hasta=(document.getElementById('prod-hasta')||{}).value||'';
+  const usarRango=desde||hasta;
   const agg={};
-  Object.keys(prodData).forEach(function(mes){
-    if(sel!=='todos'&&mes!==sel)return;
-    Object.values(prodData[mes]).forEach(function(p){
-      if(!agg[p.nombre])agg[p.nombre]={nombre:p.nombre,ventas:0,kg:0,fac:0};
-      agg[p.nombre].ventas+=p.ventas;
-      agg[p.nombre].kg+=p.kg;
-      agg[p.nombre].fac+=p.fac;
+  function normKey(s){return s.toLowerCase().replace(/\s+/g,' ').trim();}
+  function displayNombre(marca,prod){var r=marca+(marca&&prod?' - ':'')+prod;return r.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase();}).join(' ');}
+  if(usarRango&&window.prodRows){
+    window.prodRows.forEach(function(r){
+      if(desde&&r.fecha<desde)return;
+      if(hasta&&r.fecha>hasta)return;
+      const key=normKey(r.marca)+(r.marca&&r.prod?' - ':'')+normKey(r.prod);
+      const nombre=displayNombre(r.marca,r.prod);
+      if(!agg[key])agg[key]={nombre:nombre,ventas:0,kg:0,fac:0};
+      agg[key].ventas++;agg[key].kg+=r.kg;agg[key].fac+=r.fac;
     });
-  });
+  } else {
+    Object.keys(prodData).forEach(function(mes){
+      if(sel!=='todos'&&mes!==sel)return;
+      Object.values(prodData[mes]).forEach(function(p){
+        if(!agg[p.key||p.nombre])agg[p.key||p.nombre]={nombre:p.nombre,ventas:0,kg:0,fac:0};
+        agg[p.key||p.nombre].ventas+=p.ventas;
+        agg[p.key||p.nombre].kg+=p.kg;
+        agg[p.key||p.nombre].fac+=p.fac;
+      });
+    });
+  }
   const lista=Object.values(agg).sort(function(a,b){return b.fac-a.fac;}).slice(0,50);
   const tb=document.getElementById('top-productos');
   if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark)">Sin datos</div>';return;}
