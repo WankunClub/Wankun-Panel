@@ -1199,7 +1199,7 @@ function renderTopProductos(){
     // Usar kg promedio por venta para detectar el tamaño de bolsa
     var kg=p.ventas>0?Math.round(p.kg/p.ventas*2)/2:0;
     var res=skMatchProduct(marca,prod,kg);
-    var skuKey=res?res.product.sku:'__NOMATCH__'+p.nombre;
+    var skuKey=res?res.product.sku:'__NM__'+(p.nombre.toLowerCase().trim());
     var displayNombre=res?res.product.nombre:p.nombre;
     if(!bySku[skuKey])bySku[skuKey]={nombre:displayNombre,sku:res?res.product.sku:null,ventas:0,kg:0,fac:0};
     bySku[skuKey].ventas+=p.ventas;
@@ -2056,7 +2056,7 @@ function skMatchProduct(marca,prod,kg){
     });
     if(score>bestScore){bestScore=score;best=p;bestQty=qty;}
   });
-  if(!best||bestScore<4)return null;
+  if(!best||bestScore<5)return null;
   return{product:best,qty:bestQty};
 }
 
