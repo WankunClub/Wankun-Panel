@@ -309,6 +309,13 @@ Vamos Argentina!</div>
         <div class="table-body" id="av-stock-prox" style="max-height:320px"></div>
       </div>
     </div>
+    <div class="card" style="border-left:4px solid #c0392b">
+      <div class="card-title" style="color:#c0392b">No compraron lo previsto <span style="font-size:12px;font-weight:400;margin-left:8px">clientes de "Preparar stock" cuya fecha prevista ya pasó y no volvieron a comprar</span></div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:1fr 100px 90px 80px 60px"><span>Cliente</span><span>Zona</span><span>Estado</span><span>WA</span><span></span></div>
+        <div class="table-body" id="av-faltaron" style="max-height:300px"></div>
+      </div>
+    </div>
     <div class="card" style="border-left:4px solid #16a34a">
       <div class="card-title" style="color:#16a34a">Ventas — Próximos 5 días</div>
       <div class="table-wrap">
@@ -1660,7 +1667,7 @@ function enviosFlexFiltrar(){
 }
 
 // ── RECOMPRAS ─────────────────────────────────────────────────────────────────
-let avTodos=[],avFiltered=[];
+let avTodos=[],avFiltered=[],avPredicciones={};
 
 async function avConectar(){
   const st=document.getElementById('av-status');
@@ -1710,6 +1717,7 @@ async function avConectar(){
     st.className='conn-status conn-ok';st.textContent=avTodos.length+' clientes';
     document.getElementById('av-panel').style.display='block';
     avMetricas();avMostrarHoy();avMostrarManana();avMostrarStockProx();avMostrarVentasHoy();avProyeccion();
+    avActualizarPredicciones();avMostrarFaltaron();
   }catch(e){st.className='conn-status conn-err';st.textContent='Error: '+e.message;console.error(e);}
 }
 
@@ -1752,6 +1760,63 @@ function avMostrarStockProx(){
   const tb=document.getElementById('av-stock-prox');
   if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin entregas en los próximos 5 días</div>';return;}
   tb.innerHTML=lista.map(function(c){const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';const proxLabel=c.prox===0?'<span style="color:#c0392b;font-weight:700;font-size:11px">Hoy</span>':'<span style="color:#7c3aed;font-weight:700;font-size:11px">'+c.prox+'d</span>';const prods=(c.ultimosProds&&c.ultimosProds.length?c.ultimosProds:[c.ultimoProd]).filter(Boolean).map(function(p){return'<span style="display:inline-block;background:#f3e8ff;color:#7c3aed;border-radius:4px;padding:2px 6px;font-size:10px;margin:1px">'+p+'</span>';}).join(' ');return '<div class="table-row" style="grid-template-columns:1fr 100px 60px 200px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span>'+proxLabel+'<div>'+prods+'</div></div>';}).join('');
+}
+
+// ── PREDICCIONES DE RECOMPRA (Preparar stock) ─────────────────────────────────
+const AV_PRED_KEY='wankun_stock_pred_v1',AV_PRED_GRACIA=5,AV_PRED_MAXDIAS=30;
+function avActualizarPredicciones(){
+  let store={};
+  try{store=JSON.parse(localStorage.getItem(AV_PRED_KEY)||'{}');}catch(e){store={};}
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const directaMap={};
+  avTodos.filter(function(c){return c.fuente==='Directa';}).forEach(function(c){directaMap[c.nombre.toLowerCase().trim()]=c;});
+  // 1) Resolver o descartar predicciones ya trackeadas
+  Object.keys(store).forEach(function(key){
+    const e=store[key],actual=directaMap[key];
+    if(actual&&actual.ultima){
+      const ultimaActualMs=actual.ultima.getTime();
+      const ultimaConocidaMs=e.ultimaConocida?new Date(e.ultimaConocida).getTime():0;
+      if(ultimaActualMs>ultimaConocidaMs){delete store[key];return;} // cumplió, compró de nuevo
+    }
+    const diasAtraso=Math.floor((hoy-new Date(e.fechaPrevista).getTime())/(1000*60*60*24));
+    if(diasAtraso>AV_PRED_MAXDIAS){delete store[key];} // muy viejo, se descarta solo
+  });
+  // 2) Trackear nuevas entradas de la ventana 0-5 dias
+  avTodos.filter(function(c){return c.fuente==='Directa'&&c.prox!==null&&c.prox!==undefined&&c.prox>=0&&c.prox<=5;}).forEach(function(c){
+    const key=c.nombre.toLowerCase().trim();
+    if(store[key])return; // ya trackeada
+    const fechaPrevista=new Date(hoy);fechaPrevista.setDate(fechaPrevista.getDate()+c.prox);
+    const telLookup=c.telefono||(clData.find(function(x){return(x.nombre||'').toLowerCase().startsWith(c.nombre.toLowerCase().split(' ')[0])&&x.telefono;})||{}).telefono||'';
+    store[key]={nombre:c.nombre,localidad:c.localidad||'',telefono:telLookup,ultimoProd:c.ultimoProd||'',fechaPrevista:fechaPrevista.toISOString(),ultimaConocida:c.ultima?c.ultima.toISOString():'',creada:hoy.toISOString()};
+  });
+  localStorage.setItem(AV_PRED_KEY,JSON.stringify(store));
+  avPredicciones=store;
+}
+function avMostrarFaltaron(){
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const entries=Object.keys(avPredicciones||{}).map(function(key){
+    const e=avPredicciones[key],diasAtraso=Math.floor((hoy-new Date(e.fechaPrevista).getTime())/(1000*60*60*24));
+    return Object.assign({key:key},e,{diasAtraso:diasAtraso});
+  }).filter(function(e){return e.diasAtraso>=0;}).sort(function(a,b){return b.diasAtraso-a.diasAtraso;});
+  const tb=document.getElementById('av-faltaron');if(!tb)return;
+  if(!entries.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin clientes atrasados</div>';return;}
+  tb.innerHTML=entries.map(function(e){
+    const tel=e.telefono||'';
+    const esFallida=e.diasAtraso>=AV_PRED_GRACIA;
+    const color=esFallida?'#c0392b':'#856404';
+    const label=esFallida?'No compró':'Atrasado';
+    const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,e.nombre,e.ultimoProd)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';
+    const zonaTag='<span class="'+(esLocal(e.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(e.localidad)?'local':'fuera')+'</span>';
+    return '<div class="table-row" style="grid-template-columns:1fr 100px 90px 80px 60px"><span style="font-weight:500">'+e.nombre+'</span><span style="font-size:11px">'+(e.localidad||'--')+' '+zonaTag+'</span><span style="font-size:11px;font-weight:600;color:'+color+'">'+label+' ('+e.diasAtraso+'d)</span>'+waBtn+'<button class="btn" style="font-size:10px;padding:2px 6px" onclick="avDescartarPrediccion(\''+e.key.replace(/'/g,"\\'")+'\')">Descartar</button></div>';
+  }).join('');
+}
+function avDescartarPrediccion(key){
+  let store={};
+  try{store=JSON.parse(localStorage.getItem(AV_PRED_KEY)||'{}');}catch(e){store={};}
+  delete store[key];
+  localStorage.setItem(AV_PRED_KEY,JSON.stringify(store));
+  avPredicciones=store;
+  avMostrarFaltaron();
 }
 
 function avMostrarVentasHoy(){
