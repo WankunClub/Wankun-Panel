@@ -1,0 +1,6 @@
+"Fecha","Nombre del cliente","Dirección","Teléfono","Perro o Gato","Nombre del perrito/gatito","Edad","Estado","Notas","","CÓMO USAR"
+"18/07/2026","","La Lomada, Lote 123, Manuel Alberti","11 5555 5555","Perro","Simón","3 años","Sin contactar","Consulta general","","Diego carga una fila por cada cliente que ingresa (columnas A a G)."
+"","","","","","","","","","","La fila 2 es un ejemplo del formato — se puede pisar con datos reales."
+"","","","","","","","","","","Perro o Gato (E) y Estado (H) se eligen del desplegable."
+"","","","","","","","","","","Estado arranca en 'Sin contactar'. Nacho lo actualiza al contactar."
+"","","","","","","","","","","Los que compran pasan a la hoja 'Wankun Vete'."
