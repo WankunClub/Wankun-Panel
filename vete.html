@@ -171,7 +171,7 @@
 
   .msj {
     width: 100%;
-    margin-top: 14px;
+    margin-top: 6px;
     padding: 12px;
     border: 1px solid var(--borde);
     border-radius: 10px;
@@ -234,21 +234,24 @@
 <div class="contenedor">
 
   <details class="plantilla">
-    <summary>Plantilla del mensaje</summary>
+    <summary>Plantillas del mensaje</summary>
     <div class="plantilla-cuerpo">
-      <label for="tpl-general">Mensaje general</label>
-      <textarea class="msj" id="tpl-general" spellcheck="false"></textarea>
-      <label for="tpl-cachorro">Mensaje cachorro / gatito bebé</label>
-      <textarea class="msj" id="tpl-cachorro" spellcheck="false"></textarea>
+      <label for="tpl-perro">Perro adulto</label>
+      <textarea class="msj" id="tpl-perro" spellcheck="false"></textarea>
+      <label for="tpl-perro-cachorro">Perro cachorro</label>
+      <textarea class="msj" id="tpl-perro-cachorro" spellcheck="false"></textarea>
+      <label for="tpl-gato">Gato adulto</label>
+      <textarea class="msj" id="tpl-gato" spellcheck="false"></textarea>
+      <label for="tpl-gato-bebe">Gato bebé</label>
+      <textarea class="msj" id="tpl-gato-bebe" spellcheck="false"></textarea>
       <div class="ayuda">
         Comodines que se reemplazan solos en cada tarjeta:
         <code>{nombre}</code> primer nombre del cliente ·
-        <code>{perrito}</code> nombre del animal ·
-        <code>{quien}</code> pone "los perritos" o "los gatitos" según la especie.
+        <code>{perrito}</code> nombre del animal.
       </div>
       <div class="botones">
-        <button class="btn-prim" id="btn-guardar">Guardar plantilla</button>
-        <button class="btn-sec" id="btn-restaurar">Restaurar original</button>
+        <button class="btn-prim" id="btn-guardar">Guardar plantillas</button>
+        <button class="btn-sec" id="btn-restaurar">Restaurar originales</button>
         <span class="guardado" id="txt-guardado"></span>
       </div>
     </div>
@@ -267,11 +270,20 @@
 <script>
 const WORKER_URL = "https://cool-meadow-3b33.wankun-petshop.workers.dev/?sheet=" + encodeURIComponent("Leads Vete");
 const FILTROS = ["Todos", "Sin contactar", "Contactado", "Respondió", "Wankun Vete"];
-const CLAVE_PLANTILLAS = "wankun_vete_plantillas";
+const CLAVE_PLANTILLAS = "wankun_vete_plantillas_v2";
 
 const PLANTILLAS_ORIGINALES = {
-  general: "Hola {nombre}, ¿cómo va? Soy Nacho, de Wankun Club — trabajamos junto a la veterinaria. Me contaron que ayer anduvo {perrito} por el consultorio, espero que esté muy bien. Te escribo porque nos encargamos de que a {quien} de la zona nunca les falte su alimento: te lo llevamos en el día, sin que tengas que estar pendiente. Si querés, contame qué está comiendo {perrito} y te digo cómo lo manejamos.",
-  cachorro: "Hola {nombre}, ¿cómo va? Soy Nacho, de Wankun Club — trabajamos junto a la veterinaria. Me contaron que ayer anduvo {perrito} por el consultorio, espero que esté muy bien. En etapa de crecimiento la alimentación cambia mes a mes, y justamente nos encargamos de que a {quien} de la zona nunca les falte lo suyo: te lo llevamos en el día, sin que tengas que estar pendiente. Si querés, contame qué está comiendo {perrito} y te acompañamos esa etapa."
+  perro: "Hola {nombre}, te saluda Nacho de Wankun Club. Trabajamos con la veterinaria y por eso tengo tu contacto. {perrito} estuvo por la vete en estos días, gracias por confiar en nosotros. Queríamos que sepas que nos ocupamos de la alimentación de los perritos: entregamos el alimento en el día y lo acompañamos con Snacks Naturales de Filan.",
+  perro_cachorro: "Hola {nombre}, te saluda Nacho de Wankun Club. Trabajamos con la veterinaria y por eso tengo tu contacto. {perrito} estuvo por la vete en estos días, gracias por confiar en nosotros. Queríamos que sepas que nos ocupamos de la alimentación de los perritos: entregamos el alimento en el día ajustando las cantidades a medida que crece, y lo acompañamos con Snacks Naturales de Filan.",
+  gato: "Hola {nombre}, te saluda Nacho de Wankun Club. Trabajamos con la veterinaria y por eso tengo tu contacto. {perrito} estuvo por la vete en estos días, gracias por confiar en nosotros. Queríamos que sepas que nos ocupamos de la alimentación de los gatitos y entregamos el alimento en el día.",
+  gato_bebe: "Hola {nombre}, te saluda Nacho de Wankun Club. Trabajamos con la veterinaria y por eso tengo tu contacto. {perrito} estuvo por la vete en estos días, gracias por confiar en nosotros. Queríamos que sepas que nos ocupamos de la alimentación de los gatitos, entregamos el alimento en el día y vamos ajustando las cantidades a medida que crece."
+};
+
+const IDS = {
+  perro: "tpl-perro",
+  perro_cachorro: "tpl-perro-cachorro",
+  gato: "tpl-gato",
+  gato_bebe: "tpl-gato-bebe"
 };
 
 let plantillas = cargarPlantillas();
@@ -281,18 +293,20 @@ let filtroActivo = "Sin contactar";
 function cargarPlantillas() {
   try {
     const g = JSON.parse(localStorage.getItem(CLAVE_PLANTILLAS));
-    if (g && g.general && g.cachorro) return g;
+    if (g && g.perro && g.perro_cachorro && g.gato && g.gato_bebe) return g;
   } catch (e) {}
   return { ...PLANTILLAS_ORIGINALES };
 }
 
 function guardarPlantillas() {
-  plantillas = {
-    general: document.getElementById("tpl-general").value.trim() || PLANTILLAS_ORIGINALES.general,
-    cachorro: document.getElementById("tpl-cachorro").value.trim() || PLANTILLAS_ORIGINALES.cachorro
-  };
+  const nuevas = {};
+  for (const k in IDS) {
+    const v = document.getElementById(IDS[k]).value.trim();
+    nuevas[k] = v || PLANTILLAS_ORIGINALES[k];
+  }
+  plantillas = nuevas;
   try { localStorage.setItem(CLAVE_PLANTILLAS, JSON.stringify(plantillas)); } catch (e) {}
-  avisarGuardado("Guardada — aplicada a todas las tarjetas");
+  avisarGuardado("Guardadas — aplicadas a todas las tarjetas");
   render();
 }
 
@@ -300,13 +314,12 @@ function restaurarPlantillas() {
   plantillas = { ...PLANTILLAS_ORIGINALES };
   try { localStorage.removeItem(CLAVE_PLANTILLAS); } catch (e) {}
   pintarPlantillas();
-  avisarGuardado("Original restaurada");
+  avisarGuardado("Originales restauradas");
   render();
 }
 
 function pintarPlantillas() {
-  document.getElementById("tpl-general").value = plantillas.general;
-  document.getElementById("tpl-cachorro").value = plantillas.cachorro;
+  for (const k in IDS) document.getElementById(IDS[k]).value = plantillas[k];
 }
 
 let timerGuardado = null;
@@ -353,26 +366,31 @@ function telefonoWa(tel) {
   return "549" + d;
 }
 
-function esCachorro(edad) {
+function esBebe(edad) {
   const e = (edad || "").toLowerCase();
   if (e.includes("mes") || e.includes("semana")) return true;
   const n = parseFloat(e.replace(",", "."));
   return !isNaN(n) && n < 1;
 }
 
+function elegirPlantilla(l) {
+  const gato = (l.especie || "").toLowerCase().includes("gat");
+  const bebe = esBebe(l.edad);
+  if (gato && bebe) return plantillas.gato_bebe;
+  if (gato) return plantillas.gato;
+  if (bebe) return plantillas.perro_cachorro;
+  return plantillas.perro;
+}
+
 function armarMensaje(l) {
   const nombreCliente = (l.cliente || "").trim().split(/\s+/)[0] || "";
-  const animal = (l.animal || "tu perrito").trim();
-  const gato = (l.especie || "").toLowerCase().includes("gat");
-  const quien = gato ? "los gatitos" : "los perritos";
-  const tpl = esCachorro(l.edad) ? plantillas.cachorro : plantillas.general;
+  const animal = (l.animal || "").trim();
+  const tpl = elegirPlantilla(l);
 
   let m = tpl
     .split("{nombre}").join(nombreCliente)
-    .split("{perrito}").join(animal)
-    .split("{quien}").join(quien);
+    .split("{perrito}").join(animal);
 
-  // Si no hay nombre de cliente, limpiar el hueco que queda
   m = m.replace(/Hola\s+,/, "Hola,").replace(/\s{2,}/g, " ");
   return m;
 }
@@ -425,7 +443,7 @@ function render() {
           <span class="suave">${esc(l.direccion || "")}${l.direccion && l.fecha ? " · " : ""}${esc(l.fecha || "")}</span>
         </div>
         ${l.notas ? `<div class="notas">${esc(l.notas)}</div>` : ""}
-        <textarea class="msj" id="msj-${l._i}" spellcheck="false">${esc(armarMensaje(l))}</textarea>
+        <textarea class="msj" id="msj-${l._i}" spellcheck="false" style="margin-top:14px">${esc(armarMensaje(l))}</textarea>
         ${boton}
       </div>`;
   }).join("");
