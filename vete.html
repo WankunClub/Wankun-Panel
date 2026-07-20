@@ -133,10 +133,26 @@
     font-family: 'Lora', serif;
   }
 
+  .msj {
+    width: 100%;
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    background: var(--crema);
+    color: var(--negro);
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 130px;
+    resize: vertical;
+  }
+  .msj:focus { outline: 2px solid var(--dorado); outline-offset: 1px; }
+
   .btn-wsp {
     display: block;
     width: 100%;
-    margin-top: 16px;
+    margin-top: 10px;
     background: var(--negro);
     color: var(--dorado);
     text-align: center;
@@ -146,9 +162,13 @@
     letter-spacing: 0.5px;
     padding: 14px;
     border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
   }
   .btn-wsp:focus-visible { outline: 2px solid var(--dorado); outline-offset: 2px; }
   @media (hover: hover) { .btn-wsp:hover { background: #000; } }
+  .btn-wsp.deshabilitado { background: var(--borde); color: var(--gris); cursor: default; }
 
   .aviso, .vacio {
     text-align: center;
@@ -158,15 +178,6 @@
     line-height: 1.7;
   }
   .vacio strong { font-family: 'Lora', serif; font-size: 18px; color: var(--negro); display: block; margin-bottom: 6px; }
-
-  .pie {
-    text-align: center;
-    font-size: 12.5px;
-    color: var(--gris);
-    padding-top: 26px;
-    line-height: 1.7;
-  }
-  .pie a { color: var(--negro); }
 
   @media (prefers-reduced-motion: no-preference) {
     .tarjeta { animation: aparecer .25s ease both; }
@@ -193,11 +204,6 @@
   <div class="filtros" id="filtros" hidden></div>
 
   <div id="lista"><div class="aviso">Cargando leads…</div></div>
-
-  <div class="pie">
-    Los datos viven en la planilla compartida con Diego.<br>
-    Estado se actualiza ahí: <a href="https://docs.google.com/spreadsheets/d/1mkxRo-jrfq-kmWrV1n32MX3oTi2zV7Du-AiYqRZoYy8/edit" target="_blank" rel="noopener">abrir planilla</a>
-  </div>
 </div>
 
 <script>
@@ -279,7 +285,9 @@ function esc(t) {
 
 function render() {
   const lista = document.getElementById("lista");
-  const visibles = leads.filter(l => filtroActivo === "Todos" || (l.estado || "Sin contactar").trim().toLowerCase() === filtroActivo.toLowerCase());
+  const visibles = leads
+    .map((l, i) => ({ ...l, _i: i }))
+    .filter(l => filtroActivo === "Todos" || (l.estado || "Sin contactar").trim().toLowerCase() === filtroActivo.toLowerCase());
 
   document.getElementById("num-pendientes").textContent =
     leads.filter(l => (l.estado || "Sin contactar").trim().toLowerCase().startsWith("sin")).length;
@@ -292,12 +300,11 @@ function render() {
 
   lista.innerHTML = visibles.map(l => {
     const wa = telefonoWa(l.telefono);
-    const msj = encodeURIComponent(armarMensaje(l));
     const edad = l.edad ? ` · ${esc(l.edad)}` : "";
     const especie = esc(l.especie || "—");
     const boton = wa
-      ? `<a class="btn-wsp" href="https://wa.me/${wa}?text=${msj}" target="_blank" rel="noopener">Escribir por ${esc((l.animal || "el perrito").trim())}</a>`
-      : `<div class="btn-wsp" style="background:var(--borde);color:var(--gris)">Sin teléfono cargado</div>`;
+      ? `<button class="btn-wsp" data-i="${l._i}" data-tel="${wa}">Escribir por ${esc((l.animal || "el perrito").trim())}</button>`
+      : `<div class="btn-wsp deshabilitado">Sin teléfono cargado</div>`;
     return `
       <div class="tarjeta">
         <div class="fila-sup">
@@ -313,9 +320,15 @@ function render() {
           <span class="suave">${esc(l.direccion || "")}${l.direccion && l.fecha ? " · " : ""}${esc(l.fecha || "")}</span>
         </div>
         ${l.notas ? `<div class="notas">${esc(l.notas)}</div>` : ""}
+        <textarea class="msj" id="msj-${l._i}" spellcheck="false">${esc(armarMensaje(l))}</textarea>
         ${boton}
       </div>`;
   }).join("");
+
+  lista.querySelectorAll("button.btn-wsp").forEach(b => b.addEventListener("click", () => {
+    const texto = document.getElementById("msj-" + b.dataset.i).value;
+    window.open("https://wa.me/" + b.dataset.tel + "?text=" + encodeURIComponent(texto), "_blank");
+  }));
 }
 
 function armarFiltros() {
