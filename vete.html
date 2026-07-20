@@ -25,10 +25,7 @@
   }
   a { color: inherit; }
 
-  header {
-    background: var(--negro);
-    padding: 18px 20px 16px;
-  }
+  header { background: var(--negro); padding: 18px 20px 16px; }
   .marca {
     font-family: 'Lora', serif;
     color: var(--dorado);
@@ -47,6 +44,72 @@
 
   .contenedor { max-width: 760px; margin: 0 auto; padding: 0 16px 60px; }
 
+  .plantilla {
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    margin-top: 20px;
+    overflow: hidden;
+  }
+  .plantilla summary {
+    cursor: pointer;
+    padding: 16px 20px;
+    font-family: 'Lora', serif;
+    font-size: 17px;
+    font-weight: 600;
+    list-style: none;
+  }
+  .plantilla summary::-webkit-details-marker { display: none; }
+  .plantilla summary::after { content: " +"; color: var(--dorado); }
+  .plantilla[open] summary::after { content: " –"; color: var(--dorado); }
+  .plantilla-cuerpo { padding: 0 20px 20px; }
+  .plantilla label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--dorado);
+    font-weight: 600;
+    margin: 14px 0 6px;
+  }
+  .plantilla .ayuda {
+    font-size: 13px;
+    color: var(--gris);
+    line-height: 1.6;
+    margin-top: 12px;
+  }
+  .plantilla .ayuda code {
+    background: var(--crema);
+    border: 1px solid var(--borde);
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-size: 12px;
+  }
+  .botones { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .btn-sec {
+    border: 1px solid var(--negro);
+    background: var(--blanco);
+    color: var(--negro);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-prim {
+    border: none;
+    background: var(--negro);
+    color: var(--dorado);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .guardado { color: var(--verde); font-size: 13px; align-self: center; }
+
   .resumen {
     display: flex;
     align-items: baseline;
@@ -54,20 +117,10 @@
     padding: 22px 4px 14px;
     border-bottom: 1px solid var(--borde);
   }
-  .resumen .num {
-    font-family: 'Lora', serif;
-    font-size: 40px;
-    font-weight: 600;
-    line-height: 1;
-  }
+  .resumen .num { font-family: 'Lora', serif; font-size: 40px; font-weight: 600; line-height: 1; }
   .resumen .txt { font-size: 14px; color: var(--gris); }
 
-  .filtros {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    padding: 16px 0;
-  }
+  .filtros { display: flex; gap: 8px; flex-wrap: wrap; padding: 16px 0; }
   .filtro {
     border: 1px solid var(--borde);
     background: var(--blanco);
@@ -88,12 +141,7 @@
     padding: 20px;
     margin-bottom: 14px;
   }
-  .fila-sup {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-  }
+  .fila-sup { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
   .cejilla {
     font-size: 11px;
     letter-spacing: 2px;
@@ -101,13 +149,7 @@
     color: var(--dorado);
     font-weight: 600;
   }
-  .animal {
-    font-family: 'Lora', serif;
-    font-size: 30px;
-    font-weight: 600;
-    line-height: 1.15;
-    margin-top: 2px;
-  }
+  .animal { font-family: 'Lora', serif; font-size: 30px; font-weight: 600; line-height: 1.15; margin-top: 2px; }
   .estado {
     font-size: 11px;
     letter-spacing: 1px;
@@ -125,13 +167,7 @@
   .datos { margin-top: 12px; font-size: 14.5px; line-height: 1.65; color: var(--negro); }
   .datos .cliente { font-weight: 600; }
   .datos .suave { color: var(--gris); }
-  .notas {
-    margin-top: 8px;
-    font-size: 13.5px;
-    color: var(--gris);
-    font-style: italic;
-    font-family: 'Lora', serif;
-  }
+  .notas { margin-top: 8px; font-size: 13.5px; color: var(--gris); font-style: italic; font-family: 'Lora', serif; }
 
   .msj {
     width: 100%;
@@ -196,6 +232,28 @@
 </header>
 
 <div class="contenedor">
+
+  <details class="plantilla">
+    <summary>Plantilla del mensaje</summary>
+    <div class="plantilla-cuerpo">
+      <label for="tpl-general">Mensaje general</label>
+      <textarea class="msj" id="tpl-general" spellcheck="false"></textarea>
+      <label for="tpl-cachorro">Mensaje cachorro / gatito bebé</label>
+      <textarea class="msj" id="tpl-cachorro" spellcheck="false"></textarea>
+      <div class="ayuda">
+        Comodines que se reemplazan solos en cada tarjeta:
+        <code>{nombre}</code> primer nombre del cliente ·
+        <code>{perrito}</code> nombre del animal ·
+        <code>{quien}</code> pone "los perritos" o "los gatitos" según la especie.
+      </div>
+      <div class="botones">
+        <button class="btn-prim" id="btn-guardar">Guardar plantilla</button>
+        <button class="btn-sec" id="btn-restaurar">Restaurar original</button>
+        <span class="guardado" id="txt-guardado"></span>
+      </div>
+    </div>
+  </details>
+
   <div class="resumen" id="resumen" hidden>
     <span class="num" id="num-pendientes">0</span>
     <span class="txt">sin contactar</span>
@@ -209,8 +267,55 @@
 <script>
 const WORKER_URL = "https://cool-meadow-3b33.wankun-petshop.workers.dev/?sheet=" + encodeURIComponent("Leads Vete");
 const FILTROS = ["Todos", "Sin contactar", "Contactado", "Respondió", "Wankun Vete"];
+const CLAVE_PLANTILLAS = "wankun_vete_plantillas";
+
+const PLANTILLAS_ORIGINALES = {
+  general: "Hola {nombre}, ¿cómo va? Soy Nacho, de Wankun Club — trabajamos junto a la veterinaria. Me contaron que ayer anduvo {perrito} por el consultorio, espero que esté muy bien. Te escribo porque nos encargamos de que a {quien} de la zona nunca les falte su alimento: te lo llevamos en el día, sin que tengas que estar pendiente. Si querés, contame qué está comiendo {perrito} y te digo cómo lo manejamos.",
+  cachorro: "Hola {nombre}, ¿cómo va? Soy Nacho, de Wankun Club — trabajamos junto a la veterinaria. Me contaron que ayer anduvo {perrito} por el consultorio, espero que esté muy bien. En etapa de crecimiento la alimentación cambia mes a mes, y justamente nos encargamos de que a {quien} de la zona nunca les falte lo suyo: te lo llevamos en el día, sin que tengas que estar pendiente. Si querés, contame qué está comiendo {perrito} y te acompañamos esa etapa."
+};
+
+let plantillas = cargarPlantillas();
 let leads = [];
 let filtroActivo = "Sin contactar";
+
+function cargarPlantillas() {
+  try {
+    const g = JSON.parse(localStorage.getItem(CLAVE_PLANTILLAS));
+    if (g && g.general && g.cachorro) return g;
+  } catch (e) {}
+  return { ...PLANTILLAS_ORIGINALES };
+}
+
+function guardarPlantillas() {
+  plantillas = {
+    general: document.getElementById("tpl-general").value.trim() || PLANTILLAS_ORIGINALES.general,
+    cachorro: document.getElementById("tpl-cachorro").value.trim() || PLANTILLAS_ORIGINALES.cachorro
+  };
+  try { localStorage.setItem(CLAVE_PLANTILLAS, JSON.stringify(plantillas)); } catch (e) {}
+  avisarGuardado("Guardada — aplicada a todas las tarjetas");
+  render();
+}
+
+function restaurarPlantillas() {
+  plantillas = { ...PLANTILLAS_ORIGINALES };
+  try { localStorage.removeItem(CLAVE_PLANTILLAS); } catch (e) {}
+  pintarPlantillas();
+  avisarGuardado("Original restaurada");
+  render();
+}
+
+function pintarPlantillas() {
+  document.getElementById("tpl-general").value = plantillas.general;
+  document.getElementById("tpl-cachorro").value = plantillas.cachorro;
+}
+
+let timerGuardado = null;
+function avisarGuardado(txt) {
+  const el = document.getElementById("txt-guardado");
+  el.textContent = txt;
+  clearTimeout(timerGuardado);
+  timerGuardado = setTimeout(() => { el.textContent = ""; }, 3000);
+}
 
 function parseCSV(texto) {
   const filas = [];
@@ -260,16 +365,16 @@ function armarMensaje(l) {
   const animal = (l.animal || "tu perrito").trim();
   const gato = (l.especie || "").toLowerCase().includes("gat");
   const quien = gato ? "los gatitos" : "los perritos";
+  const tpl = esCachorro(l.edad) ? plantillas.cachorro : plantillas.general;
 
-  let cuerpo;
-  if (esCachorro(l.edad)) {
-    cuerpo = `Me contaron que ayer anduvo ${animal} por el consultorio, espero que esté muy bien. En etapa de crecimiento la alimentación cambia mes a mes, y justamente nos encargamos de que a ${quien} de la zona nunca les falte lo suyo: te lo llevamos en el día, sin que tengas que estar pendiente. Si querés, contame qué está comiendo ${animal} y te acompañamos esa etapa.`;
-  } else {
-    cuerpo = `Me contaron que ayer anduvo ${animal} por el consultorio, espero que esté muy bien. Te escribo porque nos encargamos de que a ${quien} de la zona nunca les falte su alimento: te lo llevamos en el día, sin que tengas que estar pendiente. Si querés, contame qué está comiendo ${animal} y te digo cómo lo manejamos.`;
-  }
+  let m = tpl
+    .split("{nombre}").join(nombreCliente)
+    .split("{perrito}").join(animal)
+    .split("{quien}").join(quien);
 
-  const saludo = nombreCliente ? `Hola ${nombreCliente}, ¿cómo va?` : "Hola, ¿cómo va?";
-  return `${saludo} Soy Nacho, de Wankun Club — trabajamos junto a la veterinaria. ${cuerpo}`;
+  // Si no hay nombre de cliente, limpiar el hueco que queda
+  m = m.replace(/Hola\s+,/, "Hola,").replace(/\s{2,}/g, " ");
+  return m;
 }
 
 function claseEstado(estado) {
@@ -374,6 +479,9 @@ async function cargar() {
   }
 }
 
+pintarPlantillas();
+document.getElementById("btn-guardar").addEventListener("click", guardarPlantillas);
+document.getElementById("btn-restaurar").addEventListener("click", restaurarPlantillas);
 cargar();
 </script>
 </body>
