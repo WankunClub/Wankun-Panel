@@ -23,4 +23,513 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     min-height: 100vh;
   }
-  a { color:
+  a { color: inherit; }
+
+  header { background: var(--negro); padding: 18px 20px 16px; }
+  .marca {
+    font-family: 'Lora', serif;
+    color: var(--dorado);
+    font-size: 15px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .titulo {
+    font-family: 'Lora', serif;
+    color: var(--blanco);
+    font-size: 26px;
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .subtitulo { color: #B8B0A2; font-size: 13px; margin-top: 4px; }
+
+  .contenedor { max-width: 760px; margin: 0 auto; padding: 0 16px 60px; }
+
+  .plantilla {
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    margin-top: 20px;
+    overflow: hidden;
+  }
+  .plantilla summary {
+    cursor: pointer;
+    padding: 16px 20px;
+    font-family: 'Lora', serif;
+    font-size: 17px;
+    font-weight: 600;
+    list-style: none;
+  }
+  .plantilla summary::-webkit-details-marker { display: none; }
+  .plantilla summary::after { content: " +"; color: var(--dorado); }
+  .plantilla[open] summary::after { content: " –"; color: var(--dorado); }
+  .plantilla-cuerpo { padding: 0 20px 20px; }
+  .plantilla label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--dorado);
+    font-weight: 600;
+    margin: 14px 0 6px;
+  }
+  .plantilla .ayuda {
+    font-size: 13px;
+    color: var(--gris);
+    line-height: 1.6;
+    margin-top: 12px;
+  }
+  .plantilla .ayuda code {
+    background: var(--crema);
+    border: 1px solid var(--borde);
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-size: 12px;
+  }
+  .botones { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .btn-sec {
+    border: 1px solid var(--negro);
+    background: var(--blanco);
+    color: var(--negro);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-prim {
+    border: none;
+    background: var(--negro);
+    color: var(--dorado);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .guardado { color: var(--verde); font-size: 13px; align-self: center; }
+
+  .resumen {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 22px 4px 14px;
+    border-bottom: 1px solid var(--borde);
+  }
+  .resumen .num { font-family: 'Lora', serif; font-size: 40px; font-weight: 600; line-height: 1; }
+  .resumen .txt { font-size: 14px; color: var(--gris); }
+
+  .filtros { display: flex; gap: 8px; flex-wrap: wrap; padding: 16px 0; }
+  .filtro {
+    border: 1px solid var(--borde);
+    background: var(--blanco);
+    color: var(--negro);
+    font-size: 13px;
+    padding: 7px 14px;
+    border-radius: 100px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .filtro.activo { background: var(--negro); color: var(--crema); border-color: var(--negro); }
+  .filtro:focus-visible { outline: 2px solid var(--dorado); outline-offset: 2px; }
+
+  .tarjeta {
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .fila-sup { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .cejilla {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--dorado);
+    font-weight: 600;
+  }
+  .animal { font-family: 'Lora', serif; font-size: 30px; font-weight: 600; line-height: 1.15; margin-top: 2px; }
+  .estado {
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 100px;
+    white-space: nowrap;
+    border: 1px solid var(--borde);
+    color: var(--gris);
+    background: var(--crema);
+  }
+  .estado.sin-contactar { background: var(--negro); color: var(--dorado); border-color: var(--negro); }
+  .estado.respondio { background: #EAF4EE; color: var(--verde); border-color: #CBE3D4; }
+
+  .datos { margin-top: 12px; font-size: 14.5px; line-height: 1.65; color: var(--negro); }
+  .datos .cliente { font-weight: 600; }
+  .datos .suave { color: var(--gris); }
+  .notas { margin-top: 8px; font-size: 13.5px; color: var(--gris); font-style: italic; font-family: 'Lora', serif; }
+
+  .msj {
+    width: 100%;
+    margin-top: 6px;
+    padding: 12px;
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    background: var(--crema);
+    color: var(--negro);
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 130px;
+    resize: vertical;
+  }
+  .msj:focus { outline: 2px solid var(--dorado); outline-offset: 1px; }
+
+  .btn-wsp {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    background: var(--negro);
+    color: var(--dorado);
+    text-align: center;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-wsp:focus-visible { outline: 2px solid var(--dorado); outline-offset: 2px; }
+  @media (hover: hover) { .btn-wsp:hover { background: #000; } }
+  .btn-wsp.deshabilitado { background: var(--borde); color: var(--gris); cursor: default; }
+
+  .aviso, .vacio {
+    text-align: center;
+    color: var(--gris);
+    font-size: 14.5px;
+    padding: 50px 20px;
+    line-height: 1.7;
+  }
+  .vacio strong { font-family: 'Lora', serif; font-size: 18px; color: var(--negro); display: block; margin-bottom: 6px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .tarjeta { animation: aparecer .25s ease both; }
+    @keyframes aparecer { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="contenedor" style="padding-bottom:0">
+    <div class="marca">Wankun Club</div>
+    <div class="titulo">Vete</div>
+    <div class="subtitulo">Leads de la veterinaria — el mensaje entra siempre por el perrito.</div>
+  </div>
+</header>
+
+<div class="contenedor">
+
+  <details class="plantilla">
+    <summary>Plantillas del mensaje</summary>
+    <div class="plantilla-cuerpo">
+      <label for="tpl-perro">Perro adulto</label>
+      <textarea class="msj" id="tpl-perro" spellcheck="false"></textarea>
+      <label for="tpl-perro-cachorro">Perro cachorro</label>
+      <textarea class="msj" id="tpl-perro-cachorro" spellcheck="false"></textarea>
+      <label for="tpl-gato">Gato adulto</label>
+      <textarea class="msj" id="tpl-gato" spellcheck="false"></textarea>
+      <label for="tpl-gato-bebe">Gato bebé</label>
+      <textarea class="msj" id="tpl-gato-bebe" spellcheck="false"></textarea>
+      <div class="ayuda">
+        Comodines que se reemplazan solos en cada tarjeta:
+        <code>{nombre}</code> primer nombre del cliente ·
+        <code>{perrito}</code> nombre del animal.
+      </div>
+      <div class="botones">
+        <button class="btn-prim" id="btn-guardar">Guardar plantillas</button>
+        <button class="btn-sec" id="btn-restaurar">Restaurar originales</button>
+        <span class="guardado" id="txt-guardado"></span>
+      </div>
+    </div>
+  </details>
+
+  <div class="resumen" id="resumen" hidden>
+    <span class="num" id="num-pendientes">0</span>
+    <span class="txt">sin contactar</span>
+  </div>
+
+  <div class="filtros" id="filtros" hidden></div>
+
+  <div id="lista"><div class="aviso">Cargando leads…</div></div>
+</div>
+
+<script>
+const WORKER_URL = "https://cool-meadow-3b33.wankun-petshop.workers.dev/?sheet=" + encodeURIComponent("Leads Vete");
+const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwjDT3c4FMMkz94gsxPo1I5X0ZyB0UMoBOmkhfdwZ-0KK2h-39rnOUH4XmW6Ys8jGos/exec";
+const WEBHOOK_TOKEN = "wankun_vete_2026";
+const FILTROS = ["Todos", "Sin contactar", "Contactado", "Respondió", "Wankun Vete"];
+const CLAVE_PLANTILLAS = "wankun_vete_plantillas_v2";
+
+const PLANTILLAS_ORIGINALES = {
+  perro: "Hola {nombre}, te saluda Nacho de Wankun Club. Trabajamos con la veterinaria y por eso tengo tu contacto. {perrito} estuvo por la vete en estos días, gracias por confiar en nosotros. Queríamos que sepas que nos ocupamos de la alimentación de los perritos: entregamos el alimento en el día y lo acompañamos con Snacks Naturales de Filan.",
+  perro_cachorro: "Hola {nombre}, te saluda Nacho de Wankun Club. Trabajamos con la veterinaria y por eso tengo tu contacto. {perrito} estuvo por la vete en estos días, gracias por confiar en nosotros. Queríamos que sepas que nos ocupamos de la alimentación de los perritos: entregamos el alimento en el día ajustando las cantidades a medida que crece, y lo acompañamos con Snacks Naturales de Filan.",
+  gato: "Hola {nombre}, te saluda Nacho de Wankun Club. Trabajamos con la veterinaria y por eso tengo tu contacto. {perrito} estuvo por la vete en estos días, gracias por confiar en nosotros. Queríamos que sepas que nos ocupamos de la alimentación de los gatitos y entregamos el alimento en el día.",
+  gato_bebe: "Hola {nombre}, te saluda Nacho de Wankun Club. Trabajamos con la veterinaria y por eso tengo tu contacto. {perrito} estuvo por la vete en estos días, gracias por confiar en nosotros. Queríamos que sepas que nos ocupamos de la alimentación de los gatitos, entregamos el alimento en el día y vamos ajustando las cantidades a medida que crece."
+};
+
+const IDS = {
+  perro: "tpl-perro",
+  perro_cachorro: "tpl-perro-cachorro",
+  gato: "tpl-gato",
+  gato_bebe: "tpl-gato-bebe"
+};
+
+let plantillas = cargarPlantillas();
+let leads = [];
+let filtroActivo = "Sin contactar";
+
+function cargarPlantillas() {
+  try {
+    const g = JSON.parse(localStorage.getItem(CLAVE_PLANTILLAS));
+    if (g && g.perro && g.perro_cachorro && g.gato && g.gato_bebe) return g;
+  } catch (e) {}
+  return { ...PLANTILLAS_ORIGINALES };
+}
+
+function guardarPlantillas() {
+  const nuevas = {};
+  for (const k in IDS) {
+    const v = document.getElementById(IDS[k]).value.trim();
+    nuevas[k] = v || PLANTILLAS_ORIGINALES[k];
+  }
+  plantillas = nuevas;
+  try { localStorage.setItem(CLAVE_PLANTILLAS, JSON.stringify(plantillas)); } catch (e) {}
+  avisarGuardado("Guardadas — aplicadas a todas las tarjetas");
+  render();
+}
+
+function restaurarPlantillas() {
+  plantillas = { ...PLANTILLAS_ORIGINALES };
+  try { localStorage.removeItem(CLAVE_PLANTILLAS); } catch (e) {}
+  pintarPlantillas();
+  avisarGuardado("Originales restauradas");
+  render();
+}
+
+function pintarPlantillas() {
+  for (const k in IDS) document.getElementById(IDS[k]).value = plantillas[k];
+}
+
+let timerGuardado = null;
+function avisarGuardado(txt) {
+  const el = document.getElementById("txt-guardado");
+  el.textContent = txt;
+  clearTimeout(timerGuardado);
+  timerGuardado = setTimeout(() => { el.textContent = ""; }, 3000);
+}
+
+function parseCSV(texto) {
+  const filas = [];
+  let fila = [], campo = "", entreComillas = false;
+  for (let i = 0; i < texto.length; i++) {
+    const c = texto[i];
+    if (entreComillas) {
+      if (c === '"') {
+        if (texto[i + 1] === '"') { campo += '"'; i++; }
+        else entreComillas = false;
+      } else campo += c;
+    } else {
+      if (c === '"') entreComillas = true;
+      else if (c === ",") { fila.push(campo); campo = ""; }
+      else if (c === "\n" || c === "\r") {
+        if (c === "\r" && texto[i + 1] === "\n") i++;
+        fila.push(campo); campo = "";
+        if (fila.some(v => v.trim() !== "")) filas.push(fila);
+        fila = [];
+      } else campo += c;
+    }
+  }
+  fila.push(campo);
+  if (fila.some(v => v.trim() !== "")) filas.push(fila);
+  return filas;
+}
+
+function telefonoWa(tel) {
+  let d = (tel || "").replace(/\D/g, "");
+  if (!d) return null;
+  if (d.startsWith("549")) return d;
+  if (d.startsWith("54")) return "549" + d.slice(2);
+  if (d.startsWith("0")) d = d.slice(1);
+  d = d.replace(/^15/, "");
+  return "549" + d;
+}
+
+function esBebe(edad) {
+  const e = (edad || "").toLowerCase();
+  if (e.includes("mes") || e.includes("semana")) return true;
+  const n = parseFloat(e.replace(",", "."));
+  return !isNaN(n) && n < 1;
+}
+
+function elegirPlantilla(l) {
+  const gato = (l.especie || "").toLowerCase().includes("gat");
+  const bebe = esBebe(l.edad);
+  if (gato && bebe) return plantillas.gato_bebe;
+  if (gato) return plantillas.gato;
+  if (bebe) return plantillas.perro_cachorro;
+  return plantillas.perro;
+}
+
+function armarMensaje(l) {
+  const nombreCliente = (l.cliente || "").trim().split(/\s+/)[0] || "";
+  const animal = (l.animal || "").trim();
+  const tpl = elegirPlantilla(l);
+
+  let m = tpl
+    .split("{nombre}").join(nombreCliente)
+    .split("{perrito}").join(animal);
+
+  m = m.replace(/Hola\s+,/, "Hola,").replace(/\s{2,}/g, " ");
+  return m;
+}
+
+function claseEstado(estado) {
+  const e = (estado || "").toLowerCase();
+  if (e.startsWith("sin")) return "sin-contactar";
+  if (e.startsWith("respond")) return "respondio";
+  return "";
+}
+
+function esc(t) {
+  return (t || "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function render() {
+  const lista = document.getElementById("lista");
+  const visibles = leads
+    .map((l, i) => ({ ...l, _i: i }))
+    .filter(l => filtroActivo === "Todos" || (l.estado || "Sin contactar").trim().toLowerCase() === filtroActivo.toLowerCase());
+
+  document.getElementById("num-pendientes").textContent =
+    leads.filter(l => (l.estado || "Sin contactar").trim().toLowerCase().startsWith("sin")).length;
+  document.getElementById("resumen").hidden = false;
+
+  if (!visibles.length) {
+    lista.innerHTML = `<div class="vacio"><strong>Nada por acá</strong>No hay leads con estado "${esc(filtroActivo)}". A medida que Diego cargue ingresos en la planilla, aparecen solos.</div>`;
+    return;
+  }
+
+  lista.innerHTML = visibles.map(l => {
+    const wa = telefonoWa(l.telefono);
+    const edad = l.edad ? ` · ${esc(l.edad)}` : "";
+    const especie = esc(l.especie || "—");
+    const boton = wa
+      ? `<button class="btn-wsp" data-i="${l._i}" data-tel="${wa}">Escribir por ${esc((l.animal || "el perrito").trim())}</button>`
+      : `<div class="btn-wsp deshabilitado">Sin teléfono cargado</div>`;
+    return `
+      <div class="tarjeta">
+        <div class="fila-sup">
+          <div>
+            <div class="cejilla">${especie}${edad}</div>
+            <div class="animal">${esc(l.animal || "Sin nombre")}</div>
+          </div>
+          <span class="estado ${claseEstado(l.estado)}">${esc(l.estado || "Sin contactar")}</span>
+        </div>
+        <div class="datos">
+          <span class="cliente">${esc(l.cliente || "—")}</span>
+          <span class="suave"> · ${esc(l.telefono || "sin teléfono")}</span><br>
+          <span class="suave">${esc(l.direccion || "")}${l.direccion && l.fecha ? " · " : ""}${esc(l.fecha || "")}</span>
+        </div>
+        ${l.notas ? `<div class="notas">${esc(l.notas)}</div>` : ""}
+        <textarea class="msj" id="msj-${l._i}" spellcheck="false" style="margin-top:14px">${esc(armarMensaje(l))}</textarea>
+        ${boton}
+      </div>`;
+  }).join("");
+
+  lista.querySelectorAll("button.btn-wsp").forEach(b => b.addEventListener("click", () => {
+    const texto = document.getElementById("msj-" + b.dataset.i).value;
+    const idx = parseInt(b.dataset.i, 10);
+    const lead = leads[idx];
+    // 1. Abrir WhatsApp — la acción principal, siempre
+    window.open("https://wa.me/" + b.dataset.tel + "?text=" + encodeURIComponent(texto), "_blank");
+    // 2. Marcar como Contactado en la planilla (fire-and-forget)
+    marcarContactado(lead, b);
+  }));
+}
+
+async function marcarContactado(lead, boton) {
+  if (!lead || !lead.telefono) return;
+  const yaEstaba = (lead.estado || "").toLowerCase();
+  // No pisar estados posteriores ni repetir si ya está en Contactado
+  if (yaEstaba.startsWith("respond") || yaEstaba.includes("wankun") || yaEstaba.startsWith("contact")) return;
+  // Actualización optimista: cambio el estado en memoria y re-renderizo
+  lead.estado = "Contactado";
+  render();
+  try {
+    await fetch(WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ token: WEBHOOK_TOKEN, telefono: lead.telefono })
+    });
+  } catch (e) {
+    // Si falla, revierto el estado local para no engañar al usuario
+    lead.estado = "Sin contactar";
+    render();
+    console.error("No se pudo marcar como Contactado en la planilla:", e);
+  }
+}
+
+function armarFiltros() {
+  const cont = document.getElementById("filtros");
+  cont.hidden = false;
+  cont.innerHTML = FILTROS.map(f =>
+    `<button class="filtro ${f === filtroActivo ? "activo" : ""}" data-f="${f}">${f}</button>`
+  ).join("");
+  cont.querySelectorAll(".filtro").forEach(b => b.addEventListener("click", () => {
+    filtroActivo = b.dataset.f;
+    armarFiltros();
+    render();
+  }));
+}
+
+async function cargar() {
+  try {
+    const res = await fetch(WORKER_URL);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const filas = parseCSV(await res.text());
+    if (filas.length < 2) throw new Error("vacía");
+
+    leads = filas.slice(1)
+      .map(f => ({
+        fecha: (f[0] || "").trim(),
+        cliente: (f[1] || "").trim(),
+        direccion: (f[2] || "").trim(),
+        telefono: (f[3] || "").trim(),
+        especie: (f[4] || "").trim(),
+        animal: (f[5] || "").trim(),
+        edad: (f[6] || "").trim(),
+        estado: (f[7] || "").trim(),
+        notas: (f[8] || "").trim(),
+      }))
+      .filter(l => l.cliente || l.animal || l.telefono)
+      .reverse();
+
+    armarFiltros();
+    render();
+  } catch (e) {
+    document.getElementById("lista").innerHTML =
+      `<div class="aviso">No pude leer la planilla.<br>Revisá que esté compartida como "Cualquier persona con el enlace: Lector" y que el Worker esté actualizado.<br><span style="font-size:12px">(${esc(e.message)})</span></div>`;
+  }
+}
+
+pintarPlantillas();
+document.getElementById("btn-guardar").addEventListener("click", guardarPlantillas);
+document.getElementById("btn-restaurar").addEventListener("click", restaurarPlantillas);
+cargar();
+</script>
+</body>
+</html>
