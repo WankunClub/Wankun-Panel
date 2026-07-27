@@ -1261,7 +1261,7 @@ async function conectarClientes(){
       const marca=r['Marca']||r['marca']||'';
       const prod=r['producto']||r['Producto']||'';
       const art=[marca,prod].filter(Boolean).join(' - ');
-      return{nombre:r['CLIENTE']||r['Cliente']||'',localidad:r['Barrio/Localidad']||r['Localidad']||'',direccion:r['Domicilio']||r['domicilio']||'',telefono:'',articulo:art,fecha:r['FECHA']||r['Fecha']||'',fac:parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0),kg:parseFloat((getCol(r,'kg')||0).toString().replace(',','.'))||0,fuente:'Directa',id:r['ID']||''};
+      return{nombre:r['CLIENTE']||r['Cliente']||'',localidad:r['Barrio/Localidad']||r['Localidad']||'',direccion:r['Domicilio']||r['domicilio']||'',telefono:(r['TELEFONO']||'').toString().trim(),articulo:art,fecha:r['FECHA']||r['Fecha']||'',fac:parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0),kg:parseFloat((getCol(r,'kg')||0).toString().replace(',','.'))||0,fuente:'Directa',id:r['ID']||''};
     }).filter(r=>r.nombre);
     const flex=fRows.map(r=>({nombre:r['NOMBRE']||'',localidad:r['LOCALIDAD']||'',direccion:r['DIRECCION']||r['Direccion']||'',telefono:(r['TELEFONO']||'').toString(),articulo:r['REFERNCIA']||'',fecha:r['Fecha compra']||'',fac:0,kg:0,fuente:'Flex Meli'})).filter(r=>r.nombre);
     clData=[...directas,...flex];
@@ -1768,6 +1768,17 @@ async function avConectar(){
       else if(diasHastaRecompra!==null&&diasHastaRecompra<=2)estado='proximo';
       return{nombre:nom,localidad:r['LOCALIDAD']||'',direccion:r['DIRECCION']||'',telefono:tel,nCompras:1,ultima:ultimaFecha||(recompraFecha||null),dias:ultimaFecha?Math.floor((hoy-ultimaFecha)/(1000*60*60*24)):null,freq:null,prox:diasHastaRecompra,recompraFecha:recompraFecha||null,estado,ultimoProd:r['REFERNCIA']||'',fuente:'Flex Meli'};
     }).filter(Boolean);
+    // Historial de compras Flex Meli por cliente, para cruzar con Ventas (mismo cliente, distinto canal)
+    const normTel=t=>(t||'').toString().replace(/\D/g,'');
+    const flexFechasPorTel={},flexFechasPorNombre={};
+    fRows.forEach(r=>{
+      const tel=normTel(r['TELEFONO']);
+      const nom=(r['NOMBRE']||'').trim().toLowerCase();
+      const f=parseFecha(r['Fecha compra']||'');
+      if(!f||isNaN(f)||f>hoy)return;
+      if(tel&&tel.length>=8)(flexFechasPorTel[tel]=flexFechasPorTel[tel]||[]).push(f);
+      if(nom)(flexFechasPorNombre[nom]=flexFechasPorNombre[nom]||[]).push(f);
+    });
     const hist={};
     vRows.forEach(r=>{
       const nom=(r['CLIENTE']||r['Cliente']||'').trim();
@@ -1775,22 +1786,28 @@ async function avConectar(){
       const f=parseFecha(r['FECHA']||r['Fecha']||'');
       if(!f||isNaN(f)||f>hoy)return;
       const key=nom.toLowerCase();
-      if(!hist[key])hist[key]={nombre:nom,localidad:r['Barrio/Localidad']||r['Localidad']||'',compras:[]};
+      if(!hist[key])hist[key]={nombre:nom,localidad:r['Barrio/Localidad']||r['Localidad']||'',telefono:'',compras:[]};
+      const tel=(r['TELEFONO']||'').toString().trim();
+      if(tel&&!hist[key].telefono)hist[key].telefono=tel;
       hist[key].compras.push({fecha:f,fac:parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0),kg:parseFloat((getCol(r,'kg')||0).toString().replace(',','.'))||0,producto:[r['Marca']||'',r['producto']||''].filter(Boolean).join(' - ')});
     });
     const ventasClientes=Object.values(hist).map(c=>{
       c.compras.sort((a,b)=>a.fecha-b.fecha);
       const ultima=c.compras[c.compras.length-1].fecha;
       const dias=Math.floor((hoy-ultima)/(1000*60*60*24));
+      // Cruzar con compras Flex Meli del mismo cliente (por telefono, respaldo por nombre) para no perder frecuencia real entre canales
+      const telN=normTel(c.telefono);
+      const flexFechas=(telN&&flexFechasPorTel[telN])?flexFechasPorTel[telN]:(flexFechasPorNombre[c.nombre.toLowerCase()]||[]);
+      const todasFechas=[...c.compras.map(x=>x.fecha),...flexFechas].sort((a,b)=>a-b);
       let freq=null;
-      if(c.compras.length>=2){const diffs=[];for(let i=1;i<c.compras.length;i++){const d=Math.floor((c.compras[i].fecha-c.compras[i-1].fecha)/(1000*60*60*24));if(d>0&&d<200)diffs.push(d);}if(diffs.length)freq=Math.round(diffs.reduce((a,b)=>a+b,0)/diffs.length);}
+      if(todasFechas.length>=2){const diffs=[];for(let i=1;i<todasFechas.length;i++){const d=Math.floor((todasFechas[i]-todasFechas[i-1])/(1000*60*60*24));if(d>0&&d<200)diffs.push(d);}if(diffs.length)freq=Math.round(diffs.reduce((a,b)=>a+b,0)/diffs.length);}
       let prox=null,estado='sin_datos';
       if(freq){prox=freq-dias;if(prox<-5)estado='vencido';else if(prox<=5)estado='proximo';else estado='ok';}
       else{if(dias>45)estado='vencido';else if(dias>38)estado='proximo';else estado='ok';}
       const ultimaFechaMs=ultima.getTime();
       const ultimosProds=c.compras.filter(x=>x.fecha.getTime()===ultimaFechaMs).map(x=>x.producto).filter(Boolean);
       const ultimoProd=ultimosProds.length?ultimosProds.join(' / '):c.compras[c.compras.length-1].producto;
-      return{nombre:c.nombre,localidad:c.localidad,direccion:'',telefono:'',nCompras:c.compras.length,ultima,dias,freq,prox,estado,ultimoProd,ultimosProds,fuente:'Directa'};
+      return{nombre:c.nombre,localidad:c.localidad,direccion:'',telefono:c.telefono,nCompras:todasFechas.length,ultima,dias,freq,prox,estado,ultimoProd,ultimosProds,fuente:'Directa'};
     });
     avTodos=[...flexClientes,...ventasClientes];
     avTodos.sort((a,b)=>(a.prox!==null?a.prox:999)-(b.prox!==null?b.prox:999));
