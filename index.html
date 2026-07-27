@@ -352,6 +352,13 @@ Vamos Argentina!</div>
         <div class="table-body" id="mig-seguimiento" style="max-height:500px"></div>
       </div>
     </div>
+    <div class="card" style="border-left:4px solid #16a34a">
+      <div class="card-title" style="color:#16a34a">✓ Convertidos recientemente <span style="font-size:12px;font-weight:400;margin-left:8px">ya hicieron su 2da compra directa — quedan acá 30 días como registro, después pasan a Recompras normal</span></div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:1fr 130px 90px 90px"><span>Cliente</span><span>Zona</span><span>2da compra</span><span></span></div>
+        <div class="table-body" id="mig-convertidos" style="max-height:300px"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2098,10 +2105,56 @@ async function migConectar(){
     seguimiento.sort((a,b)=>b.diasAtraso-a.diasAtraso);
     migSeguimiento=seguimiento;
 
+    // Tracking de conversiones: comparar contra el seguimiento anterior guardado para detectar quien paso a tener 2+ compras
+    const MIG_TRACK_KEY='wankun_mig_track_v1',MIG_CONV_MAXDIAS=30;
+    let track={};
+    try{track=JSON.parse(localStorage.getItem(MIG_TRACK_KEY)||'{}');}catch(e){track={};}
+    // Actualizar/crear entradas 'en_seguimiento' para los actuales
+    seguimiento.forEach(c=>{
+      track[c.tel]={estado:'seguimiento',nombre:c.nombre,localidad:c.localidad};
+    });
+    // Cualquier tel que estaba en 'seguimiento' pero ya no aparece en la lista actual, y tiene 2+ compras directas ahora -> convertido
+    Object.keys(track).forEach(tel=>{
+      if(track[tel].estado!=='seguimiento')return;
+      const yaNoEsta=!seguimiento.find(c=>c.tel===tel);
+      if(!yaNoEsta)return;
+      const directa=ventasPorTel[tel];
+      if(directa&&directa.compras.length>=2){
+        const fecha2da=directa.compras.sort((a,b)=>a.fecha-b.fecha)[1].fecha;
+        track[tel]={estado:'convertido',nombre:directa.nombre,localidad:directa.localidad,fecha2da:fecha2da.toISOString(),detectado:hoy.toISOString()};
+      }else{
+        delete track[tel]; // ya no esta en flex tampoco, se limpia
+      }
+    });
+    // Limpiar convertidos viejos (>30 dias)
+    Object.keys(track).forEach(tel=>{
+      if(track[tel].estado==='convertido'){
+        const dias=Math.floor((hoy-new Date(track[tel].fecha2da))/(1000*60*60*24));
+        if(dias>MIG_CONV_MAXDIAS)delete track[tel];
+      }
+    });
+    localStorage.setItem(MIG_TRACK_KEY,JSON.stringify(track));
+    const convertidos=Object.keys(track).filter(tel=>track[tel].estado==='convertido').map(tel=>({tel,...track[tel]})).sort((a,b)=>new Date(b.fecha2da)-new Date(a.fecha2da));
+    migConvertidos=convertidos;
+
     st.className='conn-status conn-ok';st.textContent=seguimiento.length+' clientes en seguimiento';
     document.getElementById('mig-panel').style.display='block';
-    migMetricas();migRenderTabla();
+    migMetricas();migRenderTabla();migRenderConvertidos();
   }catch(e){st.className='conn-status conn-err';st.textContent='Error: '+e.message;console.error(e);}
+}
+let migConvertidos=[];
+function migRenderConvertidos(){
+  const tb=document.getElementById('mig-convertidos');if(!tb)return;
+  if(!migConvertidos.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin conversiones recientes</div>';return;}
+  tb.innerHTML=migConvertidos.map(c=>{
+    const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';
+    return `<div class="table-row" style="grid-template-columns:1fr 130px 90px 90px">
+      <span style="font-weight:500">${c.nombre}</span>
+      <span style="font-size:11px">${c.localidad||'--'} ${zonaTag}</span>
+      <span style="font-size:11px">${new Date(c.fecha2da).toLocaleDateString('es-AR',{day:'numeric',month:'short'})}</span>
+      <span style="color:#16a34a;font-weight:700;font-size:16px">✓</span>
+    </div>`;
+  }).join('');
 }
 function migMetricas(){
   const t=migSeguimiento.length,v=migSeguimiento.filter(c=>c.diasAtraso>0).length;
