@@ -288,21 +288,6 @@ Vamos Argentina!</div>
   </div>
   <div id="av-panel" style="display:none">
     <div class="metrics-grid" id="av-metrics"></div>
-    <div class="card" style="border-left:4px solid #c0392b">
-      <div class="card-title" style="color:#c0392b">Contactar hoy</div>
-      <div class="table-wrap">
-        <div class="table-head" style="grid-template-columns:1fr 100px 130px 100px 80px"><span>Cliente</span><span>Estado</span><span>Zona</span><span>Producto</span><span>WA</span></div>
-        <div class="table-body" id="av-hoy" style="max-height:300px"></div>
-      </div>
-    </div>
-    <div class="card" style="border-left:4px solid #856404">
-      <div class="card-title" style="color:#856404">Mañana</div>
-      <div class="table-wrap">
-        <div class="table-head" style="grid-template-columns:1fr 130px 120px 80px"><span>Cliente</span><span>Zona</span><span>Producto</span><span>WA</span></div>
-        <div class="table-body" id="av-manana" style="max-height:300px"></div>
-      </div>
-    </div>
-    
     <div class="card" style="border-left:4px solid #7c3aed">
       <div class="card-title" style="color:#7c3aed">Preparar stock — próximos 5 días <span style="font-size:12px;font-weight:400;margin-left:8px">qué tener listo para entregar</span></div>
       <div class="table-wrap">
@@ -1921,7 +1906,7 @@ async function avConectar(){
     avTodos.sort((a,b)=>(a.prox!==null?a.prox:999)-(b.prox!==null?b.prox:999));
     st.className='conn-status conn-ok';st.textContent=avTodos.length+' clientes';
     document.getElementById('av-panel').style.display='block';
-    avMetricas();avMostrarHoy();avMostrarManana();avMostrarStockProx();avMostrarVentasHoy();avProyeccion();
+    avMetricas();avMostrarStockProx();avMostrarVentasHoy();avProyeccion();
     avActualizarPredicciones();avMostrarFaltaron();
   }catch(e){st.className='conn-status conn-err';st.textContent='Error: '+e.message;console.error(e);}
 }
@@ -1981,36 +1966,20 @@ function avActualizarPredicciones(){
   let store={};
   try{store=JSON.parse(localStorage.getItem(AV_PRED_KEY)||'{}');}catch(e){store={};}
   const hoy=new Date();hoy.setHours(0,0,0,0);
-  const normTel=t=>(t||'').toString().replace(/\D/g,'');
   const directaMap={};
   avTodos.filter(function(c){return c.fuente==='Directa';}).forEach(function(c){directaMap[c.nombre.toLowerCase().trim()]=c;});
-  // Mapa de ultima compra conocida por telefono, cruzando ambos canales, para poder resolver predicciones de Flex Meli
-  const ultimaPorTel={};
-  avTodos.forEach(function(c){
-    const t=normTel(c.telefono);
-    if(!t||t.length<8||!c.ultima)return;
-    const ms=new Date(c.ultima).getTime();
-    if(!ultimaPorTel[t]||ms>ultimaPorTel[t])ultimaPorTel[t]=ms;
-  });
   // 1) Resolver o descartar predicciones ya trackeadas
   Object.keys(store).forEach(function(key){
-    const e=store[key];
-    let ultimaActualMs=null;
-    if(key.indexOf('tel:')===0){
-      const t=key.slice(4);
-      ultimaActualMs=ultimaPorTel[t]||null;
-    }else{
-      const actual=directaMap[key];
-      if(actual&&actual.ultima)ultimaActualMs=actual.ultima.getTime();
-    }
-    if(ultimaActualMs!==null){
+    const e=store[key],actual=directaMap[key];
+    if(actual&&actual.ultima){
+      const ultimaActualMs=actual.ultima.getTime();
       const ultimaConocidaMs=e.ultimaConocida?new Date(e.ultimaConocida).getTime():0;
       if(ultimaActualMs>ultimaConocidaMs){delete store[key];return;} // cumplió, compró de nuevo
     }
     const diasAtraso=Math.floor((hoy-new Date(e.fechaPrevista).getTime())/(1000*60*60*24));
     if(diasAtraso>AV_PRED_MAXDIAS){delete store[key];} // muy viejo, se descarta solo
   });
-  // 2) Trackear nuevas entradas Directa en la ventana 0-5 dias
+  // 2) Trackear nuevas entradas de la ventana 0-5 dias (solo canal directo — Flex Meli tiene su propio flujo de migracion en Envios)
   avTodos.filter(function(c){return c.fuente==='Directa'&&c.prox!==null&&c.prox!==undefined&&c.prox>=0&&c.prox<=5;}).forEach(function(c){
     const key=c.nombre.toLowerCase().trim();
     if(store[key])return; // ya trackeada
@@ -2018,15 +1987,8 @@ function avActualizarPredicciones(){
     const telLookup=c.telefono||(clData.find(function(x){return(x.nombre||'').toLowerCase().startsWith(c.nombre.toLowerCase().split(' ')[0])&&x.telefono;})||{}).telefono||'';
     store[key]={nombre:c.nombre,localidad:c.localidad||'',telefono:telLookup,ultimoProd:c.ultimoProd||'',fechaPrevista:fechaPrevista.toISOString(),ultimaConocida:c.ultima?c.ultima.toISOString():'',creada:hoy.toISOString()};
   });
-  // 3) Trackear nuevas entradas de Flex Meli cuya recompra prevista ya esta en ventana 0-5 dias (antes se perdian si no se miraba el panel el dia exacto)
-  avTodos.filter(function(c){return c.fuente==='Flex Meli'&&c.prox!==null&&c.prox!==undefined&&c.prox<=5&&c.telefono;}).forEach(function(c){
-    const t=normTel(c.telefono);
-    if(!t||t.length<8)return;
-    const key='tel:'+t;
-    if(store[key])return; // ya trackeada
-    if(!c.recompraFecha)return;
-    store[key]={nombre:c.nombre,localidad:c.localidad||'',telefono:c.telefono,ultimoProd:c.ultimoProd||'',fechaPrevista:new Date(c.recompraFecha).toISOString(),ultimaConocida:c.ultima?new Date(c.ultima).toISOString():'',creada:hoy.toISOString()};
-  });
+  // Limpiar entradas viejas de Flex Meli (tel:) que hayan quedado trackeadas por el error anterior
+  Object.keys(store).forEach(function(key){if(key.indexOf('tel:')===0)delete store[key];});
   localStorage.setItem(AV_PRED_KEY,JSON.stringify(store));
   avPredicciones=store;
 }
