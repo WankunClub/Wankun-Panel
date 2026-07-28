@@ -1900,7 +1900,7 @@ async function avConectar(){
       const ultimaFechaMs=ultima.getTime();
       const ultimosProds=c.compras.filter(x=>x.fecha.getTime()===ultimaFechaMs).map(x=>x.producto).filter(Boolean);
       const ultimoProd=ultimosProds.length?ultimosProds.join(' / '):c.compras[c.compras.length-1].producto;
-      return{nombre:c.nombre,localidad:c.localidad,direccion:'',telefono:c.telefono,nCompras:todasFechas.length,ultima,dias,freq,prox,estado,ultimoProd,ultimosProds,fuente:'Directa'};
+      return{nombre:c.nombre,localidad:c.localidad,direccion:'',telefono:c.telefono,nCompras:todasFechas.length,comprasDirecta:c.compras.length,ultima,dias,freq,prox,estado,ultimoProd,ultimosProds,fuente:'Directa'};
     });
     avTodos=[...flexClientes,...ventasClientes];
     avTodos.sort((a,b)=>(a.prox!==null?a.prox:999)-(b.prox!==null?b.prox:999));
@@ -1912,8 +1912,11 @@ async function avConectar(){
 }
 
 function avMetricas(){
-  const t=avTodos.length,v=avTodos.filter(c=>c.estado==='vencido').length,p=avTodos.filter(c=>c.estado==='proximo').length,l=avTodos.filter(c=>esLocal(c.localidad)).length;
-  document.getElementById('av-metrics').innerHTML=`<div class="metric"><div class="metric-label">Clientes unicos</div><div class="metric-value">${t}</div></div><div class="metric"><div class="metric-label">Contactar hoy</div><div class="metric-value" style="color:#c0392b">${v+p}</div></div><div class="metric"><div class="metric-label">Vencidos</div><div class="metric-value" style="color:#c0392b">${v}</div></div><div class="metric"><div class="metric-label">Proximos 7d</div><div class="metric-value" style="color:#856404">${p}</div></div><div class="metric"><div class="metric-label">Zona local</div><div class="metric-value">${l}</div></div>`;
+  const directa=avTodos.filter(c=>c.fuente==='Directa');
+  const t=directa.length,v=directa.filter(c=>c.estado==='vencido').length,p=directa.filter(c=>c.estado==='proximo').length,l=directa.filter(c=>esLocal(c.localidad)).length;
+  // Cliente activo: 2+ compras por canal directo (haya migrado de Flex Meli o no) Y no vencido (sigue comprando o esta dentro de sus dias)
+  const activos=directa.filter(c=>c.comprasDirecta>=2&&c.estado!=='vencido').length;
+  document.getElementById('av-metrics').innerHTML=`<div class="metric"><div class="metric-label">Clientes activos</div><div class="metric-value" style="color:#16a34a">${activos}</div></div><div class="metric"><div class="metric-label">Clientes unicos (directo)</div><div class="metric-value">${t}</div></div><div class="metric"><div class="metric-label">Vencidos</div><div class="metric-value" style="color:#c0392b">${v}</div></div><div class="metric"><div class="metric-label">Proximos 7d</div><div class="metric-value" style="color:#856404">${p}</div></div><div class="metric"><div class="metric-label">Zona local</div><div class="metric-value">${l}</div></div>`;
 }
 
 function avMostrarHoy(){
