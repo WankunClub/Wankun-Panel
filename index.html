@@ -187,6 +187,10 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="bar-chart" id="bar-ventas"></div>
   </div>
   <div class="card">
+    <div class="card-title">Objetivo vs. real — 2026</div>
+    <div id="objetivo-real-chart"></div>
+  </div>
+  <div class="card">
     <div class="card-title">Comparativo al mismo día — últimos 3 meses</div>
     <div id="comparativo-tabla"></div>
   </div>
@@ -910,6 +914,40 @@ function renderPeq(id,data,color){
   }).join('');
 }
 
+const OBJETIVO_2026={'2026-02':11111007,'2026-03':12777658,'2026-04':14694306,'2026-05':16898452,'2026-06':19433220,'2026-07':22348203,'2026-08':25700434,'2026-09':29555499,'2026-10':33988824,'2026-11':39087147,'2026-12':44950219};
+const MESES_ABR_2026=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+function renderObjetivoReal(id,real,obj,labels){
+  const el=document.getElementById(id);if(!el)return;
+  const w=760,h=260,padL=44,padR=16,padT=16,padB=28,n=labels.length;
+  const vals=[...real,...obj].filter(v=>v!=null);
+  const maxV=Math.max(...vals,1);
+  const x=i=>padL+i*(w-padL-padR)/(n-1);
+  const y=v=>padT+(h-padT-padB)*(1-v/maxV);
+  function pathFor(arr){let d='',started=false;arr.forEach((v,i)=>{if(v==null){started=false;return;}const px=x(i),py=y(v);d+=(started?' L':'M')+px+','+py;started=true;});return d;}
+  const realPath=pathFor(real),objPath=pathFor(obj);
+  const areaIdx=[];real.forEach((v,i)=>{if(v!=null&&obj[i]!=null)areaIdx.push(i);});
+  let areaPath='';
+  if(areaIdx.length){areaPath='M'+areaIdx.map(i=>x(i)+','+y(real[i])).join(' L')+' L'+areaIdx.slice().reverse().map(i=>x(i)+','+y(obj[i])).join(' L')+' Z';}
+  const realCircles=real.map((v,i)=>{
+    if(v==null)return'';
+    let tip='Real: '+fmt(v);
+    if(obj[i]){const pct=Math.round((v/obj[i]-1)*100);tip+=' ('+(pct>=0?'+':'')+pct+'% sobre objetivo)';}
+    return`<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="var(--azul-med)"><title>${labels[i]} — ${tip}</title></circle>`;
+  }).join('');
+  const objCircles=obj.map((v,i)=>v==null?'':`<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="var(--gris-dark)"><title>${labels[i]} — Objetivo: ${fmt(v)}</title></circle>`).join('');
+  const xLabels=labels.map((l,i)=>`<text x="${x(i)}" y="${h-8}" text-anchor="middle" font-size="10" fill="var(--gris-dark)">${l}</text>`).join('');
+  el.innerHTML=`<div style="display:flex;gap:16px;margin-bottom:8px;font-size:11px;color:var(--gris-dark)"><span><svg width="10" height="10" style="vertical-align:middle"><rect width="10" height="10" fill="var(--azul-med)"/></svg> Real</span><span><svg width="10" height="10" style="vertical-align:middle"><rect width="10" height="10" fill="var(--gris-dark)"/></svg> Objetivo</span></div>
+<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;overflow:visible">
+<path d="${areaPath}" fill="var(--azul-claro)" opacity="0.25"></path>
+<path d="${objPath}" fill="none" stroke="var(--gris-dark)" stroke-width="2" stroke-dasharray="4 4"></path>
+<path d="${realPath}" fill="none" stroke="var(--azul-med)" stroke-width="2.5"></path>
+${objCircles}
+${realCircles}
+${xLabels}
+</svg>`;
+}
+
 // ── Cargar ventas LIVE desde Sheets ─────────────────────────────────────────
 async function cargarVentasLive(){
   try{
@@ -1014,6 +1052,9 @@ async function cargarVentasLive(){
 
     renderBarras('bar-inicio',facs,labels);
     renderBarras('bar-ventas',facs,labels);
+    const real2026=[],obj2026=[];
+    for(let m=1;m<=12;m++){const key='2026-'+String(m).padStart(2,'0');real2026.push(porMes[key]||null);obj2026.push(OBJETIVO_2026[key]||null);}
+    renderObjetivoReal('objetivo-real-chart',real2026,obj2026,MESES_ABR_2026);
     renderPeq('zonas-bars',ZONAS_DATA,VERDE);
     renderPeq('marcas-bars',MARCAS_DATA,AZUL);
     buildTopProductos(rows);
