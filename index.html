@@ -2303,14 +2303,16 @@ function migProductoCalcular(vRows,fRows){
   const normTel=t=>(t||'').toString().replace(/\D/g,'');
   const normNombreDir=(n,d)=>((n||'').trim().toLowerCase()+'|'+(d||'').trim().toLowerCase());
 
-  // Primera fecha de compra directa por identificador (telefono si hay, sino nombre+direccion)
+  // Primera fecha de compra directa por identificador (telefono si hay, sino nombre+direccion), guardando tambien nombre/tel para mostrar
   const primeraDirectaPorId={};
   vRows.forEach(r=>{
     const tel=normTel(r['TELEFONO']);
     const id=tel&&tel.length>=8?('T:'+tel):('N:'+normNombreDir(r['CLIENTE']||r['Cliente'],r['Domicilio']||r['domicilio']));
     const f=parseFecha(r['FECHA']||r['Fecha']||'');
     if(!f||isNaN(f)||f>hoy)return;
-    if(!primeraDirectaPorId[id]||f<primeraDirectaPorId[id])primeraDirectaPorId[id]=f;
+    if(!primeraDirectaPorId[id]||f<primeraDirectaPorId[id].fecha){
+      primeraDirectaPorId[id]={fecha:f,nombre:(r['CLIENTE']||r['Cliente']||'').trim(),tel};
+    }
   });
 
   // Cohortes Flex Meli: agrupadas por mes de compra + producto (REFERNCIA), clientes distintos por id
@@ -2318,7 +2320,7 @@ function migProductoCalcular(vRows,fRows){
   // -> se agrupa por version normalizada (sin espacios extra, minusculas) pero se muestra un label prolijo consistente
   const normProducto=p=>(p||'Sin especificar').trim().replace(/\s+/g,' ').toLowerCase();
   const labelProducto=p=>normProducto(p).replace(/\b\w/g,c=>c.toUpperCase());
-  const cohortes={}; // key: 'YYYY-MM|producto-normalizado' -> {compradores:Map(id->fechaFlex)}
+  const cohortes={}; // key: 'YYYY-MM|producto-normalizado' -> {compradores:Map(id->{fecha,nombre,tel})}
   fRows.forEach(r=>{
     const f=parseFecha(r['Fecha compra']||'');
     if(!f||isNaN(f)||f>hoy)return;
@@ -2330,17 +2332,27 @@ function migProductoCalcular(vRows,fRows){
     if(!cohortes[key])cohortes[key]={mesKey,producto:labelProducto(r['REFERNCIA']),compradores:new Map()};
     // si el mismo id compro el mismo producto mas de una vez en el mes, nos quedamos con la fecha mas temprana
     const existente=cohortes[key].compradores.get(id);
-    if(!existente||f<existente)cohortes[key].compradores.set(id,f);
+    if(!existente||f<existente.fecha){
+      cohortes[key].compradores.set(id,{fecha:f,nombre:(r['NOMBRE']||'').trim(),tel});
+    }
   });
 
-  // Por cada cohorte: cuantos de esos compradores tienen una compra directa posterior a su fecha Flex
+  // Por cada cohorte: cuantos de esos compradores tienen una compra directa posterior a su fecha Flex, y el detalle de quienes son
   const filas=Object.values(cohortes).map(c=>{
-    let migrados=0;
-    c.compradores.forEach((fechaFlex,id)=>{
-      const fechaDirecta=primeraDirectaPorId[id];
-      if(fechaDirecta&&fechaDirecta>=fechaFlex)migrados++;
+    const migradosDetalle=[];
+    c.compradores.forEach((infoFlex,id)=>{
+      const directa=primeraDirectaPorId[id];
+      if(directa&&directa.fecha>=infoFlex.fecha){
+        migradosDetalle.push({
+          nombre:directa.nombre||infoFlex.nombre||'Sin nombre',
+          tel:directa.tel||infoFlex.tel||'',
+          fechaFlex:infoFlex.fecha,
+          fechaMigro:directa.fecha
+        });
+      }
     });
-    return{mesKey:c.mesKey,producto:c.producto,total:c.compradores.size,migrados,tasa:c.compradores.size?Math.round(migrados/c.compradores.size*1000)/10:0};
+    migradosDetalle.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+    return{mesKey:c.mesKey,producto:c.producto,total:c.compradores.size,migrados:migradosDetalle.length,tasa:c.compradores.size?Math.round(migradosDetalle.length/c.compradores.size*1000)/10:0,migradosDetalle};
   });
   filas.sort((a,b)=>b.mesKey.localeCompare(a.mesKey)||b.total-a.total);
   migProductoFilas=filas;
@@ -2376,16 +2388,28 @@ function migProductoRender(){
       <span style="font-size:14px">${totalMig}</span>
       <span style="color:${colorMes}">${tasaMes}%</span>
     </div>`;
-    const filasProducto=filasMes.sort((a,b)=>b.total-a.total).map(f=>{
+    const filasProducto=filasMes.sort((a,b)=>b.total-a.total).map((f,i)=>{
       let color='#c0392b';
       if(f.tasa>=40)color='#16a34a';else if(f.tasa>=20)color='#856404';
-      return `<div class="table-row" style="grid-template-columns:22px 100px 1fr 110px 110px 100px">
+      const prodId=idSeguro+'-p'+i;
+      const filaProducto=`<div class="table-row" style="grid-template-columns:22px 100px 1fr 110px 110px 100px;cursor:pointer" onclick="migProductoToggleCompradores('${prodId}')">
         <span></span><span></span>
-        <span style="color:var(--gris-dark)">${f.producto}</span>
+        <span style="color:var(--gris-dark)"><span id="mig-prod-arrow-${prodId}" style="font-size:10px;margin-right:6px">▸</span>${f.producto}</span>
         <span style="font-size:13px">${f.total}</span>
         <span style="font-size:13px">${f.migrados}</span>
         <span style="font-weight:700;color:${color}">${f.tasa}%</span>
       </div>`;
+      const listaCompradores=f.migradosDetalle.length?f.migradosDetalle.map(c=>{
+        const waBtn=c.tel?'<a class="wa-link" href="'+avWaLink(c.tel,c.nombre,f.producto)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:11px">Sin tel</span>';
+        return `<div class="table-row" style="grid-template-columns:22px 100px 1fr 130px 100px 60px;font-size:12px">
+          <span></span><span></span>
+          <span>${c.nombre}</span>
+          <span style="color:var(--gris-dark)">${c.tel||'--'}</span>
+          <span style="color:var(--gris-dark)">Migró ${c.fechaMigro.toLocaleDateString('es-AR',{day:'numeric',month:'short'})}</span>
+          <span>${waBtn}</span>
+        </div>`;
+      }).join(''):'<div style="padding:10px 14px;color:var(--gris-dark);font-size:12px">Sin migraciones en esta cohorte</div>';
+      return filaProducto+`<div id="mig-prod-compradores-${prodId}" style="display:none;background:#fbfbfb">${listaCompradores}</div>`;
     }).join('');
     return filaResumen+`<div id="mig-prod-detalle-${idSeguro}" style="display:none">${filasProducto}</div>`;
   }).join('');
@@ -2393,6 +2417,14 @@ function migProductoRender(){
 function migProductoToggle(idSeguro){
   const el=document.getElementById('mig-prod-detalle-'+idSeguro);
   const arrow=document.getElementById('mig-prod-arrow-'+idSeguro);
+  if(!el)return;
+  const abierto=el.style.display!=='none';
+  el.style.display=abierto?'none':'block';
+  if(arrow)arrow.textContent=abierto?'▸':'▾';
+}
+function migProductoToggleCompradores(prodId){
+  const el=document.getElementById('mig-prod-compradores-'+prodId);
+  const arrow=document.getElementById('mig-prod-arrow-'+prodId);
   if(!el)return;
   const abierto=el.style.display!=='none';
   el.style.display=abierto?'none':'block';
