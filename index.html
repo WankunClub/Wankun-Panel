@@ -337,7 +337,7 @@ Vamos Argentina!</div>
     <div class="card" style="border-left:4px solid #0369a1">
       <div class="card-title" style="color:#0369a1">Tasa de migración por producto y mes <span style="font-size:12px;font-weight:400;margin-left:8px">de los que compraron ese producto por Flex Meli en ese mes, cuántos (por teléfono) migraron después al canal directo — no importa cuándo</span></div>
       <div class="table-wrap">
-        <div class="table-head" style="grid-template-columns:110px 1fr 110px 110px 100px"><span>Mes</span><span>Producto (Referencia)</span><span>Flex Meli</span><span>Migraron</span><span>Tasa</span></div>
+        <div class="table-head" style="grid-template-columns:22px 100px 1fr 110px 110px 100px"><span></span><span>Mes</span><span>Detalle</span><span>Flex Meli</span><span>Migraron</span><span>Tasa</span></div>
         <div class="table-body" id="mig-prod-tabla" style="max-height:500px"></div>
       </div>
     </div>
@@ -2314,16 +2314,20 @@ function migProductoCalcular(vRows,fRows){
   });
 
   // Cohortes Flex Meli: agrupadas por mes de compra + producto (REFERNCIA), clientes distintos por id
-  const cohortes={}; // key: 'YYYY-MM|Producto' -> {compradores:Map(id->fechaFlex)}
+  // El mismo producto puede venir escrito con distinta capitalizacion en la planilla (ej "Med Adu" / "med adu" / "Med adu")
+  // -> se agrupa por version normalizada (sin espacios extra, minusculas) pero se muestra un label prolijo consistente
+  const normProducto=p=>(p||'Sin especificar').trim().replace(/\s+/g,' ').toLowerCase();
+  const labelProducto=p=>normProducto(p).replace(/\b\w/g,c=>c.toUpperCase());
+  const cohortes={}; // key: 'YYYY-MM|producto-normalizado' -> {compradores:Map(id->fechaFlex)}
   fRows.forEach(r=>{
     const f=parseFecha(r['Fecha compra']||'');
     if(!f||isNaN(f)||f>hoy)return;
     const tel=normTel(r['TELEFONO']);
     const id=tel&&tel.length>=8?('T:'+tel):('N:'+normNombreDir(r['NOMBRE'],r['DIRECCION']||r['Direccion']));
-    const producto=(r['REFERNCIA']||'Sin especificar').trim();
+    const productoNorm=normProducto(r['REFERNCIA']);
     const mesKey=f.getFullYear()+'-'+String(f.getMonth()+1).padStart(2,'0');
-    const key=mesKey+'|'+producto;
-    if(!cohortes[key])cohortes[key]={mesKey,producto,compradores:new Map()};
+    const key=mesKey+'|'+productoNorm;
+    if(!cohortes[key])cohortes[key]={mesKey,producto:labelProducto(r['REFERNCIA']),compradores:new Map()};
     // si el mismo id compro el mismo producto mas de una vez en el mes, nos quedamos con la fecha mas temprana
     const existente=cohortes[key].compradores.get(id);
     if(!existente||f<existente)cohortes[key].compradores.set(id,f);
@@ -2347,7 +2351,7 @@ function migProductoRender(){
   const tb=document.getElementById('mig-prod-tabla');if(!tb)return;
   if(!migProductoFilas.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin datos</div>';return;}
   const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  // Agrupar por mes para mostrar primero el total del mes (todos los productos sumados), y despues el detalle por producto
+  // Agrupar por mes: se muestra solo el resumen (colapsado); al tocar el mes se despliega el detalle por producto
   const porMes={};
   migProductoFilas.forEach(f=>{
     if(!porMes[f.mesKey])porMes[f.mesKey]=[];
@@ -2363,9 +2367,11 @@ function migProductoRender(){
     const tasaMes=totalFlex?Math.round(totalMig/totalFlex*1000)/10:0;
     let colorMes='#c0392b';
     if(tasaMes>=40)colorMes='#16a34a';else if(tasaMes>=20)colorMes='#856404';
-    const filaResumen=`<div class="table-row" style="grid-template-columns:110px 1fr 110px 110px 100px;background:#f8fafc;font-weight:700">
+    const idSeguro=mesKey.replace(/[^0-9]/g,'-');
+    const filaResumen=`<div class="table-row" style="grid-template-columns:22px 100px 1fr 110px 110px 100px;background:#f8fafc;font-weight:700;cursor:pointer" onclick="migProductoToggle('${idSeguro}')">
+      <span id="mig-prod-arrow-${idSeguro}" style="font-size:11px;color:var(--gris-dark)">▸</span>
       <span style="font-size:12px">${mesLabel}</span>
-      <span>TOTAL del mes (todos los productos)</span>
+      <span>${filasMes.length} producto${filasMes.length===1?'':'s'} — tocá para ver el detalle</span>
       <span style="font-size:14px">${totalFlex}</span>
       <span style="font-size:14px">${totalMig}</span>
       <span style="color:${colorMes}">${tasaMes}%</span>
@@ -2373,16 +2379,24 @@ function migProductoRender(){
     const filasProducto=filasMes.sort((a,b)=>b.total-a.total).map(f=>{
       let color='#c0392b';
       if(f.tasa>=40)color='#16a34a';else if(f.tasa>=20)color='#856404';
-      return `<div class="table-row" style="grid-template-columns:110px 1fr 110px 110px 100px">
-        <span></span>
-        <span style="padding-left:14px;color:var(--gris-dark)">${f.producto}</span>
+      return `<div class="table-row" style="grid-template-columns:22px 100px 1fr 110px 110px 100px">
+        <span></span><span></span>
+        <span style="color:var(--gris-dark)">${f.producto}</span>
         <span style="font-size:13px">${f.total}</span>
         <span style="font-size:13px">${f.migrados}</span>
         <span style="font-weight:700;color:${color}">${f.tasa}%</span>
       </div>`;
     }).join('');
-    return filaResumen+filasProducto;
+    return filaResumen+`<div id="mig-prod-detalle-${idSeguro}" style="display:none">${filasProducto}</div>`;
   }).join('');
+}
+function migProductoToggle(idSeguro){
+  const el=document.getElementById('mig-prod-detalle-'+idSeguro);
+  const arrow=document.getElementById('mig-prod-arrow-'+idSeguro);
+  if(!el)return;
+  const abierto=el.style.display!=='none';
+  el.style.display=abierto?'none':'block';
+  if(arrow)arrow.textContent=abierto?'▸':'▾';
 }
 let migConvertidos=[];
 function migRenderConvertidos(){
