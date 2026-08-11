@@ -335,7 +335,7 @@ Vamos Argentina!</div>
     <div class="card" style="border-left:4px solid #7c3aed">
       <div class="card-title" style="color:#7c3aed">Preparar stock — próximos 5 días <span style="font-size:12px;font-weight:400;margin-left:8px">qué tener listo para entregar</span></div>
       <div class="table-wrap">
-        <div class="table-head" style="grid-template-columns:1fr 100px 60px 200px"><span>Cliente</span><span>Zona</span><span>En</span><span>Productos a preparar</span></div>
+        <div class="table-head" style="grid-template-columns:1fr 100px 60px 200px 70px"><span>Cliente</span><span>Zona</span><span>En</span><span>Productos a preparar</span><span>WA</span></div>
         <div class="table-body" id="av-stock-prox" style="max-height:320px"></div>
       </div>
     </div>
@@ -2265,7 +2265,7 @@ function avMostrarStockProx(){
   const lista=avTodos.filter(function(c){if(c.fuente!=='Directa')return false;if(c.prox===null||c.prox===undefined)return false;return c.prox>=0&&c.prox<=5;}).sort(function(a,b){return(a.prox||0)-(b.prox||0);});
   const tb=document.getElementById('av-stock-prox');
   if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin entregas en los próximos 5 días</div>';return;}
-  tb.innerHTML=lista.map(function(c){const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';const proxLabel=c.prox===0?'<span style="color:#c0392b;font-weight:700;font-size:11px">Hoy</span>':'<span style="color:#7c3aed;font-weight:700;font-size:11px">'+c.prox+'d</span>';const prods=(c.ultimosProds&&c.ultimosProds.length?c.ultimosProds:[c.ultimoProd]).filter(Boolean).map(function(p){return'<span style="display:inline-block;background:#f3e8ff;color:#7c3aed;border-radius:4px;padding:2px 6px;font-size:10px;margin:1px">'+p+'</span>';}).join(' ');return '<div class="table-row" style="grid-template-columns:1fr 100px 60px 200px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span>'+proxLabel+'<div>'+prods+'</div></div>';}).join('');
+  tb.innerHTML=lista.map(function(c){const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';const proxLabel=c.prox===0?'<span style="color:#c0392b;font-weight:700;font-size:11px">Hoy</span>':'<span style="color:#7c3aed;font-weight:700;font-size:11px">'+c.prox+'d</span>';const prods=(c.ultimosProds&&c.ultimosProds.length?c.ultimosProds:[c.ultimoProd]).filter(Boolean).map(function(p){return'<span style="display:inline-block;background:#f3e8ff;color:#7c3aed;border-radius:4px;padding:2px 6px;font-size:10px;margin:1px">'+p+'</span>';}).join(' ');const tel=c.telefono||'';const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,c.nombre,c.ultimoProd)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';return '<div class="table-row" style="grid-template-columns:1fr 100px 60px 200px 70px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span>'+proxLabel+'<div>'+prods+'</div>'+waBtn+'</div>';}).join('');
 }
 
 // ── VENCIDOS (recompra) ─────────────────────────────────────────────────────
