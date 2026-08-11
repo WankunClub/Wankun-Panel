@@ -38,6 +38,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
 .metric-value{font-size:26px;font-weight:600;color:var(--texto);line-height:1}
 .metric-delta{font-size:12px;margin-top:6px;color:var(--gris-dark)}
 .delta-up{color:var(--verde)}
+.delta-down{color:#dc2626}
 .card{background:var(--blanco);border-radius:var(--radio);padding:20px 22px;box-shadow:var(--sombra);margin-bottom:16px}
 .card-title{font-size:14px;font-weight:600;color:var(--texto);margin-bottom:16px;display:flex;align-items:center;gap:8px}
 .card-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -124,6 +125,8 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="nav-section">Principal</div>
     <div class="nav-item active" onclick="irA('inicio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Inicio</div>
     <div class="nav-item" onclick="irA('ventas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Ventas</div>
+    <div class="nav-section">Finanzas</div>
+    <div class="nav-item" onclick="irA('financiero')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Financiero</div>
     <div class="nav-section">Clientes</div>
     <div class="nav-item" onclick="irA('clientes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</div>
     <div class="nav-item" onclick="irA('recompras')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Recompras</div>
@@ -217,6 +220,43 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="table-wrap" style="margin-top:12px">
       <div class="table-head" style="grid-template-columns:2fr 80px 80px 120px"><span>Producto</span><span>Ventas</span><span>Kg total</span><span>Facturación</span></div>
       <div class="table-body" id="top-productos" style="max-height:400px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FINANCIERO -->
+<div class="page" id="page-financiero">
+  <div id="fin-error" style="display:none;background:#fef2f2;color:#dc2626;padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px">
+    No se pudo cargar la información financiera. <span style="cursor:pointer;text-decoration:underline" onclick="finCargar()">Reintentar</span>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric"><div class="metric-label">Facturación (mes)</div><div class="metric-value" id="fin-fac-mes">—</div><div class="metric-delta" id="fin-fac-mes-delta">cargando...</div></div>
+    <div class="metric"><div class="metric-label">Resultado (mes)</div><div class="metric-value" id="fin-resultado-mes">—</div><div class="metric-delta" id="fin-resultado-mes-delta">cargando...</div></div>
+    <div class="metric"><div class="metric-label">Gastos fijos (mes)</div><div class="metric-value" id="fin-gf-pct">—</div><div class="metric-delta">sobre facturación del mes</div></div>
+    <div class="metric"><div class="metric-label">Gastos variables (mes)</div><div class="metric-value" id="fin-gv-pct">—</div><div class="metric-delta">sobre facturación del mes</div></div>
+    <div class="metric"><div class="metric-label">Resultado acumulado (año)</div><div class="metric-value" id="fin-resultado-anual">—</div><div class="metric-delta" id="fin-resultado-anual-delta">cargando...</div></div>
+    <div class="metric"><div class="metric-label">Ahorro acumulado (año)</div><div class="metric-value" id="fin-ahorro-anual">—</div><div class="metric-delta" id="fin-ahorro-anual-delta">cargando...</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Resumen mensual — Facturación, gastos y resultado</div>
+    <div class="table-wrap" style="margin-top:12px">
+      <div class="table-head" style="grid-template-columns:1fr 1.3fr 1fr 1fr 1.3fr"><span>Mes</span><span>Facturación (real)</span><span>Gastos fijos</span><span>Gastos variables</span><span>Resultado</span></div>
+      <div class="table-body" id="fin-tabla-mensual"></div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">Gastos del mes: fijos vs variables</div>
+      <div id="fin-gastos-bars"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Facturación por canal — Wkn Club vs Mercado Libre</div>
+      <div class="table-wrap" style="margin-top:8px">
+        <div class="table-head" style="grid-template-columns:1fr 1.2fr 1.2fr 1fr"><span>Mes</span><span>Wkn Club</span><span>Mercado Libre</span><span>% Directo</span></div>
+        <div class="table-body" id="fin-tabla-canal"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -829,10 +869,11 @@ function irA(p){
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
   if(p==='stock'){setTimeout(function(){skRenderTabla();skRenderMetricas();},50);}
-  const t={'inicio':'Inicio','ventas':'Ventas','clientes':'Clientes','recompras':'Recompras','migracion':'Migración','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','stock':'Control de Stock'};
+  const t={'inicio':'Inicio','ventas':'Ventas','financiero':'Financiero','clientes':'Clientes','recompras':'Recompras','migracion':'Migración','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','stock':'Control de Stock'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
   if(p==='resenas'){resenasCargarHistorial();}
+  if(p==='financiero'){if(!FIN_DATA)finCargar();}
 }
 
 document.getElementById('fecha-hoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
@@ -894,6 +935,162 @@ function parseCSV(text){
     rows.push(obj);
   }
   return rows;
+}
+
+// ── FINANCIERO ───────────────────────────────────────────────────────────────
+// Nota: esta planilla usa formato numérico US (coma=miles, punto=decimal),
+// distinto del formato argentino de Ventas/Flex Meli. Por eso usa su propio parser.
+let FIN_DATA=null, FIN_CARGANDO=false;
+
+function parseFinNum(v){
+  if(v===undefined||v===null)return 0;
+  let s=v.toString().trim();
+  if(!s||s.indexOf('DIV/0')>-1)return 0;
+  const neg=/^\(.*\)$/.test(s.replace(/[$\s]/g,''));
+  s=s.replace(/["']/g,'').replace(/\$/g,'').replace(/[()]/g,'').replace(/\s/g,'').replace(/,/g,'');
+  const n=parseFloat(s);
+  if(isNaN(n))return 0;
+  return neg?-Math.abs(n):n;
+}
+
+async function fetchRawCSV(sheet){
+  const r=await fetch(PROXY+'/?sheet='+encodeURIComponent(sheet));
+  if(!r.ok)throw new Error('Error leyendo '+sheet);
+  const text=await r.text();
+  return text.replace(/\r/g,'').trim().split('\n').map(line=>{
+    const vals=[];let cur='',inQ=false;
+    for(const ch of line){
+      if(ch==='"')inQ=!inQ;
+      else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}
+      else cur+=ch;
+    }
+    vals.push(cur.trim());
+    return vals;
+  });
+}
+
+function finFilaEn(rows,col,label){
+  return rows.find(r=>(r[col]||'').trim().toLowerCase()===label.trim().toLowerCase());
+}
+
+function finMesesDesde(row,startCol){
+  const out=[];
+  if(!row)return out;
+  for(let m=0;m<12;m++){
+    out.push({budget:parseFinNum(row[startCol+2*m]),real:parseFinNum(row[startCol+2*m+1])});
+  }
+  return out;
+}
+
+async function finCargar(){
+  if(FIN_CARGANDO)return;
+  FIN_CARGANDO=true;
+  const err=document.getElementById('fin-error');
+  if(err)err.style.display='none';
+  try{
+    const [resumen,finanzas,facturacion]=await Promise.all([
+      fetchRawCSV('FinResumen'),fetchRawCSV('FinFinanzas'),fetchRawCSV('FinFacturacion')
+    ]);
+    FIN_DATA={resumen,finanzas,facturacion};
+    finRenderTodo();
+  }catch(e){
+    console.error('Error financiero:',e);
+    if(err)err.style.display='block';
+  }finally{
+    FIN_CARGANDO=false;
+  }
+}
+
+function finRenderTodo(){
+  if(!FIN_DATA)return;
+  const {resumen,finanzas,facturacion}=FIN_DATA;
+
+  const rFacturacion=finFilaEn(finanzas,1,'Facturación');
+  const rGastosFijos=finFilaEn(finanzas,1,'Total Gasto Fijos');
+  const rGastosVar=finFilaEn(finanzas,1,'Total Gastos Variables');
+  const rResultado=finFilaEn(finanzas,1,'Resultado(Ventas-Gastos-Ahorros)');
+  const rWkn=finFilaEn(facturacion,1,'Wkn Club');
+  const rML=finFilaEn(facturacion,1,'Mercado libre');
+
+  const facMeses=finMesesDesde(rFacturacion,2);
+  const gfMeses=finMesesDesde(rGastosFijos,2);
+  const gvMeses=finMesesDesde(rGastosVar,2);
+  const resMeses=finMesesDesde(rResultado,2);
+  const wknMeses=finMesesDesde(rWkn,2);
+  const mlMeses=finMesesDesde(rML,2);
+
+  const mesIdx=Math.min(MES_ACTUAL_IDX,11);
+  const facMes=facMeses[mesIdx]||{budget:0,real:0};
+  const gfMes=gfMeses[mesIdx]||{budget:0,real:0};
+  const gvMes=gvMeses[mesIdx]||{budget:0,real:0};
+  const resMes=resMeses[mesIdx]||{budget:0,real:0};
+
+  document.getElementById('fin-fac-mes').textContent=fmt(facMes.real);
+  const cumpl=facMes.budget>0?Math.round(facMes.real/facMes.budget*100):null;
+  const cumplEl=document.getElementById('fin-fac-mes-delta');
+  cumplEl.textContent=cumpl!=null?cumpl+'% del presupuesto':'sin presupuesto cargado';
+  cumplEl.className='metric-delta '+(cumpl!=null?(cumpl>=100?'delta-up':'delta-down'):'');
+
+  document.getElementById('fin-resultado-mes').textContent=(resMes.real>=0?'':'-')+fmt(Math.abs(resMes.real));
+  const resEl=document.getElementById('fin-resultado-mes-delta');
+  resEl.textContent=resMes.real>=0?'Ganancia del mes':'Pérdida del mes';
+  resEl.className='metric-delta '+(resMes.real>=0?'delta-up':'delta-down');
+
+  const pctGF=facMes.real>0?(gfMes.real/facMes.real*100):0;
+  const pctGV=facMes.real>0?(gvMes.real/facMes.real*100):0;
+  document.getElementById('fin-gf-pct').textContent=pctGF.toFixed(1)+'%';
+  document.getElementById('fin-gv-pct').textContent=pctGV.toFixed(1)+'%';
+
+  const rIngTot=finFilaEn(resumen,2,'Ingresos totales');
+  const rAhorroTot=finFilaEn(resumen,2,'Ahorros totales');
+  const rResTot=finFilaEn(resumen,2,'Resultados TOTALES');
+  const ingTot=rIngTot?parseFinNum(rIngTot[3]):0;
+  const ahorroTot=rAhorroTot?parseFinNum(rAhorroTot[3]):0;
+  const resTot=rResTot?parseFinNum(rResTot[3]):0;
+
+  document.getElementById('fin-resultado-anual').textContent=(resTot>=0?'':'-')+fmt(Math.abs(resTot));
+  const resAnualEl=document.getElementById('fin-resultado-anual-delta');
+  const pctResTot=ingTot>0?(resTot/ingTot*100):0;
+  resAnualEl.textContent=pctResTot.toFixed(1)+'% sobre ingresos del año';
+  resAnualEl.className='metric-delta '+(resTot>=0?'delta-up':'delta-down');
+
+  document.getElementById('fin-ahorro-anual').textContent=fmt(ahorroTot);
+  const pctAhorro=ingTot>0?(ahorroTot/ingTot*100):0;
+  document.getElementById('fin-ahorro-anual-delta').textContent=pctAhorro.toFixed(2)+'% sobre ingresos del año';
+
+  const tbody=document.getElementById('fin-tabla-mensual');
+  let rowsHtml='';
+  for(let m=0;m<12;m++){
+    const f=facMeses[m],gf=gfMeses[m],gv=gvMeses[m],r=resMeses[m];
+    if(!f||(f.real===0&&f.budget===0))continue;
+    const cump=f.budget>0?Math.round(f.real/f.budget*100):null;
+    rowsHtml+='<div class="table-row" style="grid-template-columns:1fr 1.3fr 1fr 1fr 1.3fr">'
+      +'<span>'+MESES_LARGO[m]+'</span>'
+      +'<span>'+fmt(f.real)+(cump!=null?' <span style="color:var(--gris-dark);font-size:11px">('+cump+'%)</span>':'')+'</span>'
+      +'<span>'+fmt(gf.real)+'</span>'
+      +'<span>'+fmt(gv.real)+'</span>'
+      +'<span style="color:'+(r.real>=0?'var(--verde)':'#dc2626')+';font-weight:600">'+(r.real>=0?'':'-')+fmt(Math.abs(r.real))+'</span>'
+      +'</div>';
+  }
+  tbody.innerHTML=rowsHtml||'<div style="padding:20px;color:var(--gris-dark);font-size:13px">Sin datos</div>';
+
+  const tbodyCanal=document.getElementById('fin-tabla-canal');
+  let canalHtml='';
+  for(let m=0;m<12;m++){
+    const w=wknMeses[m],ml=mlMeses[m];
+    if(!w||(w.real===0&&(!ml||ml.real===0)))continue;
+    const totalMes=(w.real||0)+((ml&&ml.real)||0);
+    const pctDirecto=totalMes>0?Math.round(w.real/totalMes*100):0;
+    canalHtml+='<div class="table-row" style="grid-template-columns:1fr 1.2fr 1.2fr 1fr">'
+      +'<span>'+MESES_LARGO[m]+'</span>'
+      +'<span>'+fmt(w.real)+'</span>'
+      +'<span>'+(ml&&ml.real?fmt(ml.real):'—')+'</span>'
+      +'<span style="font-weight:600">'+pctDirecto+'%</span>'
+      +'</div>';
+  }
+  tbodyCanal.innerHTML=canalHtml||'<div style="padding:20px;color:var(--gris-dark);font-size:13px">Sin datos</div>';
+
+  renderPeq('fin-gastos-bars',{'Gastos Fijos':gfMes.real||0.01,'Gastos Variables':gvMes.real||0.01},AZUL);
 }
 
 let ZONAS_DATA={},MARCAS_DATA={};
