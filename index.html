@@ -1651,7 +1651,7 @@ function clVerFicha(nombre){
   const comprasDirecta=registros.filter(r=>r.fuente==='Directa'&&r.fecha).sort((a,b)=>parseFecha(a.fecha)-parseFecha(b.fecha));
   const primeraFlex=comprasFlex.length?parseFecha(comprasFlex[0].fecha):null;
   const mensaje25=comprasFlex.length?parseFecha(comprasFlex[0].recompraFlex):null;
-  const compraMigratoria=comprasDirecta.length?parseFecha(comprasDirecta[0].fecha):null;
+  const compraMigratoria=(comprasFlex.length&&comprasDirecta.length)?parseFecha(comprasDirecta[0].fecha):null;
   const fmtCorta=f=>f&&!isNaN(f)?f.toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'2-digit'}):null;
 
   // Frecuencia
