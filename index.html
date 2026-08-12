@@ -893,6 +893,15 @@ function parseFecha(s){
   return null;
 }
 
+// Mediana en vez de promedio: si un cliente tuvo un bache aislado (dejo de comprarnos un tiempo y volvio),
+// ese intervalo larguisimo no debe arrastrar hacia arriba la frecuencia estimada de recompra real.
+function mediana(arr){
+  if(!arr.length)return null;
+  const s=[...arr].sort((a,b)=>a-b);
+  const mid=Math.floor(s.length/2);
+  return s.length%2!==0?s[mid]:Math.round((s[mid-1]+s[mid])/2);
+}
+
 function getCol(r,...keys){
   for(const k of keys){
     if(r[k]!==undefined&&r[k]!==null&&r[k]!=='')return r[k];
@@ -1659,7 +1668,7 @@ function clVerFicha(nombre){
   if(fechas.length>=2){
     const diffs=[];
     for(let i=1;i<fechas.length;i++){const d=Math.floor((fechas[i]-fechas[i-1])/(1000*60*60*24));if(d>0&&d<200)diffs.push(d);}
-    if(diffs.length)frecuencia=Math.round(diffs.reduce((a,b)=>a+b,0)/diffs.length);
+    if(diffs.length)frecuencia=mediana(diffs);
   }
   const ultima=fechas.length?fechas[fechas.length-1]:null;
   const diasDesde=ultima?Math.floor((new Date()-ultima)/(1000*60*60*24)):null;
@@ -2198,7 +2207,7 @@ async function avConectar(){
       const flexFechas=(telN&&flexFechasPorTel[telN])?flexFechasPorTel[telN]:(flexFechasPorNombre[c.nombre.toLowerCase()]||[]);
       const todasFechas=[...c.compras.map(x=>x.fecha),...flexFechas].sort((a,b)=>a-b);
       let freq=null;
-      if(todasFechas.length>=2){const diffs=[];for(let i=1;i<todasFechas.length;i++){const d=Math.floor((todasFechas[i]-todasFechas[i-1])/(1000*60*60*24));if(d>0&&d<200)diffs.push(d);}if(diffs.length)freq=Math.round(diffs.reduce((a,b)=>a+b,0)/diffs.length);}
+      if(todasFechas.length>=2){const diffs=[];for(let i=1;i<todasFechas.length;i++){const d=Math.floor((todasFechas[i]-todasFechas[i-1])/(1000*60*60*24));if(d>0&&d<200)diffs.push(d);}if(diffs.length)freq=mediana(diffs);}
       let prox=null,estado='sin_datos';
       if(freq){prox=freq-dias;if(prox<-5)estado='vencido';else if(prox<=5)estado='proximo';else estado='ok';}
       else{if(dias>45)estado='vencido';else if(dias>38)estado='proximo';else estado='ok';}
