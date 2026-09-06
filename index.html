@@ -346,6 +346,14 @@ Vamos Argentina!</div>
         <div class="table-body" id="av-faltaron" style="max-height:300px"></div>
       </div>
     </div>
+    <div class="card" style="border-left:4px solid #991b1b">
+      <div class="card-title" style="color:#991b1b">Compraron 1 sola vez y no volvieron <span style="font-size:12px;font-weight:400;margin-left:8px">toda su historia directa es una única compra — ordenados por antigüedad</span></div>
+      <div id="av-unavez-resumen" style="padding:10px 14px;font-size:13px;color:var(--gris-dark)"></div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:1fr 130px 130px 80px 60px"><span>Cliente</span><span>Producto</span><span>Zona</span><span>Hace</span><span>WA</span></div>
+        <div class="table-body" id="av-unavez-tabla" style="max-height:400px"></div>
+      </div>
+    </div>
     <div class="card" style="border-left:4px solid #16a34a">
       <div class="card-title" style="color:#16a34a">Ventas — Próximos 5 días</div>
       <div class="table-wrap">
@@ -2221,7 +2229,7 @@ async function avConectar(){
     st.className='conn-status conn-ok';st.textContent=avTodos.length+' clientes';
     document.getElementById('av-panel').style.display='block';
     avMetricas();avMostrarStockProx();avMostrarVentasHoy();avProyeccion();
-    avActualizarPredicciones();avMostrarFaltaron();
+    avActualizarPredicciones();avMostrarFaltaron();avMostrarUnaVez();
   }catch(e){st.className='conn-status conn-err';st.textContent='Error: '+e.message;console.error(e);}
 }
 
@@ -2309,6 +2317,45 @@ function avActualizarPredicciones(){
   });
   if(cambio)avSetDismissStore(store);
   avPredicciones=store;
+}
+// ── COMPRARON 1 SOLA VEZ Y NO VOLVIERON: toda su historia directa es una unica compra, ordenados por antiguedad ────
+function avMostrarUnaVez(){
+  const resumen=document.getElementById('av-unavez-resumen');
+  const tb=document.getElementById('av-unavez-tabla');
+  if(!resumen||!tb)return;
+  const unaVez=avTodos.filter(c=>c.fuente==='Directa'&&c.comprasDirecta===1);
+  if(!unaVez.length){
+    resumen.innerHTML='';
+    tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin clientes en esta situación</div>';
+    return;
+  }
+  // Desglose por producto y por zona, para detectar patrones
+  const porProducto={},porZona={};
+  unaVez.forEach(c=>{
+    const prod=(c.ultimoProd||'Sin especificar').trim()||'Sin especificar';
+    const zona=(c.localidad||'Sin especificar').trim()||'Sin especificar';
+    porProducto[prod]=(porProducto[prod]||0)+1;
+    porZona[zona]=(porZona[zona]||0)+1;
+  });
+  const topProducto=Object.entries(porProducto).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const topZona=Object.entries(porZona).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  resumen.innerHTML=`<strong>${unaVez.length} clientes</strong> compraron una sola vez en toda su historia directa.<br>
+    <span style="font-size:12px">Por producto: ${topProducto.map(([p,n])=>p+' ('+n+')').join(' · ')}</span><br>
+    <span style="font-size:12px">Por zona: ${topZona.map(([z,n])=>z+' ('+n+')').join(' · ')}</span><br>
+    <span style="font-size:11px;color:#856404">⚠️ Antes del 16/6 no había teléfono como dato — a esos clientes se los identifica por nombre, y pueden estar duplicados por variantes de tipeo. Están marcados abajo.</span>`;
+
+  const ordenados=unaVez.slice().sort((a,b)=>(b.dias||0)-(a.dias||0));
+  tb.innerHTML=ordenados.map(c=>{
+    const waBtn=c.telefono?'<a class="wa-link" href="'+avWaLink(c.telefono,c.nombre)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:11px">Sin tel</span>';
+    const avisoDup=!c.telefono?' <span title="Sin teléfono — identificado por nombre, podría ser un duplicado no detectado" style="color:#856404;cursor:help">⚠️</span>':'';
+    return `<div class="table-row" style="grid-template-columns:1fr 130px 130px 80px 60px">
+      <span>${c.nombre}${avisoDup}</span>
+      <span style="color:var(--gris-dark);font-size:12px">${c.ultimoProd||'--'}</span>
+      <span style="color:var(--gris-dark);font-size:12px">${c.localidad||'--'}</span>
+      <span style="font-size:12px">${c.dias!=null?c.dias+'d':'--'}</span>
+      <span>${waBtn}</span>
+    </div>`;
+  }).join('');
 }
 function avMostrarFaltaron(){
   const dismiss=avGetDismissStore();
