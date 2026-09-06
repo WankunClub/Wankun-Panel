@@ -2511,6 +2511,10 @@ function migProductoCalcular(vRows,fRows,mlRows){
   const hoy=new Date();hoy.setHours(0,0,0,0);
   const normTel=t=>(t||'').toString().replace(/\D/g,'');
   const normNombreDir=(n,d)=>((n||'').trim().toLowerCase()+'|'+(d||'').trim().toLowerCase());
+  // Guarda contra typos de año en la planilla (ej "1-ago-61" en vez de "1-ago-26" -> parsea como 2061)
+  // cualquier fecha fuera de un rango razonable se descarta como dato corrupto, no como venta real
+  const ANIO_MIN=2023;
+  const fechaValida=f=>f&&!isNaN(f)&&f<=hoy&&f.getFullYear()>=ANIO_MIN;
 
   // Primera fecha de compra directa por identificador (telefono si hay, sino nombre+direccion), guardando tambien nombre/tel para mostrar
   const primeraDirectaPorId={};
@@ -2518,7 +2522,7 @@ function migProductoCalcular(vRows,fRows,mlRows){
     const tel=normTel(r['TELEFONO']);
     const id=tel&&tel.length>=8?('T:'+tel):('N:'+normNombreDir(r['CLIENTE']||r['Cliente'],r['Domicilio']||r['domicilio']));
     const f=parseFecha(r['FECHA']||r['Fecha']||'');
-    if(!f||isNaN(f)||f>hoy)return;
+    if(!fechaValida(f))return;
     if(!primeraDirectaPorId[id]||f<primeraDirectaPorId[id].fecha){
       primeraDirectaPorId[id]={fecha:f,nombre:(r['CLIENTE']||r['Cliente']||'').trim(),tel};
     }
@@ -2545,7 +2549,7 @@ function migProductoCalcular(vRows,fRows,mlRows){
   const cohortes={}; // key: 'YYYY-MM|producto-canonico' -> {compradores:Map(id->{fecha,nombre,tel})}
   fRows.forEach(r=>{
     const f=parseFecha(r['Fecha compra']||'');
-    if(!f||isNaN(f)||f>hoy)return;
+    if(!fechaValida(f))return;
     const tel=normTel(r['TELEFONO']);
     const id=tel&&tel.length>=8?('T:'+tel):('N:'+normNombreDir(r['NOMBRE'],r['DIRECCION']||r['Direccion']));
     const productoCanon=labelProducto(r['REFERNCIA']);
