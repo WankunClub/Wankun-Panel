@@ -127,6 +127,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="nav-item" onclick="irA('ventas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Ventas</div>
     <div class="nav-section">Finanzas</div>
     <div class="nav-item" onclick="irA('financiero')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Financiero</div>
+    <div class="nav-item" onclick="irA('vete')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Vete</div>
     <div class="nav-section">Clientes</div>
     <div class="nav-item" onclick="irA('clientes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</div>
     <div class="nav-item" onclick="irA('recompras')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Recompras</div>
@@ -257,6 +258,58 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
         <div class="table-head" style="grid-template-columns:1fr 1.2fr 1.2fr 1fr"><span>Mes</span><span>Wkn Club</span><span>Mercado Libre</span><span>% Directo</span></div>
         <div class="table-body" id="fin-tabla-canal"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- VETE -->
+<div class="page" id="page-vete">
+  <div id="vete-error" style="display:none;background:#fef2f2;color:#dc2626;padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px">
+    No se pudo cargar la informacion de Vete. <span style="cursor:pointer;text-decoration:underline" onclick="veteCargar()">Reintentar</span>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric"><div class="metric-label">Kg vendidos</div><div class="metric-value" id="vete-kg">&mdash;</div></div>
+    <div class="metric"><div class="metric-label">Total vendido</div><div class="metric-value" id="vete-total">&mdash;</div></div>
+    <div class="metric"><div class="metric-label">Costo de lo vendido</div><div class="metric-value" id="vete-costo">&mdash;</div></div>
+    <div class="metric"><div class="metric-label">Utilidad</div><div class="metric-value" id="vete-utilidad">&mdash;</div></div>
+  </div>
+  <div class="metrics-grid" style="margin-top:12px">
+    <div class="metric"><div class="metric-label">Cobro la veterinaria</div><div class="metric-value" id="vete-cobro-vete" style="color:#b45309">&mdash;</div></div>
+    <div class="metric"><div class="metric-label">Cobro El Club</div><div class="metric-value" id="vete-cobro-club" style="color:var(--verde)">&mdash;</div></div>
+    <div class="metric"><div class="metric-label">Diferencia</div><div class="metric-value" id="vete-diferencia">&mdash;</div></div>
+  </div>
+  <div class="metrics-grid" style="margin-top:12px">
+    <div class="metric"><div class="metric-label">Le debes a la vete (Costos Internos)</div><div class="metric-value" id="vete-debes" style="color:#dc2626">&mdash;</div></div>
+    <div class="metric"><div class="metric-label">Balance neto</div><div class="metric-value" id="vete-neto">&mdash;</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Desglose por mes</div>
+    <div class="table-wrap" style="margin-top:12px">
+      <div class="table-head" style="grid-template-columns:1fr 1fr 1.2fr 1fr 1fr 1.2fr 1.2fr">
+        <span>Mes</span><span>Kg</span><span>Total vendido</span><span>Costo</span><span>Utilidad</span><span>Cobro vete</span><span>Cobro club</span>
+      </div>
+      <div class="table-body" id="vete-tabla-mensual"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Detalle por alimento (historico)</div>
+    <div class="table-wrap" style="margin-top:12px">
+      <div class="table-head" style="grid-template-columns:1.6fr 1fr 1fr 1fr 1fr">
+        <span>Alimento</span><span>Unidades</span><span>Kg</span><span>Venta</span><span>Costo</span>
+      </div>
+      <div class="table-body" id="vete-tabla-alimento"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Pendiente por antiguedad</div>
+    <div class="table-wrap" style="margin-top:12px">
+      <div class="table-head" style="grid-template-columns:1fr 1.6fr 1fr 0.7fr">
+        <span>Fecha</span><span>Alimento</span><span>Costo</span><span>Dias</span>
+      </div>
+      <div class="table-body" id="vete-tabla-pendientes"></div>
     </div>
   </div>
 </div>
@@ -877,11 +930,12 @@ function irA(p){
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
   if(p==='stock'){setTimeout(function(){skRenderTabla();skRenderMetricas();},50);}
-  const t={'inicio':'Inicio','ventas':'Ventas','financiero':'Financiero','clientes':'Clientes','recompras':'Recompras','migracion':'Migración','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','stock':'Control de Stock'};
+  const t={'inicio':'Inicio','ventas':'Ventas','financiero':'Financiero','vete':'Vete','clientes':'Clientes','recompras':'Recompras','migracion':'Migración','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','stock':'Control de Stock'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
   if(p==='resenas'){resenasCargarHistorial();}
   if(p==='financiero'){if(!FIN_DATA)finCargar();}
+  if(p==='vete'){if(!VETE_DATA)veteCargar();}
 }
 
 document.getElementById('fecha-hoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
@@ -952,6 +1006,155 @@ function parseCSV(text){
     rows.push(obj);
   }
   return rows;
+}
+
+// ── VETE ─────────────────────────────────────────────────────────────────────
+let VETE_DATA=null, VETE_CARGANDO=false;
+
+function fmtARS(n){return '$'+Math.round(n||0).toLocaleString('es-AR');}
+
+function parseVeteNum(v){
+  if(v===undefined||v===null)return 0;
+  let s=v.toString().trim();
+  if(!s)return 0;
+  s=s.replace(/[$"'\s]/g,'');
+  s=s.replace(/\./g,'');   // punto = separador de miles en esta planilla
+  s=s.replace(/,/g,'.');    // por si viniera con coma decimal
+  const n=parseFloat(s);
+  return isNaN(n)?0:n;
+}
+
+function parsePesoKg(v){
+  if(!v)return 0;
+  let s=v.toString().toLowerCase().replace('kg','').replace(',','.').trim();
+  const n=parseFloat(s);
+  return isNaN(n)?0:n;
+}
+
+async function veteCargar(){
+  if(VETE_CARGANDO)return;
+  VETE_CARGANDO=true;
+  const err=document.getElementById('vete-error');
+  if(err)err.style.display='none';
+  try{
+    const [ventas,internos]=await Promise.all([fetchCSV('Vete'),fetchCSV('Costos Internos')]);
+    VETE_DATA={ventas,internos};
+    veteRenderTodo();
+  }catch(e){
+    console.error('Error Vete:',e);
+    if(err)err.style.display='block';
+  }finally{
+    VETE_CARGANDO=false;
+  }
+}
+
+function veteRenderTodo(){
+  if(!VETE_DATA)return;
+  const {ventas,internos}=VETE_DATA;
+
+  let kgTot=0,ventaTot=0,costoTot=0,cobroVete=0,cobroClub=0;
+  const porMes={};
+  const porAlimento={};
+  const pendientes=[];
+
+  ventas.forEach(r=>{
+    const alimento=(getCol(r,'Alimento')||'').trim();
+    if(!alimento)return;
+    const fechaStr=getCol(r,'Fecha');
+    const fecha=parseFecha(fechaStr);
+    const peso=parsePesoKg(getCol(r,'Peso'));
+    const costo=parseVeteNum(getCol(r,'Costo'));
+    const venta=parseVeteNum(getCol(r,'Precio de Venta'));
+    const destino=(getCol(r,'Destino')||'').trim().toLowerCase();
+
+    kgTot+=peso; ventaTot+=venta; costoTot+=costo;
+    if(destino.indexOf('pendiente')>-1)cobroVete+=costo;
+    else if(destino.indexOf('cobrado')>-1)cobroClub+=costo;
+
+    if(fecha){
+      const key=fecha.getFullYear()+'-'+(fecha.getMonth()+1).toString().padStart(2,'0');
+      if(!porMes[key])porMes[key]={kg:0,venta:0,costo:0,cobroVete:0,cobroClub:0,anio:fecha.getFullYear(),mesIdx:fecha.getMonth()};
+      porMes[key].kg+=peso;porMes[key].venta+=venta;porMes[key].costo+=costo;
+      if(destino.indexOf('pendiente')>-1)porMes[key].cobroVete+=costo;
+      else if(destino.indexOf('cobrado')>-1)porMes[key].cobroClub+=costo;
+    }
+
+    if(!porAlimento[alimento])porAlimento[alimento]={unidades:0,kg:0,venta:0,costo:0};
+    porAlimento[alimento].unidades+=1;
+    porAlimento[alimento].kg+=peso;
+    porAlimento[alimento].venta+=venta;
+    porAlimento[alimento].costo+=costo;
+
+    if(destino.indexOf('pendiente')>-1){
+      pendientes.push({fecha,fechaStr,alimento,costo});
+    }
+  });
+
+  const utilidad=ventaTot-costoTot;
+  const diferencia=costoTot-(cobroVete+cobroClub);
+
+  let debesInternos=0;
+  internos.forEach(r=>{debesInternos+=parseVeteNum(getCol(r,'Costo'));});
+  const neto=cobroVete-debesInternos;
+
+  document.getElementById('vete-kg').textContent=Math.round(kgTot).toLocaleString('es-AR')+' kg';
+  document.getElementById('vete-total').textContent=fmtARS(ventaTot);
+  document.getElementById('vete-costo').textContent=fmtARS(costoTot);
+  document.getElementById('vete-utilidad').textContent=fmtARS(utilidad);
+  document.getElementById('vete-cobro-vete').textContent=fmtARS(cobroVete);
+  document.getElementById('vete-cobro-club').textContent=fmtARS(cobroClub);
+  const difEl=document.getElementById('vete-diferencia');
+  difEl.textContent=Math.abs(diferencia)<1?'$0':fmtARS(diferencia);
+  difEl.style.color=Math.abs(diferencia)<1?'var(--verde)':'#dc2626';
+  document.getElementById('vete-debes').textContent=fmtARS(debesInternos);
+  const netoEl=document.getElementById('vete-neto');
+  netoEl.textContent=(neto>=0?'':'-')+fmtARS(Math.abs(neto));
+  netoEl.style.color=neto>=0?'var(--verde)':'#dc2626';
+
+  const mesesKeys=Object.keys(porMes).sort();
+  let mesHtml='';
+  mesesKeys.forEach(k=>{
+    const m=porMes[k];
+    mesHtml+='<div class="table-row" style="grid-template-columns:1fr 1fr 1.2fr 1fr 1fr 1.2fr 1.2fr">'
+      +'<span>'+MESES_LARGO[m.mesIdx]+' '+m.anio+'</span>'
+      +'<span>'+Math.round(m.kg)+' kg</span>'
+      +'<span>'+fmtARS(m.venta)+'</span>'
+      +'<span>'+fmtARS(m.costo)+'</span>'
+      +'<span>'+fmtARS(m.venta-m.costo)+'</span>'
+      +'<span>'+fmtARS(m.cobroVete)+'</span>'
+      +'<span>'+fmtARS(m.cobroClub)+'</span>'
+      +'</div>';
+  });
+  document.getElementById('vete-tabla-mensual').innerHTML=mesHtml||'<div style="padding:20px;color:var(--gris-dark);font-size:13px">Sin datos</div>';
+
+  const alimentos=Object.keys(porAlimento).sort((a,b)=>porAlimento[b].venta-porAlimento[a].venta);
+  let aliHtml='';
+  alimentos.forEach(a=>{
+    const d=porAlimento[a];
+    aliHtml+='<div class="table-row" style="grid-template-columns:1.6fr 1fr 1fr 1fr 1fr">'
+      +'<span>'+a+'</span>'
+      +'<span>'+d.unidades+'</span>'
+      +'<span>'+Math.round(d.kg)+' kg</span>'
+      +'<span>'+fmtARS(d.venta)+'</span>'
+      +'<span>'+fmtARS(d.costo)+'</span>'
+      +'</div>';
+  });
+  document.getElementById('vete-tabla-alimento').innerHTML=aliHtml||'<div style="padding:20px;color:var(--gris-dark);font-size:13px">Sin datos</div>';
+
+  pendientes.sort((x,y)=>(x.fecha?x.fecha.getTime():0)-(y.fecha?y.fecha.getTime():0));
+  const hoy=new Date();
+  let pendHtml='';
+  pendientes.forEach(p=>{
+    const dias=p.fecha?Math.floor((hoy-p.fecha)/86400000):null;
+    const color=dias>14?'#dc2626':(dias>7?'#b45309':'inherit');
+    pendHtml+='<div class="table-row" style="grid-template-columns:1fr 1.6fr 1fr 0.7fr">'
+      +'<span>'+p.fechaStr+'</span>'
+      +'<span>'+p.alimento+'</span>'
+      +'<span>'+fmtARS(p.costo)+'</span>'
+      +'<span style="color:'+color+';font-weight:600">'+(dias!=null?dias:'\u2014')+'</span>'
+      +'</div>';
+  });
+  document.getElementById('vete-tabla-pendientes').innerHTML=pendHtml||'<div style="padding:20px;color:var(--gris-dark);font-size:13px">Sin pendientes</div>';
 }
 
 // ── FINANCIERO ───────────────────────────────────────────────────────────────
