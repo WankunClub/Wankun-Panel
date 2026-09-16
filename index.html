@@ -1003,6 +1003,9 @@ function parseCSV(text){
     for(const ch of lines[i]){if(ch==='"')inQ=!inQ;else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}else cur+=ch;}
     vals.push(cur.trim());
     const obj={};headers.forEach((h,idx)=>{obj[h]=vals[idx]||'';});
+    // Acceso posicional por si el encabezado de una columna no coincide textualmente con lo que
+    // busca el codigo (tilde, mayuscula, nombre distinto). _col0=A, _col1=B, ... _col10=K, etc.
+    vals.forEach((v,idx)=>{obj['_col'+idx]=v||'';});
     rows.push(obj);
   }
   return rows;
@@ -2403,10 +2406,20 @@ async function avConectar(){
       if(!nom)return;
       const f=parseFecha(r['FECHA']||r['Fecha']||'');
       if(!f||isNaN(f)||f>hoy)return;
-      const key=nom.toLowerCase();
+      // Identidad de cliente: SIEMPRE por telefono cuando existe (unico ID confiable).
+      // Agrupar por nombre parte el historial de un mismo cliente en variantes de tipeo
+      // (mayusculas, espacios, con/sin segundo nombre) y le hace perder la frecuencia
+      // de recompra calculada -> desaparece de "Preparar stock" aunque compre seguido.
+      // Telefono siempre esta en la columna K de Ventas (confirmado) -> si el encabezado
+      // no matchea textualmente "TELEFONO" (tilde/mayuscula/otro nombre), usamos la columna
+      // K por posicion (_col10) como respaldo, validando que tenga cara de telefono (6+ digitos).
+      const telHeader=getCol(r,'TELEFONO','Teléfono','TELÉFONO','Telefono','telefono','Cel','Celular');
+      const telColK=(r['_col10']||'').toString();
+      const telRaw=(telHeader||(/\d{6,}/.test(telColK)?telColK:'')).toString().trim();
+      const telN=normTel(telRaw);
+      const key=telN&&telN.length>=8?('T:'+telN):('N:'+nom.toLowerCase());
       if(!hist[key])hist[key]={nombre:nom,localidad:r['Barrio/Localidad']||r['Localidad']||'',telefono:'',compras:[]};
-      const tel=(r['TELEFONO']||'').toString().trim();
-      if(tel&&!hist[key].telefono)hist[key].telefono=tel;
+      if(telRaw&&!hist[key].telefono)hist[key].telefono=telRaw;
       hist[key].compras.push({fecha:f,fac:parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0),kg:parseFloat((getCol(r,'kg')||0).toString().replace(',','.'))||0,producto:[r['Marca']||'',r['producto']||''].filter(Boolean).join(' - ')});
     });
     const ventasClientes=Object.values(hist).map(c=>{
@@ -2441,7 +2454,13 @@ function avMetricas(){
   const t=directa.length,v=directa.filter(c=>c.estado==='vencido').length,p=directa.filter(c=>c.estado==='proximo').length,l=directa.filter(c=>esLocal(c.localidad)).length;
   // Cliente activo: 2+ compras por canal directo (haya migrado de Flex Meli o no) Y no vencido (sigue comprando o esta dentro de sus dias)
   const activos=directa.filter(c=>c.comprasDirecta>=2&&c.estado!=='vencido').length;
-  document.getElementById('av-metrics').innerHTML=`<div class="metric"><div class="metric-label">Clientes activos</div><div class="metric-value" style="color:#16a34a">${activos}</div></div><div class="metric"><div class="metric-label">Clientes unicos (directo)</div><div class="metric-value">${t}</div></div><div class="metric"><div class="metric-label">Vencidos</div><div class="metric-value" style="color:#c0392b">${v}</div></div><div class="metric"><div class="metric-label">Proximos 7d</div><div class="metric-value" style="color:#856404">${p}</div></div><div class="metric"><div class="metric-label">Zona local</div><div class="metric-value">${l}</div></div>`;
+  // Alerta de integridad de datos: clientes del canal directo sin telefono en NINGUNA fila de su historial.
+  // Estos siguen agrupandose por nombre (unico fallback posible) y quedan expuestos al mismo riesgo de
+  // fragmentacion que causo el bug de "Preparar stock" (clientes con compras reales que no aparecian).
+  // Si este numero crece, hay que cargar telefonos en la planilla Ventas -- no es un bug de codigo, es un hueco de datos.
+  const sinTel=directa.filter(c=>!c.telefono).length;
+  const sinTelHtml=sinTel>0?`<div class="metric" title="Clientes sin telefono cargado en Ventas: se agrupan por nombre y pueden fragmentarse/perderse de las predicciones. Cargar el telefono en la planilla."><div class="metric-label">Sin tel (riesgo dup.)</div><div class="metric-value" style="color:#c0392b">${sinTel}</div></div>`:'';
+  document.getElementById('av-metrics').innerHTML=`<div class="metric"><div class="metric-label">Clientes activos</div><div class="metric-value" style="color:#16a34a">${activos}</div></div><div class="metric"><div class="metric-label">Clientes unicos (directo)</div><div class="metric-value">${t}</div></div><div class="metric"><div class="metric-label">Vencidos</div><div class="metric-value" style="color:#c0392b">${v}</div></div><div class="metric"><div class="metric-label">Proximos 7d</div><div class="metric-value" style="color:#856404">${p}</div></div><div class="metric"><div class="metric-label">Zona local</div><div class="metric-value">${l}</div></div>${sinTelHtml}`;
 }
 
 function avMostrarHoy(){
