@@ -2542,7 +2542,11 @@ function avMostrarRevisar25(){
       if(cp.dias>=25)filas.push({nombre:c.nombre,telefono:c.telefono,localidad:c.localidad,producto:cp.producto,dias:cp.dias});
     });
   });
-  filas.sort(function(a,b){return b.dias-a.dias;});
+  // Orden ascendente: primero los que HOY cumplen justo 25 dias (el checkpoint recien alcanzado,
+  // el mas accionable), y a medida que se scrollea van apareciendo 26, 27, 28... dias. Un cliente
+  // que no compra hace 380 dias no es urgente verlo primero -- ya esta perdido hace rato, lo
+  // importante es agarrar a tiempo al que recien esta entrando en la ventana de revision.
+  filas.sort(function(a,b){return a.dias-b.dias;});
   const tb=document.getElementById('av-revisar25');
   if(!tb)return;
   if(!filas.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Nada con 25+ días todavía</div>';return;}
