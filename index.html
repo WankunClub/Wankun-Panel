@@ -392,21 +392,18 @@ Vamos Argentina!</div>
         <div class="table-body" id="av-stock-prox" style="max-height:320px"></div>
       </div>
     </div>
-    <div class="card" style="border-left:4px solid #c0392b">
-      <div class="card-title" style="color:#c0392b">No compraron lo previsto <span style="font-size:12px;font-weight:400;margin-left:8px">clientes de "Preparar stock" cuya fecha prevista ya pasó y no volvieron a comprar</span></div>
+    <div class="card" style="border-left:4px solid #d97706">
+      <div class="card-title" style="color:#d97706">A revisar — 25+ días desde la venta <span style="font-size:12px;font-weight:400;margin-left:8px">chequeo manual, sin importar el ciclo calculado: toda venta con 25+ días sin repetirse aparece acá</span></div>
       <div class="table-wrap">
-        <div class="table-head" style="grid-template-columns:1fr 100px 90px 80px 60px"><span>Cliente</span><span>Zona</span><span>Estado</span><span>WA</span><span></span></div>
-        <div class="table-body" id="av-faltaron" style="max-height:300px"></div>
+        <div class="table-head" style="grid-template-columns:1fr 130px 100px 70px 60px"><span>Cliente</span><span>Producto</span><span>Zona</span><span>Hace</span><span>WA</span></div>
+        <div class="table-body" id="av-revisar25" style="max-height:360px"></div>
       </div>
     </div>
-    <div class="card" style="border-left:4px solid #991b1b">
-      <div class="card-title" style="color:#991b1b">Compraron 1 sola vez y no volvieron <span style="font-size:12px;font-weight:400;margin-left:8px">toda su historia directa es una única compra — ordenados por antigüedad</span></div>
-      <div id="av-unavez-resumen" style="padding:10px 14px;font-size:13px;color:var(--gris-dark)"></div>
-      <div class="table-wrap">
-        <div class="table-head" style="grid-template-columns:1fr 130px 130px 80px 60px"><span>Cliente</span><span>Producto</span><span>Zona</span><span>Hace</span><span>WA</span></div>
-        <div class="table-body" id="av-unavez-tabla" style="max-height:400px"></div>
-      </div>
-    </div>
+    <!-- "No compraron lo previsto" y "Compraron 1 sola vez y no volvieron" se sacaron temporalmente
+         (17/9) porque dependian de la identidad de cliente rota (agrupacion por nombre / telefono
+         mal leido) y mostraban datos poco confiables. Se reconstruyen una vez que la limpieza de
+         datos (columna telefono, identidad de cliente) este resuelta. Las funciones JS siguen
+         existiendo (avMostrarFaltaron, avMostrarUnaVez) por si se quieren reactivar rapido. -->
     <div class="card" style="border-left:4px solid #16a34a">
       <div class="card-title" style="color:#16a34a">Ventas — Próximos 5 días</div>
       <div class="table-wrap">
@@ -2438,29 +2435,51 @@ async function avConectar(){
       const ultimaFechaMs=ultima.getTime();
       const ultimosProds=c.compras.filter(x=>x.fecha.getTime()===ultimaFechaMs).map(x=>x.producto).filter(Boolean);
       const ultimoProd=ultimosProds.length?ultimosProds.join(' / '):c.compras[c.compras.length-1].producto;
-      return{nombre:c.nombre,localidad:c.localidad,direccion:'',telefono:c.telefono,nCompras:todasFechas.length,comprasDirecta:c.compras.length,ultima,dias,freq,prox,estado,ultimoProd,ultimosProds,fuente:'Directa'};
+      // Ciclo POR PRODUCTO: un cliente que compra mas de un alimento (distintas mascotas,
+      // o rota entre marcas) tiene un ritmo de recompra propio para CADA producto. Mezclarlos
+      // en una sola frecuencia general distorsiona la fecha (ver caso real: Iara Michailenko,
+      // compra Diabetic y Pro Plan con ciclos distintos -> la frecuencia mezclada la escondia
+      // de "Preparar stock" aunque el Pro Plan ya estaba por vencer).
+      // Se usa solo para decidir QUE PRODUCTO mostrar/ofrecer en Preparar stock, no reemplaza
+      // freq/prox/estado de arriba (esos siguen alimentando Vencidos, Activos, etc.).
+      const porProducto={};
+      c.compras.forEach(x=>{const p=x.producto||'Sin especificar';(porProducto[p]=porProducto[p]||[]).push(x.fecha);});
+      const ciclosProducto=Object.keys(porProducto).map(p=>{
+        const fechasP=porProducto[p].slice().sort((a,b)=>a-b);
+        const ultimaP=fechasP[fechasP.length-1];
+        const diasP=Math.floor((hoy-ultimaP)/(1000*60*60*24));
+        let freqP=null;
+        if(fechasP.length>=2){const diffsP=[];for(let i=1;i<fechasP.length;i++){const d=Math.floor((fechasP[i]-fechasP[i-1])/(1000*60*60*24));if(d>0&&d<200)diffsP.push(d);}if(diffsP.length)freqP=mediana(diffsP);}
+        return{producto:p,freq:freqP,ultima:ultimaP,dias:diasP,prox:freqP?freqP-diasP:null,nCompras:fechasP.length};
+      });
+      // El producto "conductor" para Preparar stock: entre los que ya tienen ciclo propio
+      // (2+ compras de ESE producto), el que este mas cerca de vencer.
+      const conCiclo=ciclosProducto.filter(x=>x.prox!==null).sort((a,b)=>a.prox-b.prox);
+      const prodProximo=conCiclo.length?conCiclo[0]:null;
+      return{nombre:c.nombre,localidad:c.localidad,direccion:'',telefono:c.telefono,nCompras:todasFechas.length,comprasDirecta:c.compras.length,ultima,dias,freq,prox,estado,ultimoProd,ultimosProds,ciclosProducto,prodProximo,fuente:'Directa'};
     });
     avTodos=[...flexClientes,...ventasClientes];
     avTodos.sort((a,b)=>(a.prox!==null?a.prox:999)-(b.prox!==null?b.prox:999));
     st.className='conn-status conn-ok';st.textContent=avTodos.length+' clientes';
     document.getElementById('av-panel').style.display='block';
-    avMetricas();avMostrarStockProx();avMostrarVentasHoy();avProyeccion();
-    avActualizarPredicciones();avMostrarFaltaron();avMostrarUnaVez();
+    avMetricas();avMostrarStockProx();avMostrarRevisar25();avMostrarVentasHoy();avProyeccion();
+    avActualizarPredicciones();
   }catch(e){st.className='conn-status conn-err';st.textContent='Error: '+e.message;console.error(e);}
 }
 
 function avMetricas(){
   const directa=avTodos.filter(c=>c.fuente==='Directa');
-  const t=directa.length,v=directa.filter(c=>c.estado==='vencido').length,p=directa.filter(c=>c.estado==='proximo').length,l=directa.filter(c=>esLocal(c.localidad)).length;
-  // Cliente activo: 2+ compras por canal directo (haya migrado de Flex Meli o no) Y no vencido (sigue comprando o esta dentro de sus dias)
-  const activos=directa.filter(c=>c.comprasDirecta>=2&&c.estado!=='vencido').length;
+  const t=directa.length,l=directa.filter(c=>esLocal(c.localidad)).length;
+  // "Clientes activos", "Vencidos" y "Proximos 7d" se sacaron temporalmente (17/9) junto con las
+  // tarjetas "No compraron lo previsto" y "Compraron 1 sola vez": dependen de la misma identidad
+  // de cliente / frecuencia que todavia se esta limpiando. Se reconstruyen cuando eso este resuelto.
   // Alerta de integridad de datos: clientes del canal directo sin telefono en NINGUNA fila de su historial.
   // Estos siguen agrupandose por nombre (unico fallback posible) y quedan expuestos al mismo riesgo de
   // fragmentacion que causo el bug de "Preparar stock" (clientes con compras reales que no aparecian).
   // Si este numero crece, hay que cargar telefonos en la planilla Ventas -- no es un bug de codigo, es un hueco de datos.
   const sinTel=directa.filter(c=>!c.telefono).length;
   const sinTelHtml=sinTel>0?`<div class="metric" title="Clientes sin telefono cargado en Ventas: se agrupan por nombre y pueden fragmentarse/perderse de las predicciones. Cargar el telefono en la planilla."><div class="metric-label">Sin tel (riesgo dup.)</div><div class="metric-value" style="color:#c0392b">${sinTel}</div></div>`:'';
-  document.getElementById('av-metrics').innerHTML=`<div class="metric"><div class="metric-label">Clientes activos</div><div class="metric-value" style="color:#16a34a">${activos}</div></div><div class="metric"><div class="metric-label">Clientes unicos (directo)</div><div class="metric-value">${t}</div></div><div class="metric"><div class="metric-label">Vencidos</div><div class="metric-value" style="color:#c0392b">${v}</div></div><div class="metric"><div class="metric-label">Proximos 7d</div><div class="metric-value" style="color:#856404">${p}</div></div><div class="metric"><div class="metric-label">Zona local</div><div class="metric-value">${l}</div></div>${sinTelHtml}`;
+  document.getElementById('av-metrics').innerHTML=`<div class="metric"><div class="metric-label">Clientes unicos (directo)</div><div class="metric-value">${t}</div></div><div class="metric"><div class="metric-label">Zona local</div><div class="metric-value">${l}</div></div>${sinTelHtml}`;
 }
 
 function avMostrarHoy(){
@@ -2501,10 +2520,33 @@ function avMostrarReactivar(){
 }
 
 function avMostrarStockProx(){
-  const lista=avTodos.filter(function(c){if(c.fuente!=='Directa')return false;if(c.prox===null||c.prox===undefined)return false;return c.prox>=0&&c.prox<=5;}).sort(function(a,b){return(a.prox||0)-(b.prox||0);});
+  // Preferimos el ciclo del producto especifico que esta por vencer (prodProximo).
+  // Si el cliente todavia no tiene 2 compras de un mismo producto (no hay ciclo propio
+  // para ninguno), caemos al calculo general viejo para no perder a esos clientes.
+  const proxDe=c=>c.prodProximo?c.prodProximo.prox:c.prox;
+  const prodDe=c=>c.prodProximo?c.prodProximo.producto:c.ultimoProd;
+  const lista=avTodos.filter(function(c){if(c.fuente!=='Directa')return false;const p=proxDe(c);if(p===null||p===undefined)return false;return p>=0&&p<=5;}).sort(function(a,b){return(proxDe(a)||0)-(proxDe(b)||0);});
   const tb=document.getElementById('av-stock-prox');
   if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin entregas en los próximos 5 días</div>';return;}
-  tb.innerHTML=lista.map(function(c){const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';const proxLabel=c.prox===0?'<span style="color:#c0392b;font-weight:700;font-size:11px">Hoy</span>':'<span style="color:#7c3aed;font-weight:700;font-size:11px">'+c.prox+'d</span>';const prods=(c.ultimosProds&&c.ultimosProds.length?c.ultimosProds:[c.ultimoProd]).filter(Boolean).map(function(p){return'<span style="display:inline-block;background:#f3e8ff;color:#7c3aed;border-radius:4px;padding:2px 6px;font-size:10px;margin:1px">'+p+'</span>';}).join(' ');const tel=c.telefono||'';const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,c.nombre,c.ultimoProd)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';return '<div class="table-row" style="grid-template-columns:1fr 100px 60px 200px 70px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span>'+proxLabel+'<div>'+prods+'</div>'+waBtn+'</div>';}).join('');
+  tb.innerHTML=lista.map(function(c){const prox=proxDe(c);const prodPrincipal=prodDe(c);const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';const proxLabel=prox===0?'<span style="color:#c0392b;font-weight:700;font-size:11px">Hoy</span>':'<span style="color:#7c3aed;font-weight:700;font-size:11px">'+prox+'d</span>';const prodsBase=c.prodProximo?[prodPrincipal]:(c.ultimosProds&&c.ultimosProds.length?c.ultimosProds:[c.ultimoProd]);const prods=prodsBase.filter(Boolean).map(function(p){return'<span style="display:inline-block;background:#f3e8ff;color:#7c3aed;border-radius:4px;padding:2px 6px;font-size:10px;margin:1px">'+p+'</span>';}).join(' ');const tel=c.telefono||'';const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,c.nombre,prodPrincipal)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';return '<div class="table-row" style="grid-template-columns:1fr 100px 60px 200px 70px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span>'+proxLabel+'<div>'+prods+'</div>'+waBtn+'</div>';}).join('');
+}
+
+// Chequeo manual de respaldo: sin importar ninguna frecuencia calculada, toda venta de un
+// producto que tenga 25+ dias y no se haya repetido tiene que quedar visible para que Nacho
+// decida a ojo si corresponde mandar el mensaje, usando su propia tabla de recompra. Existe
+// para no depender 100% del motor de prediccion mientras se sigue afinando (ver caso Iara).
+function avMostrarRevisar25(){
+  const filas=[];
+  avTodos.filter(c=>c.fuente==='Directa').forEach(function(c){
+    (c.ciclosProducto||[]).forEach(function(cp){
+      if(cp.dias>=25)filas.push({nombre:c.nombre,telefono:c.telefono,localidad:c.localidad,producto:cp.producto,dias:cp.dias});
+    });
+  });
+  filas.sort(function(a,b){return b.dias-a.dias;});
+  const tb=document.getElementById('av-revisar25');
+  if(!tb)return;
+  if(!filas.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Nada con 25+ días todavía</div>';return;}
+  tb.innerHTML=filas.map(function(f){const zonaTag='<span class="'+(esLocal(f.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(f.localidad)?'local':'fuera')+'</span>';const tel=f.telefono||'';const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,f.nombre,f.producto)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';return '<div class="table-row" style="grid-template-columns:1fr 130px 100px 70px 60px"><span style="font-weight:500">'+f.nombre+'</span><span style="font-size:12px">'+f.producto+'</span><span style="font-size:11px">'+(f.localidad||'--')+' '+zonaTag+'</span><span style="font-size:12px">'+f.dias+'d</span>'+waBtn+'</div>';}).join('');
 }
 
 // ── VENCIDOS (recompra) ─────────────────────────────────────────────────────
