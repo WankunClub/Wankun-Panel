@@ -1833,7 +1833,15 @@ function clBuscar(q){
     </div>`).join('');
 }
 
-function clVerFicha(nombre){
+async function clVerFicha(nombre){
+  // La ficha depende de clData, que antes solo se cargaba si se visitaba la pestaña "Clientes"
+  // y se apretaba su boton de cargar. Si se toca un nombre desde Recompras sin haber pasado por
+  // ahi, clData estaba vacio y no pasaba nada (bug reportado: "no me deja tocar la ficha").
+  // Ahora, si todavia no se cargo, se carga sola antes de intentar abrir la ficha.
+  if(!clData.length){
+    await conectarClientes();
+    if(!clData.length)return; // sin datos ni despues de intentar cargar -> no hay nada que mostrar
+  }
   // Cruce en 3 niveles, de mas confiable a menos:
   // 1) Telefono (solo existe desde el 16-jun-2026 en adelante)
   // 2) Nombre exacto (normalizado)
@@ -2528,7 +2536,7 @@ function avMostrarStockProx(){
   const lista=avTodos.filter(function(c){if(c.fuente!=='Directa')return false;const p=proxDe(c);if(p===null||p===undefined)return false;return p>=0&&p<=5;}).sort(function(a,b){return(proxDe(a)||0)-(proxDe(b)||0);});
   const tb=document.getElementById('av-stock-prox');
   if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin entregas en los próximos 5 días</div>';return;}
-  tb.innerHTML=lista.map(function(c){const prox=proxDe(c);const prodPrincipal=prodDe(c);const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';const proxLabel=prox===0?'<span style="color:#c0392b;font-weight:700;font-size:11px">Hoy</span>':'<span style="color:#7c3aed;font-weight:700;font-size:11px">'+prox+'d</span>';const prodsBase=c.prodProximo?[prodPrincipal]:(c.ultimosProds&&c.ultimosProds.length?c.ultimosProds:[c.ultimoProd]);const prods=prodsBase.filter(Boolean).map(function(p){return'<span style="display:inline-block;background:#f3e8ff;color:#7c3aed;border-radius:4px;padding:2px 6px;font-size:10px;margin:1px">'+p+'</span>';}).join(' ');const tel=c.telefono||'';const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,c.nombre,prodPrincipal)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';return '<div class="table-row" style="grid-template-columns:1fr 100px 60px 200px 70px"><span style="font-weight:500">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span>'+proxLabel+'<div>'+prods+'</div>'+waBtn+'</div>';}).join('');
+  tb.innerHTML=lista.map(function(c){const prox=proxDe(c);const prodPrincipal=prodDe(c);const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';const proxLabel=prox===0?'<span style="color:#c0392b;font-weight:700;font-size:11px">Hoy</span>':'<span style="color:#7c3aed;font-weight:700;font-size:11px">'+prox+'d</span>';const prodsBase=c.prodProximo?[prodPrincipal]:(c.ultimosProds&&c.ultimosProds.length?c.ultimosProds:[c.ultimoProd]);const prods=prodsBase.filter(Boolean).map(function(p){return'<span style="display:inline-block;background:#f3e8ff;color:#7c3aed;border-radius:4px;padding:2px 6px;font-size:10px;margin:1px">'+p+'</span>';}).join(' ');const tel=c.telefono||'';const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,c.nombre,prodPrincipal)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';const nombreEsc=c.nombre.replace(/'/g,"\\'");return '<div class="table-row" style="grid-template-columns:1fr 100px 60px 200px 70px"><span style="font-weight:500;cursor:pointer;color:var(--azul-med)" onclick="clVerFicha(\''+nombreEsc+'\')">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span>'+proxLabel+'<div>'+prods+'</div>'+waBtn+'</div>';}).join('');
 }
 
 // Chequeo manual de respaldo: sin importar ninguna frecuencia calculada, toda venta de un
@@ -2550,7 +2558,7 @@ function avMostrarRevisar25(){
   const tb=document.getElementById('av-revisar25');
   if(!tb)return;
   if(!filas.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Nada con 25+ días todavía</div>';return;}
-  tb.innerHTML=filas.map(function(f){const zonaTag='<span class="'+(esLocal(f.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(f.localidad)?'local':'fuera')+'</span>';const tel=f.telefono||'';const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,f.nombre,f.producto)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';return '<div class="table-row" style="grid-template-columns:1fr 130px 100px 70px 60px"><span style="font-weight:500">'+f.nombre+'</span><span style="font-size:12px">'+f.producto+'</span><span style="font-size:11px">'+(f.localidad||'--')+' '+zonaTag+'</span><span style="font-size:12px">'+f.dias+'d</span>'+waBtn+'</div>';}).join('');
+  tb.innerHTML=filas.map(function(f){const zonaTag='<span class="'+(esLocal(f.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(f.localidad)?'local':'fuera')+'</span>';const tel=f.telefono||'';const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,f.nombre,f.producto)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';const nombreEsc=f.nombre.replace(/'/g,"\\'");return '<div class="table-row" style="grid-template-columns:1fr 130px 100px 70px 60px"><span style="font-weight:500;cursor:pointer;color:var(--azul-med)" onclick="clVerFicha(\''+nombreEsc+'\')">'+f.nombre+'</span><span style="font-size:12px">'+f.producto+'</span><span style="font-size:11px">'+(f.localidad||'--')+' '+zonaTag+'</span><span style="font-size:12px">'+f.dias+'d</span>'+waBtn+'</div>';}).join('');
 }
 
 // ── VENCIDOS (recompra) ─────────────────────────────────────────────────────
