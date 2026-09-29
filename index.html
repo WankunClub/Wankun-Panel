@@ -526,7 +526,7 @@ Muchas gracias!</div>
       <div class="table-head" style="grid-template-columns:1fr 1fr 120px 90px 80px"><span>Cliente</span><span>Artículo</span><span>Telefono</span><span>Avisado</span><span>WA</span></div>
       <div class="table-body" id="env-table" style="max-height:360px"></div>
     </div>
-    <div style="font-size:12px;color:var(--gris-dark);margin-top:12px">Mensaje: "Hola [Nombre]! El alimento [Marca Producto] está en camino, lo entregamos en [Dirección] a partir de las 17 hs. El saldo a pagar es de $[Saldo]. Te deseamos en nombre de Wankun Club un gran día!"</div>
+    <div style="font-size:12px;color:var(--gris-dark);margin-top:12px">Mensaje: "Hola [Nombre]! El alimento [Marca Producto] está en camino, lo entregamos en [Dirección], [Localidad] a partir de las 17 hs. El saldo a pagar es de $[Saldo]. Te deseamos en nombre de Wankun Club un gran día!"</div>
   </div>
 
   <div class="card">
@@ -2149,8 +2149,8 @@ async function enviosCargar(){
     const nombre=(r['CLIENTE']||r['Cliente']||'').trim();if(!nombre)return;
     const tel=(getCol(r,'TELEFONO','Telefono','Celular')||'').toString().trim();
     const articulo=getCol(r,'ARTICULO','Articulo','Artículo')||'';
-    // Datos para el mensaje: D=direccion, F+G=marca+producto, I=saldo (por posicion de columna)
-    const direccion=(r['_col3']||'').trim();
+    // Datos para el mensaje: D+E=direccion y localidad, F+G=marca+producto, I=saldo (por posicion de columna)
+    const direccion=[(r['_col3']||'').trim(),(r['_col4']||'').trim()].filter(Boolean).join(', ');
     const producto=[(r['_col5']||'').trim(),(r['_col6']||'').trim()].filter(Boolean).join(' ');
     const saldo=envParseSaldo(r['_col8']);
     const key=envKey(tel,nombre);
