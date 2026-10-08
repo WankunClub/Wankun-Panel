@@ -133,6 +133,10 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
 .hr-stop .a{font-size:13px;color:var(--gris-dark)}
 .hr-stop .f{font-size:13px;font-weight:600;margin-top:2px}
 .hr-maps-btn{display:inline-flex;align-items:center;padding:9px 16px;border-radius:8px;background:var(--verde);color:#fff;font-weight:600;font-size:13px;text-decoration:none}
+.hr-log{opacity:.5}
+.hr-log .hr-num{color:var(--gris-dark)}
+.hr-sep{margin-top:14px;padding:6px 0;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--gris-dark);border-bottom:1px solid var(--gris-med)}
+.hr-logchk{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--gris-dark);padding:0 6px;cursor:pointer;white-space:nowrap}
 .hr-vacio{padding:20px;text-align:center;color:var(--gris-dark);font-size:13px}
 @media (max-width:760px){.hr-add{grid-template-columns:1fr 1fr}.hr-add .btn{grid-column:1/-1}.hr-row{grid-template-columns:28px 1fr auto}.hr-row .hr-in{grid-column:2/4}.hr-row .hr-nomwrap{grid-column:2/3}}
 </style>
@@ -3692,6 +3696,14 @@ function hrFmtFecha(f){const[y,m,d]=f.split('-');return d+'/'+m+'/'+y;}
 function hrKey(){return 'wankun_ruta_'+hrFecha;}
 function hrGuardar(){try{localStorage.setItem(hrKey(),JSON.stringify({paradas:hrParadas,vuelta:document.getElementById('hr-vuelta').checked}));}catch(e){}}
 function hrLeer(){try{const raw=localStorage.getItem(hrKey());if(raw){const s=JSON.parse(raw);hrParadas=Array.isArray(s.paradas)?s.paradas:[];document.getElementById('hr-vuelta').checked=s.vuelta!==false;return;}}catch(e){}hrParadas=[];document.getElementById('hr-vuelta').checked=true;}
+const HR_LOG_KEY='wankun_ruta_logistica';
+function hrLogMem(){try{return JSON.parse(localStorage.getItem(HR_LOG_KEY)||'{}');}catch(e){return{};}}
+function hrLogRecordar(nombre,v){try{const m=hrLogMem();m[hrNorm(nombre)]=v;localStorage.setItem(HR_LOG_KEY,JSON.stringify(m));}catch(e){}}
+function hrLogInicial(p){const m=hrLogMem();const k=hrNorm(p.nombre);if(k in m)return m[k];return !!(p.localidad&&typeof esLocal==='function'&&!esLocal(p.localidad));}
+function hrPropias(){return hrParadas.filter(p=>!p.logistica);}
+function hrLogistica(i,v){const p=hrParadas[i];p.logistica=v;hrLogRecordar(p.nombre,v);
+  // las de logística van al final, las propias mantienen su orden
+  hrParadas=[...hrParadas.filter(x=>!x.logistica),...hrParadas.filter(x=>x.logistica)];hrGuardar();hrRender();}
 function hrInit(){
   const inp=document.getElementById('hr-fecha');
   if(!hrFecha){hrFecha=hrHoyISO();inp.value=hrFecha;hrLeer();hrRender();if(!hrParadas.length)hrTraer();}
@@ -3725,7 +3737,8 @@ async function hrTraer(){
       vistos[k]={id:k,fuente:'flex',nombre,direccion:(r['DIRECCION']||r['Direccion']||'').trim(),localidad:(r['LOCALIDAD']||'').trim(),alimento:prod};nuevas.push(vistos[k]);
     });
     const ya=new Set(hrParadas.map(p=>p.id));
-    nuevas.forEach(p=>{if(!ya.has(p.id)){hrParadas.push(p);agregadas++;}});
+    nuevas.forEach(p=>{if(!ya.has(p.id)){p.logistica=hrLogInicial(p);hrParadas.push(p);agregadas++;}});
+    hrParadas=[...hrParadas.filter(x=>!x.logistica),...hrParadas.filter(x=>x.logistica)];
     hrGuardar();
   }catch(e){error='No se pudieron leer las planillas. Probá de nuevo en un rato.';}
   hrCargando=false;btn.textContent='Traer ventas del día';btn.disabled=false;
@@ -3736,15 +3749,16 @@ function hrAgregar(){
   const g=id=>document.getElementById(id);const nombre=g('hr-n-nombre').value.trim();
   if(!nombre&&!g('hr-n-dir').value.trim()){g('hr-n-nombre').focus();return;}
   hrParadas.push({id:'m:'+Date.now(),fuente:'manual',nombre:nombre||'(sin nombre)',direccion:g('hr-n-dir').value.trim(),localidad:g('hr-n-loc').value.trim(),alimento:g('hr-n-ali').value.trim()});
+  hrParadas=[...hrParadas.filter(x=>!x.logistica),...hrParadas.filter(x=>x.logistica)];
   ['hr-n-nombre','hr-n-dir','hr-n-loc','hr-n-ali'].forEach(id=>g(id).value='');
   hrGuardar();hrRender();g('hr-n-nombre').focus();
 }
-function hrMover(i,d){const j=i+d;if(j<0||j>=hrParadas.length)return;const t=hrParadas[i];hrParadas[i]=hrParadas[j];hrParadas[j]=t;hrGuardar();hrRender();}
+function hrMover(i,d){const j=i+d;if(j<0||j>=hrParadas.length||hrParadas[j].logistica)return;const t=hrParadas[i];hrParadas[i]=hrParadas[j];hrParadas[j]=t;hrGuardar();hrRender();}
 function hrQuitar(i){const p=hrParadas[i];if(!confirm('¿Sacar a '+p.nombre+' de la ruta?'))return;hrParadas.splice(i,1);hrGuardar();hrRender();}
 function hrEditar(i,campo,valor){hrParadas[i][campo]=valor;hrGuardar();hrRenderHoja();}
 function hrDirMaps(p){return[p.direccion,p.localidad,'Buenos Aires, Argentina'].filter(Boolean).join(', ');}
 function hrLinksMaps(){
-  const pts=[HR_ORIGEN,...hrParadas.filter(p=>p.direccion||p.localidad).map(hrDirMaps)];
+  const pts=[HR_ORIGEN,...hrPropias().filter(p=>p.direccion||p.localidad).map(hrDirMaps)];
   if(document.getElementById('hr-vuelta').checked)pts.push(HR_ORIGEN);
   const links=[];let i=0;
   while(i<pts.length-1){
@@ -3760,34 +3774,35 @@ function hrRender(msg){
   const fuenteTxt={directo:'Directo',flex:'Flex',manual:'A mano'};
   let h=msg?'<div class="hr-help" style="color:var(--verde);font-weight:600">'+hrEsc(msg)+'</div>':'';
   if(!hrParadas.length){h+='<div class="hr-vacio">Todavía no hay entregas para el '+hrFmtFecha(hrFecha)+'.</div>';}
-  else h+=hrParadas.map((p,i)=>'<div class="hr-row"><div class="hr-num">'+(i+1)+'</div>'+
+  else{const np=hrPropias().length,nl=hrParadas.length-np;h+='<div class="hr-help"><b>'+np+'</b> las entregamos nosotros · <b>'+nl+'</b> van por logística (no entran en la hoja de ruta). Tildá <b>Logística</b> en las que no repartimos; el Panel se acuerda para la próxima.</div>';
+  let n=0;h+=hrParadas.map((p,i)=>(p.logistica&&(i===0||!hrParadas[i-1].logistica)?'<div class="hr-sep">Van por logística</div>':'')+'<div class="hr-row'+(p.logistica?' hr-log':'')+'"><div class="hr-num">'+(p.logistica?'—':(++n))+'</div>'+
     '<div class="hr-nomwrap"><span class="hr-nom">'+hrEsc(p.nombre)+'</span><span class="hr-src '+p.fuente+'">'+fuenteTxt[p.fuente]+'</span></div>'+
     '<input class="hr-in'+(p.direccion?'':' hr-falta')+'" value="'+hrEsc(p.direccion)+'" placeholder="Falta dirección" onchange="hrEditar('+i+',\'direccion\',this.value);this.classList.toggle(\'hr-falta\',!this.value)">'+
     '<input class="hr-in" value="'+hrEsc(p.localidad)+'" placeholder="Localidad" onchange="hrEditar('+i+',\'localidad\',this.value)">'+
     '<input class="hr-in'+(p.alimento?'':' hr-falta')+'" value="'+hrEsc(p.alimento)+'" placeholder="Falta alimento" onchange="hrEditar('+i+',\'alimento\',this.value);this.classList.toggle(\'hr-falta\',!this.value)">'+
-    '<div class="hr-acc"><button title="Subir" onclick="hrMover('+i+',-1)">↑</button><button title="Bajar" onclick="hrMover('+i+',1)">↓</button><button class="del" title="Sacar" onclick="hrQuitar('+i+')">✕</button></div></div>').join('');
+    '<div class="hr-acc"><label class="hr-logchk" title="Va por logística"><input type="checkbox" '+(p.logistica?'checked':'')+' onchange="hrLogistica('+i+',this.checked)"> Logística</label>'+(p.logistica?'':'<button title="Subir" onclick="hrMover('+i+',-1)">↑</button><button title="Bajar" onclick="hrMover('+i+',1)">↓</button>')+'<button class="del" title="Sacar" onclick="hrQuitar('+i+')">✕</button></div></div>').join('');}
   el.innerHTML=h;
   hrRenderHoja();
 }
 function hrRenderHoja(){
   const card=document.getElementById('hr-hoja-card');
-  if(!hrParadas.length){card.style.display='none';return;}
+  const P=hrPropias();if(!P.length){card.style.display='none';return;}
   card.style.display='block';
   const links=hrLinksMaps();
   document.getElementById('hr-maps').innerHTML=links.map((u,i)=>'<a class="hr-maps-btn" href="'+u+'" target="_blank" rel="noopener">Abrir en Google Maps'+(links.length>1?' — tramo '+(i+1):'')+'</a>').join('');
-  document.getElementById('hr-hoja').innerHTML='<div class="hr-help">'+hrFmtFecha(hrFecha)+' · '+hrParadas.length+' paradas · salida desde Alta Golf Gracia 1984</div>'+
-    hrParadas.map((p,i)=>'<div class="hr-stop"><div class="n">'+(i+1)+'</div><div><b>'+hrEsc(p.nombre)+'</b><div class="a">'+hrEsc([p.direccion,p.localidad].filter(Boolean).join(', ')||'Falta dirección')+'</div><div class="f">'+hrEsc(p.alimento||'Falta alimento')+'</div></div></div>').join('');
+  document.getElementById('hr-hoja').innerHTML='<div class="hr-help">'+hrFmtFecha(hrFecha)+' · '+P.length+' paradas · salida desde Alta Golf Gracia 1984</div>'+
+    P.map((p,i)=>'<div class="hr-stop"><div class="n">'+(i+1)+'</div><div><b>'+hrEsc(p.nombre)+'</b><div class="a">'+hrEsc([p.direccion,p.localidad].filter(Boolean).join(', ')||'Falta dirección')+'</div><div class="f">'+hrEsc(p.alimento||'Falta alimento')+'</div></div></div>').join('');
 }
 function hrTexto(){
   let t='HOJA DE RUTA – '+hrFmtFecha(hrFecha)+'\n\n';
-  hrParadas.forEach((p,i)=>{t+=(i+1)+'. '+p.nombre+'\n   '+([p.direccion,p.localidad].filter(Boolean).join(', ')||'(falta dirección)')+'\n   '+(p.alimento||'(falta alimento)')+'\n\n';});
+  hrPropias().forEach((p,i)=>{t+=(i+1)+'. '+p.nombre+'\n   '+([p.direccion,p.localidad].filter(Boolean).join(', ')||'(falta dirección)')+'\n   '+(p.alimento||'(falta alimento)')+'\n\n';});
   return t.trim();
 }
 async function hrCopiar(){try{await navigator.clipboard.writeText(hrTexto());alert('Hoja de ruta copiada.');}catch(e){prompt('Copiá la hoja de ruta:',hrTexto());}}
 function hrImprimir(){
   const w=window.open('','_blank');if(!w){alert('Habilitá las ventanas emergentes para imprimir.');return;}
-  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Hoja de ruta '+hrFmtFecha(hrFecha)+'</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#111}h1{font-size:20px;margin:0 0 4px}p{color:#555;margin:0 0 16px;font-size:13px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #ccc;padding:8px 6px;text-align:left;vertical-align:top}th{font-size:11px;text-transform:uppercase;color:#555}td.n{font-weight:700;width:24px}</style></head><body><h1>Hoja de ruta — Wankun Club</h1><p>'+hrFmtFecha(hrFecha)+' · '+hrParadas.length+' paradas</p><table><tr><th>#</th><th>Cliente</th><th>Dirección</th><th>Alimento</th></tr>'+
-    hrParadas.map((p,i)=>'<tr><td class="n">'+(i+1)+'</td><td>'+hrEsc(p.nombre)+'</td><td>'+hrEsc([p.direccion,p.localidad].filter(Boolean).join(', '))+'</td><td>'+hrEsc(p.alimento)+'</td></tr>').join('')+'</table></body></html>');
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Hoja de ruta '+hrFmtFecha(hrFecha)+'</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#111}h1{font-size:20px;margin:0 0 4px}p{color:#555;margin:0 0 16px;font-size:13px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #ccc;padding:8px 6px;text-align:left;vertical-align:top}th{font-size:11px;text-transform:uppercase;color:#555}td.n{font-weight:700;width:24px}</style></head><body><h1>Hoja de ruta — Wankun Club</h1><p>'+hrFmtFecha(hrFecha)+' · '+hrPropias().length+' paradas</p><table><tr><th>#</th><th>Cliente</th><th>Dirección</th><th>Alimento</th></tr>'+
+    hrPropias().map((p,i)=>'<tr><td class="n">'+(i+1)+'</td><td>'+hrEsc(p.nombre)+'</td><td>'+hrEsc([p.direccion,p.localidad].filter(Boolean).join(', '))+'</td><td>'+hrEsc(p.alimento)+'</td></tr>').join('')+'</table></body></html>');
   w.document.close();w.focus();setTimeout(()=>w.print(),300);
 }
 </script>
