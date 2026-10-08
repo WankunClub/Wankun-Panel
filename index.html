@@ -113,6 +113,28 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
 .tag-ok{background:var(--verde-bg);color:var(--verde)}
 .tag-warn{background:#fff3cd;color:#856404}
 .tag-bad{background:#ffe5e5;color:#c0392b}
+.hr-in{padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--blanco);color:var(--texto);min-width:0}
+.hr-help{font-size:12px;color:var(--gris-dark);margin-bottom:12px}
+.hr-add{display:grid;grid-template-columns:1.2fr 1.6fr 1fr 1.2fr auto;gap:8px}
+.hr-row{display:grid;grid-template-columns:32px 1.2fr 1.6fr 1fr 1.2fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--gris-med)}
+.hr-num{font-weight:700;font-size:16px;color:var(--verde);text-align:center}
+.hr-nom{font-weight:600;font-size:13px}
+.hr-src{display:inline-block;font-size:10px;padding:1px 7px;border-radius:20px;margin-left:6px;font-weight:500;background:#dbeafe;color:#1d4ed8}
+.hr-src.flex{background:#fff4d6;color:#a16207}
+.hr-src.manual{background:var(--gris-med);color:var(--gris-dark)}
+.hr-acc{display:flex;gap:4px}
+.hr-acc button{width:32px;height:32px;border-radius:8px;border:1px solid var(--gris-med);background:var(--blanco);cursor:pointer;font-size:14px;color:var(--texto)}
+.hr-acc button:hover{background:var(--gris)}
+.hr-acc button.del{color:#c0392b}
+.hr-falta{border-color:#e0a526 !important;background:#fffbea !important}
+.hr-stop{display:grid;grid-template-columns:36px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--gris-med)}
+.hr-stop:last-child{border-bottom:none}
+.hr-stop .n{font-weight:700;font-size:18px;color:var(--verde)}
+.hr-stop .a{font-size:13px;color:var(--gris-dark)}
+.hr-stop .f{font-size:13px;font-weight:600;margin-top:2px}
+.hr-maps-btn{display:inline-flex;align-items:center;padding:9px 16px;border-radius:8px;background:var(--verde);color:#fff;font-weight:600;font-size:13px;text-decoration:none}
+.hr-vacio{padding:20px;text-align:center;color:var(--gris-dark);font-size:13px}
+@media (max-width:760px){.hr-add{grid-template-columns:1fr 1fr}.hr-add .btn{grid-column:1/-1}.hr-row{grid-template-columns:28px 1fr auto}.hr-row .hr-in{grid-column:2/4}.hr-row .hr-nomwrap{grid-column:2/3}}
 </style>
 </head>
 <body>
@@ -135,6 +157,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="nav-item" onclick="irA('analisis')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Análisis clientes</div>
     <div class="nav-item" onclick="irA('resenas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Reseñas</div>
     <div class="nav-item" onclick="irA('envios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Envíos</div>
+    <div class="nav-item" onclick="irA('ruta')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8a3 3 0 0 0 0-6H8a3 3 0 0 1 0-6h8"/></svg>Hoja de ruta</div>
     <div class="nav-section">Marketing</div>
     <div class="nav-item" onclick="irA('marketing')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.92 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 5.61 5.61l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Agente Marketing</div>
     <div class="nav-section">Sistema</div>
@@ -501,6 +524,41 @@ Muchas gracias!</div>
 </div>
 
 <!-- ENVIOS -->
+<div class="page" id="page-ruta">
+  <div class="card" style="margin-bottom:16px">
+    <div class="results-header">
+      <div class="card-title" style="margin:0">Entregas del día</div>
+      <div class="btn-row">
+        <div class="filtro-group"><label>Fecha</label><input type="date" id="hr-fecha" class="hr-in" onchange="hrCambiarFecha()"></div>
+        <button class="btn btn-primary" onclick="hrTraer()" style="align-self:flex-end" id="hr-btn-traer">Traer ventas del día</button>
+      </div>
+    </div>
+    <div class="hr-help">Trae las compras de esa fecha de <b>Ventas</b> (canal directo) y de <b>Flex Meli</b>. También podés sumar una entrega a mano. Ordená las paradas con las flechas.</div>
+    <div class="hr-add">
+      <input class="hr-in" id="hr-n-nombre" list="hr-clientes" placeholder="Cliente" oninput="hrAutocompletar()">
+      <input class="hr-in" id="hr-n-dir" placeholder="Dirección (o barrio + lote)">
+      <input class="hr-in" id="hr-n-loc" placeholder="Localidad">
+      <input class="hr-in" id="hr-n-ali" placeholder="Alimento">
+      <button class="btn" onclick="hrAgregar()">+ Agregar</button>
+    </div>
+    <datalist id="hr-clientes"></datalist>
+    <div id="hr-lista" style="margin-top:14px"></div>
+  </div>
+
+  <div class="card" id="hr-hoja-card" style="display:none">
+    <div class="results-header">
+      <div class="card-title" style="margin:0">Hoja de ruta</div>
+      <div class="btn-row">
+        <label style="font-size:12px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="hr-vuelta" checked onchange="hrGuardar();hrRender()"> Vuelvo al local</label>
+        <button class="btn" onclick="hrCopiar()">Copiar</button>
+        <button class="btn" onclick="hrImprimir()">Imprimir</button>
+      </div>
+    </div>
+    <div id="hr-maps" class="btn-row" style="margin-bottom:12px"></div>
+    <div id="hr-hoja"></div>
+  </div>
+</div>
+
 <div class="page" id="page-envios">
   <div class="metrics-grid" id="env-metrics">
     <div class="metric"><div class="metric-label">Compras hoy (directo)</div><div class="metric-value" id="env-m-total">0</div></div>
@@ -927,10 +985,11 @@ function irA(p){
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
   if(p==='stock'){setTimeout(function(){skRenderTabla();skRenderMetricas();},50);}
-  const t={'inicio':'Inicio','ventas':'Ventas','financiero':'Financiero','vete':'Vete','clientes':'Clientes','recompras':'Recompras','migracion':'Migración','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','stock':'Control de Stock'};
+  const t={'inicio':'Inicio','ventas':'Ventas','financiero':'Financiero','vete':'Vete','clientes':'Clientes','recompras':'Recompras','migracion':'Migración','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','ruta':'Hoja de ruta','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','stock':'Control de Stock'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
   if(p==='resenas'){resenasCargarHistorial();}
+  if(p==='ruta'){hrInit();}
   if(p==='financiero'){if(!FIN_DATA)finCargar();}
   if(p==='vete'){if(!VETE_DATA)veteCargar();}
 }
@@ -3619,6 +3678,118 @@ function analVerFicha(tel,nombre){
 }
 const AN_ESTADO_KEY='wankun_anal_estado_v1';
 
+
+// ── HOJA DE RUTA ──────────────────────────────────────────────────────────────
+// Arma la ruta del día con las ventas de esa fecha (Ventas = canal directo, Flex meli = envíos Flex).
+// Las paradas, su orden y las correcciones se guardan en este navegador, por fecha.
+const HR_ORIGEN='Alta Golf Gracia 1984, Manuel Alberti, Buenos Aires, Argentina';
+let hrFecha='',hrParadas=[],hrClientes={},hrCargando=false;
+function hrHoyISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function hrEsc(t){return(t==null?'':String(t)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function hrNorm(t){return(t||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();}
+function hrMismaFecha(s){const f=parseFecha(s);if(!f)return false;const[y,m,d]=hrFecha.split('-').map(Number);return f.getFullYear()===y&&f.getMonth()===m-1&&f.getDate()===d;}
+function hrFmtFecha(f){const[y,m,d]=f.split('-');return d+'/'+m+'/'+y;}
+function hrKey(){return 'wankun_ruta_'+hrFecha;}
+function hrGuardar(){try{localStorage.setItem(hrKey(),JSON.stringify({paradas:hrParadas,vuelta:document.getElementById('hr-vuelta').checked}));}catch(e){}}
+function hrLeer(){try{const raw=localStorage.getItem(hrKey());if(raw){const s=JSON.parse(raw);hrParadas=Array.isArray(s.paradas)?s.paradas:[];document.getElementById('hr-vuelta').checked=s.vuelta!==false;return;}}catch(e){}hrParadas=[];document.getElementById('hr-vuelta').checked=true;}
+function hrInit(){
+  const inp=document.getElementById('hr-fecha');
+  if(!hrFecha){hrFecha=hrHoyISO();inp.value=hrFecha;hrLeer();hrRender();if(!hrParadas.length)hrTraer();}
+}
+function hrCambiarFecha(){const v=document.getElementById('hr-fecha').value;if(!v)return;hrFecha=v;hrLeer();hrRender();if(!hrParadas.length)hrTraer();}
+async function hrTraer(){
+  if(hrCargando)return;hrCargando=true;
+  const btn=document.getElementById('hr-btn-traer');btn.textContent='Trayendo…';btn.disabled=true;
+  let agregadas=0,error='';
+  try{
+    const[vRows,fRows]=await Promise.all([fetchCSV('Ventas'),fetchCSV('Flex meli').catch(()=>[])]);
+    // Base de clientes para autocompletar (última dirección conocida)
+    vRows.forEach(r=>{const n=(r['CLIENTE']||r['Cliente']||'').trim();if(!n)return;const dir=(r['_col3']||'').trim(),loc=(r['_col4']||'').trim();if(dir||!hrClientes[n])hrClientes[n]={dir:dir||(hrClientes[n]&&hrClientes[n].dir)||'',loc:loc||(hrClientes[n]&&hrClientes[n].loc)||''};});
+    fRows.forEach(r=>{const n=(r['NOMBRE']||'').trim();if(!n||hrClientes[n])return;hrClientes[n]={dir:(r['DIRECCION']||r['Direccion']||'').trim(),loc:(r['LOCALIDAD']||'').trim()};});
+    document.getElementById('hr-clientes').innerHTML=Object.keys(hrClientes).sort((a,b)=>a.localeCompare(b,'es')).map(n=>'<option value="'+hrEsc(n)+'">').join('');
+    const nuevas=[],vistos={};
+    vRows.forEach(r=>{
+      if(!hrMismaFecha(r['FECHA']||r['Fecha']||''))return;
+      const nombre=(r['CLIENTE']||r['Cliente']||'').trim();if(!nombre)return;
+      const prod=[(r['_col5']||'').trim(),(r['_col6']||'').trim()].filter(Boolean).join(' ')||getCol(r,'ARTICULO','Articulo','Artículo')||'';
+      const k='d:'+hrNorm(nombre);
+      if(vistos[k]){if(prod&&vistos[k].alimento.indexOf(prod)<0)vistos[k].alimento+=(vistos[k].alimento?' + ':'')+prod;return;}
+      vistos[k]={id:k,fuente:'directo',nombre,direccion:(r['_col3']||'').trim(),localidad:(r['_col4']||'').trim(),alimento:prod};nuevas.push(vistos[k]);
+    });
+    fRows.forEach(r=>{
+      const fecha=r['Fecha envio']||r['Fecha envío']||r['Fecha de envio']||r['Fecha de envío']||r['FECHA ENVIO']||r['Fecha compra']||'';
+      if(!hrMismaFecha(fecha))return;
+      const nombre=(r['NOMBRE']||'').trim();if(!nombre)return;
+      const prod=(r['REFERNCIA']||'').trim();const k='f:'+hrNorm(nombre);
+      if(vistos[k]){if(prod&&vistos[k].alimento.indexOf(prod)<0)vistos[k].alimento+=(vistos[k].alimento?' + ':'')+prod;return;}
+      vistos[k]={id:k,fuente:'flex',nombre,direccion:(r['DIRECCION']||r['Direccion']||'').trim(),localidad:(r['LOCALIDAD']||'').trim(),alimento:prod};nuevas.push(vistos[k]);
+    });
+    const ya=new Set(hrParadas.map(p=>p.id));
+    nuevas.forEach(p=>{if(!ya.has(p.id)){hrParadas.push(p);agregadas++;}});
+    hrGuardar();
+  }catch(e){error='No se pudieron leer las planillas. Probá de nuevo en un rato.';}
+  hrCargando=false;btn.textContent='Traer ventas del día';btn.disabled=false;
+  hrRender(error||(agregadas?'Se agregaron '+agregadas+' entregas.':'No hay entregas nuevas para esta fecha en las planillas.'));
+}
+function hrAutocompletar(){const n=document.getElementById('hr-n-nombre').value.trim();const c=hrClientes[n];if(!c)return;const d=document.getElementById('hr-n-dir'),l=document.getElementById('hr-n-loc');if(!d.value)d.value=c.dir;if(!l.value)l.value=c.loc;}
+function hrAgregar(){
+  const g=id=>document.getElementById(id);const nombre=g('hr-n-nombre').value.trim();
+  if(!nombre&&!g('hr-n-dir').value.trim()){g('hr-n-nombre').focus();return;}
+  hrParadas.push({id:'m:'+Date.now(),fuente:'manual',nombre:nombre||'(sin nombre)',direccion:g('hr-n-dir').value.trim(),localidad:g('hr-n-loc').value.trim(),alimento:g('hr-n-ali').value.trim()});
+  ['hr-n-nombre','hr-n-dir','hr-n-loc','hr-n-ali'].forEach(id=>g(id).value='');
+  hrGuardar();hrRender();g('hr-n-nombre').focus();
+}
+function hrMover(i,d){const j=i+d;if(j<0||j>=hrParadas.length)return;const t=hrParadas[i];hrParadas[i]=hrParadas[j];hrParadas[j]=t;hrGuardar();hrRender();}
+function hrQuitar(i){const p=hrParadas[i];if(!confirm('¿Sacar a '+p.nombre+' de la ruta?'))return;hrParadas.splice(i,1);hrGuardar();hrRender();}
+function hrEditar(i,campo,valor){hrParadas[i][campo]=valor;hrGuardar();hrRenderHoja();}
+function hrDirMaps(p){return[p.direccion,p.localidad,'Buenos Aires, Argentina'].filter(Boolean).join(', ');}
+function hrLinksMaps(){
+  const pts=[HR_ORIGEN,...hrParadas.filter(p=>p.direccion||p.localidad).map(hrDirMaps)];
+  if(document.getElementById('hr-vuelta').checked)pts.push(HR_ORIGEN);
+  const links=[];let i=0;
+  while(i<pts.length-1){
+    const seg=pts.slice(i,i+11); // origen + 9 paradas intermedias + destino
+    const way=seg.slice(1,-1);
+    links.push('https://www.google.com/maps/dir/?api=1&travelmode=driving&origin='+encodeURIComponent(seg[0])+'&destination='+encodeURIComponent(seg[seg.length-1])+(way.length?'&waypoints='+encodeURIComponent(way.join('|')):''));
+    i+=seg.length-1;
+  }
+  return links;
+}
+function hrRender(msg){
+  const el=document.getElementById('hr-lista');
+  const fuenteTxt={directo:'Directo',flex:'Flex',manual:'A mano'};
+  let h=msg?'<div class="hr-help" style="color:var(--verde);font-weight:600">'+hrEsc(msg)+'</div>':'';
+  if(!hrParadas.length){h+='<div class="hr-vacio">Todavía no hay entregas para el '+hrFmtFecha(hrFecha)+'.</div>';}
+  else h+=hrParadas.map((p,i)=>'<div class="hr-row"><div class="hr-num">'+(i+1)+'</div>'+
+    '<div class="hr-nomwrap"><span class="hr-nom">'+hrEsc(p.nombre)+'</span><span class="hr-src '+p.fuente+'">'+fuenteTxt[p.fuente]+'</span></div>'+
+    '<input class="hr-in'+(p.direccion?'':' hr-falta')+'" value="'+hrEsc(p.direccion)+'" placeholder="Falta dirección" onchange="hrEditar('+i+',\'direccion\',this.value);this.classList.toggle(\'hr-falta\',!this.value)">'+
+    '<input class="hr-in" value="'+hrEsc(p.localidad)+'" placeholder="Localidad" onchange="hrEditar('+i+',\'localidad\',this.value)">'+
+    '<input class="hr-in'+(p.alimento?'':' hr-falta')+'" value="'+hrEsc(p.alimento)+'" placeholder="Falta alimento" onchange="hrEditar('+i+',\'alimento\',this.value);this.classList.toggle(\'hr-falta\',!this.value)">'+
+    '<div class="hr-acc"><button title="Subir" onclick="hrMover('+i+',-1)">↑</button><button title="Bajar" onclick="hrMover('+i+',1)">↓</button><button class="del" title="Sacar" onclick="hrQuitar('+i+')">✕</button></div></div>').join('');
+  el.innerHTML=h;
+  hrRenderHoja();
+}
+function hrRenderHoja(){
+  const card=document.getElementById('hr-hoja-card');
+  if(!hrParadas.length){card.style.display='none';return;}
+  card.style.display='block';
+  const links=hrLinksMaps();
+  document.getElementById('hr-maps').innerHTML=links.map((u,i)=>'<a class="hr-maps-btn" href="'+u+'" target="_blank" rel="noopener">Abrir en Google Maps'+(links.length>1?' — tramo '+(i+1):'')+'</a>').join('');
+  document.getElementById('hr-hoja').innerHTML='<div class="hr-help">'+hrFmtFecha(hrFecha)+' · '+hrParadas.length+' paradas · salida desde Alta Golf Gracia 1984</div>'+
+    hrParadas.map((p,i)=>'<div class="hr-stop"><div class="n">'+(i+1)+'</div><div><b>'+hrEsc(p.nombre)+'</b><div class="a">'+hrEsc([p.direccion,p.localidad].filter(Boolean).join(', ')||'Falta dirección')+'</div><div class="f">'+hrEsc(p.alimento||'Falta alimento')+'</div></div></div>').join('');
+}
+function hrTexto(){
+  let t='HOJA DE RUTA – '+hrFmtFecha(hrFecha)+'\n\n';
+  hrParadas.forEach((p,i)=>{t+=(i+1)+'. '+p.nombre+'\n   '+([p.direccion,p.localidad].filter(Boolean).join(', ')||'(falta dirección)')+'\n   '+(p.alimento||'(falta alimento)')+'\n\n';});
+  return t.trim();
+}
+async function hrCopiar(){try{await navigator.clipboard.writeText(hrTexto());alert('Hoja de ruta copiada.');}catch(e){prompt('Copiá la hoja de ruta:',hrTexto());}}
+function hrImprimir(){
+  const w=window.open('','_blank');if(!w){alert('Habilitá las ventanas emergentes para imprimir.');return;}
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Hoja de ruta '+hrFmtFecha(hrFecha)+'</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#111}h1{font-size:20px;margin:0 0 4px}p{color:#555;margin:0 0 16px;font-size:13px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #ccc;padding:8px 6px;text-align:left;vertical-align:top}th{font-size:11px;text-transform:uppercase;color:#555}td.n{font-weight:700;width:24px}</style></head><body><h1>Hoja de ruta — Wankun Club</h1><p>'+hrFmtFecha(hrFecha)+' · '+hrParadas.length+' paradas</p><table><tr><th>#</th><th>Cliente</th><th>Dirección</th><th>Alimento</th></tr>'+
+    hrParadas.map((p,i)=>'<tr><td class="n">'+(i+1)+'</td><td>'+hrEsc(p.nombre)+'</td><td>'+hrEsc([p.direccion,p.localidad].filter(Boolean).join(', '))+'</td><td>'+hrEsc(p.alimento)+'</td></tr>').join('')+'</table></body></html>');
+  w.document.close();w.focus();setTimeout(()=>w.print(),300);
+}
 </script>
 </body>
 </html>
