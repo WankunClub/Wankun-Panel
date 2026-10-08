@@ -3686,7 +3686,8 @@ const AN_ESTADO_KEY='wankun_anal_estado_v1';
 // ── HOJA DE RUTA ──────────────────────────────────────────────────────────────
 // Arma la ruta del día con las ventas de esa fecha (Ventas = canal directo, Flex meli = envíos Flex).
 // Las paradas, su orden y las correcciones se guardan en este navegador, por fecha.
-const HR_ORIGEN='Alta Golf Gracia 1984, Manuel Alberti, Buenos Aires, Argentina';
+// Coordenadas exactas del pin de Wankun Club (la dirección escrita Google la ubica mal, en Highland Park)
+const HR_ORIGEN='-34.4447773,-58.7654003';
 let hrFecha='',hrParadas=[],hrClientes={},hrCargando=false;
 function hrHoyISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function hrEsc(t){return(t==null?'':String(t)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
