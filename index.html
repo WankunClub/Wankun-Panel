@@ -3696,14 +3696,15 @@ function hrFmtFecha(f){const[y,m,d]=f.split('-');return d+'/'+m+'/'+y;}
 function hrKey(){return 'wankun_ruta_'+hrFecha;}
 function hrGuardar(){try{localStorage.setItem(hrKey(),JSON.stringify({paradas:hrParadas,vuelta:document.getElementById('hr-vuelta').checked}));}catch(e){}}
 function hrLeer(){try{const raw=localStorage.getItem(hrKey());if(raw){const s=JSON.parse(raw);hrParadas=Array.isArray(s.paradas)?s.paradas:[];document.getElementById('hr-vuelta').checked=s.vuelta!==false;return;}}catch(e){}hrParadas=[];document.getElementById('hr-vuelta').checked=true;}
-const HR_LOG_KEY='wankun_ruta_logistica';
-function hrLogMem(){try{return JSON.parse(localStorage.getItem(HR_LOG_KEY)||'{}');}catch(e){return{};}}
-function hrLogRecordar(nombre,v){try{const m=hrLogMem();m[hrNorm(nombre)]=v;localStorage.setItem(HR_LOG_KEY,JSON.stringify(m));}catch(e){}}
-function hrLogInicial(p){const m=hrLogMem();const k=hrNorm(p.nombre);if(k in m)return m[k];return !!(p.localidad&&typeof esLocal==='function'&&!esLocal(p.localidad));}
-function hrPropias(){return hrParadas.filter(p=>!p.logistica);}
-function hrLogistica(i,v){const p=hrParadas[i];p.logistica=v;hrLogRecordar(p.nombre,v);
-  // las de logística van al final, las propias mantienen su orden
-  hrParadas=[...hrParadas.filter(x=>!x.logistica),...hrParadas.filter(x=>x.logistica)];hrGuardar();hrRender();}
+const HR_REP_KEY='wankun_ruta_reparto';
+function hrRepMem(){try{return JSON.parse(localStorage.getItem(HR_REP_KEY)||'{}');}catch(e){return{};}}
+function hrRepRecordar(nombre,v){try{const m=hrRepMem();m[hrNorm(nombre)]=v;localStorage.setItem(HR_REP_KEY,JSON.stringify(m));}catch(e){}}
+function hrRepInicial(p){return hrRepMem()[hrNorm(p.nombre)]===true;}
+function hrPropias(){return hrParadas.filter(p=>p.reparto);}
+function hrOrdenar(){hrParadas=[...hrParadas.filter(x=>x.reparto),...hrParadas.filter(x=>!x.reparto)];}
+function hrReparto(i,v){const p=hrParadas[i];p.reparto=v;hrRepRecordar(p.nombre,v);
+  if(v){hrParadas.splice(i,1);const n=hrPropias().length;hrParadas.splice(n,0,p);}else hrOrdenar();
+  hrGuardar();hrRender();}
 function hrInit(){
   const inp=document.getElementById('hr-fecha');
   if(!hrFecha){hrFecha=hrHoyISO();inp.value=hrFecha;hrLeer();hrRender();if(!hrParadas.length)hrTraer();}
@@ -3737,8 +3738,8 @@ async function hrTraer(){
       vistos[k]={id:k,fuente:'flex',nombre,direccion:(r['DIRECCION']||r['Direccion']||'').trim(),localidad:(r['LOCALIDAD']||'').trim(),alimento:prod};nuevas.push(vistos[k]);
     });
     const ya=new Set(hrParadas.map(p=>p.id));
-    nuevas.forEach(p=>{if(!ya.has(p.id)){p.logistica=hrLogInicial(p);hrParadas.push(p);agregadas++;}});
-    hrParadas=[...hrParadas.filter(x=>!x.logistica),...hrParadas.filter(x=>x.logistica)];
+    nuevas.forEach(p=>{if(!ya.has(p.id)){p.reparto=hrRepInicial(p);hrParadas.push(p);agregadas++;}});
+    hrOrdenar();
     hrGuardar();
   }catch(e){error='No se pudieron leer las planillas. Probá de nuevo en un rato.';}
   hrCargando=false;btn.textContent='Traer ventas del día';btn.disabled=false;
@@ -3749,11 +3750,11 @@ function hrAgregar(){
   const g=id=>document.getElementById(id);const nombre=g('hr-n-nombre').value.trim();
   if(!nombre&&!g('hr-n-dir').value.trim()){g('hr-n-nombre').focus();return;}
   hrParadas.push({id:'m:'+Date.now(),fuente:'manual',nombre:nombre||'(sin nombre)',direccion:g('hr-n-dir').value.trim(),localidad:g('hr-n-loc').value.trim(),alimento:g('hr-n-ali').value.trim()});
-  hrParadas=[...hrParadas.filter(x=>!x.logistica),...hrParadas.filter(x=>x.logistica)];
+  hrParadas[hrParadas.length-1].reparto=true;hrOrdenar();
   ['hr-n-nombre','hr-n-dir','hr-n-loc','hr-n-ali'].forEach(id=>g(id).value='');
   hrGuardar();hrRender();g('hr-n-nombre').focus();
 }
-function hrMover(i,d){const j=i+d;if(j<0||j>=hrParadas.length||hrParadas[j].logistica)return;const t=hrParadas[i];hrParadas[i]=hrParadas[j];hrParadas[j]=t;hrGuardar();hrRender();}
+function hrMover(i,d){const j=i+d;if(j<0||j>=hrParadas.length||!hrParadas[i].reparto||!hrParadas[j].reparto)return;const t=hrParadas[i];hrParadas[i]=hrParadas[j];hrParadas[j]=t;hrGuardar();hrRender();}
 function hrQuitar(i){const p=hrParadas[i];if(!confirm('¿Sacar a '+p.nombre+' de la ruta?'))return;hrParadas.splice(i,1);hrGuardar();hrRender();}
 function hrEditar(i,campo,valor){hrParadas[i][campo]=valor;hrGuardar();hrRenderHoja();}
 function hrDirMaps(p){return[p.direccion,p.localidad,'Buenos Aires, Argentina'].filter(Boolean).join(', ');}
@@ -3774,13 +3775,13 @@ function hrRender(msg){
   const fuenteTxt={directo:'Directo',flex:'Flex',manual:'A mano'};
   let h=msg?'<div class="hr-help" style="color:var(--verde);font-weight:600">'+hrEsc(msg)+'</div>':'';
   if(!hrParadas.length){h+='<div class="hr-vacio">Todavía no hay entregas para el '+hrFmtFecha(hrFecha)+'.</div>';}
-  else{const np=hrPropias().length,nl=hrParadas.length-np;h+='<div class="hr-help"><b>'+np+'</b> las entregamos nosotros · <b>'+nl+'</b> van por logística (no entran en la hoja de ruta). Tildá <b>Logística</b> en las que no repartimos; el Panel se acuerda para la próxima.</div>';
-  let n=0;h+=hrParadas.map((p,i)=>(p.logistica&&(i===0||!hrParadas[i-1].logistica)?'<div class="hr-sep">Van por logística</div>':'')+'<div class="hr-row'+(p.logistica?' hr-log':'')+'"><div class="hr-num">'+(p.logistica?'—':(++n))+'</div>'+
+  else{const np=hrPropias().length,nl=hrParadas.length-np;h+='<div class="hr-help">Tildá <b>Reparto</b> en las que llevamos nosotros. <b>'+np+'</b> en el recorrido · <b>'+nl+'</b> afuera (logística). El Panel se acuerda de cada cliente para la próxima.</div>';
+  let n=0;h+=hrParadas.map((p,i)=>(!p.reparto&&(i===0||hrParadas[i-1].reparto)?'<div class="hr-sep">Sin tildar — no entran en el recorrido</div>':'')+'<div class="hr-row'+(p.reparto?'':' hr-log')+'"><div class="hr-num">'+(p.reparto?(++n):'—')+'</div>'+
     '<div class="hr-nomwrap"><span class="hr-nom">'+hrEsc(p.nombre)+'</span><span class="hr-src '+p.fuente+'">'+fuenteTxt[p.fuente]+'</span></div>'+
     '<input class="hr-in'+(p.direccion?'':' hr-falta')+'" value="'+hrEsc(p.direccion)+'" placeholder="Falta dirección" onchange="hrEditar('+i+',\'direccion\',this.value);this.classList.toggle(\'hr-falta\',!this.value)">'+
     '<input class="hr-in" value="'+hrEsc(p.localidad)+'" placeholder="Localidad" onchange="hrEditar('+i+',\'localidad\',this.value)">'+
     '<input class="hr-in'+(p.alimento?'':' hr-falta')+'" value="'+hrEsc(p.alimento)+'" placeholder="Falta alimento" onchange="hrEditar('+i+',\'alimento\',this.value);this.classList.toggle(\'hr-falta\',!this.value)">'+
-    '<div class="hr-acc"><label class="hr-logchk" title="Va por logística"><input type="checkbox" '+(p.logistica?'checked':'')+' onchange="hrLogistica('+i+',this.checked)"> Logística</label>'+(p.logistica?'':'<button title="Subir" onclick="hrMover('+i+',-1)">↑</button><button title="Bajar" onclick="hrMover('+i+',1)">↓</button>')+'<button class="del" title="Sacar" onclick="hrQuitar('+i+')">✕</button></div></div>').join('');}
+    '<div class="hr-acc"><label class="hr-logchk" title="La llevamos nosotros"><input type="checkbox" '+(p.reparto?'checked':'')+' onchange="hrReparto('+i+',this.checked)"> Reparto</label>'+(!p.reparto?'':'<button title="Subir" onclick="hrMover('+i+',-1)">↑</button><button title="Bajar" onclick="hrMover('+i+',1)">↓</button>')+'<button class="del" title="Sacar" onclick="hrQuitar('+i+')">✕</button></div></div>').join('');}
   el.innerHTML=h;
   hrRenderHoja();
 }
