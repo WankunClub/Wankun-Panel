@@ -232,6 +232,14 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
         <label>Mes</label>
         <select id="diaria-mes-sel" onchange="renderVentaDiaria()"></select>
       </div>
+      <div class="filtro-group">
+        <label>Ordenar</label>
+        <select id="diaria-orden-sel" onchange="renderVentaDiaria()">
+          <option value="fecha">Fecha</option>
+          <option value="fac">Mayor facturación</option>
+          <option value="kg">Más kg</option>
+        </select>
+      </div>
     </div>
     <div id="venta-diaria-tabla" style="margin-top:12px"></div>
   </div>
@@ -1609,7 +1617,8 @@ function renderVentaDiaria(){
   const dias=diarioData.byMesDia[mes]||{};
   const[y,mo]=mes.split('-').map(Number);
   const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  const lista=Object.keys(dias).map(Number).filter(d=>dias[d].fac>0||dias[d].kg>0).sort((a,b)=>b-a);
+  const orden=(document.getElementById('diaria-orden-sel')||{}).value||'fecha';
+  const lista=Object.keys(dias).map(Number).filter(d=>dias[d].fac>0||dias[d].kg>0).sort((a,b)=>orden==='fac'?dias[b].fac-dias[a].fac:orden==='kg'?dias[b].kg-dias[a].kg:b-a);
   if(!lista.length){el.innerHTML='<div style="padding:16px;text-align:center;color:var(--gris-dark);font-size:13px">Sin ventas cargadas en este mes</div>';return;}
   const fmt$=v=>'$ '+Math.round(v).toLocaleString('es-AR');
   const fmtKg=v=>v.toLocaleString('es-AR',{maximumFractionDigits:1});
@@ -1622,6 +1631,8 @@ function renderVentaDiaria(){
     html+='<tr style="border-bottom:1px solid var(--gris-med)"><td style="padding:9px 14px">'+DOW[new Date(y,mo-1,d).getDay()]+' '+d+'/'+mo+'</td><td style="padding:9px 14px;text-align:right">'+fmt$(v.fac)+'</td><td style="padding:9px 14px;text-align:right">'+fmtKg(v.kg)+'</td></tr>';
   });
   html+='<tr style="background:var(--verde-bg);font-weight:700;color:var(--verde)"><td style="padding:10px 14px">Total mes</td><td style="padding:10px 14px;text-align:right">'+fmt$(totF)+'</td><td style="padding:10px 14px;text-align:right">'+fmtKg(totK)+'</td></tr>';
+  const n=lista.length;
+  html+='<tr style="background:var(--gris);font-weight:600"><td style="padding:10px 14px">Promedio por día de venta <span style="font-weight:400;color:var(--gris-dark);font-size:12px">('+n+' días)</span></td><td style="padding:10px 14px;text-align:right">'+fmt$(totF/n)+'</td><td style="padding:10px 14px;text-align:right">'+fmtKg(totK/n)+'</td></tr>';
   html+='</tbody></table>';
   el.innerHTML='<div style="max-height:420px;overflow-y:auto">'+html+'</div>';
 }
