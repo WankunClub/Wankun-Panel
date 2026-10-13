@@ -1634,7 +1634,7 @@ function renderVentaDiaria(){
   const n=lista.length;
   html+='<tr style="background:var(--gris);font-weight:600"><td style="padding:10px 14px">Promedio por día de venta <span style="font-weight:400;color:var(--gris-dark);font-size:12px">('+n+' días)</span></td><td style="padding:10px 14px;text-align:right">'+fmt$(totF/n)+'</td><td style="padding:10px 14px;text-align:right">'+fmtKg(totK/n)+'</td></tr>';
   html+='</tbody></table>';
-  el.innerHTML='<div style="max-height:420px;overflow-y:auto">'+html+'</div>';
+  el.innerHTML=html;
 }
 
 function renderComparativoTabla(byMesDia){
