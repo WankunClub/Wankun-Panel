@@ -514,6 +514,7 @@ Vamos Argentina!</div>
       <div class="card-title" style="margin:0">Pedido de reseñas — compraron ayer</div>
       <div class="btn-row">
         <div class="filtro-group"><label>Estado</label><select id="rs-filtro" onchange="resenasFiltrar()"><option value="pendiente">Sin pedir</option><option value="todos">Todos</option><option value="pedida">Pedida, sin dejar</option><option value="dejada">Ya dejada</option></select></div>
+        <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#f3f4f6;color:#374151;font-weight:500;align-self:flex-end" id="rs-sync">Conectando con la planilla…</span>
         <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500;align-self:flex-end" id="rs-count">0</span>
         <button class="btn btn-primary" onclick="resenasCargar()" style="align-self:flex-end">Cargar clientes</button>
       </div>
@@ -531,7 +532,7 @@ Nos ayudarias muchisimo si nos dejas una reseña en Google contandonos que te pa
 https://g.page/r/CWpl5hrUBgqFEBM/review
 
 Muchas gracias!</div>
-    <div style="font-size:12px;color:var(--gris-dark);margin-top:8px">Nota: muestra solo clientes que compraron <strong>ayer</strong> por canal directo (Ventas), deduplicados por cliente. El estado pedida/dejada se guarda en este navegador y persiste entre días — si mañana ese mismo cliente compra de nuevo, ya vas a ver su estado anterior.</div>
+    <div style="font-size:12px;color:var(--gris-dark);margin-top:8px">Nota: muestra solo clientes que compraron <strong>ayer</strong> por canal directo (Ventas), deduplicados por teléfono. El registro de reseñas pedidas se guarda en la hoja <strong>Resenas</strong> de la planilla de Ventas: es el mismo en la compu y en el celular. A quien ya se le pidió reseña le aparece "Pedida" con la fecha y no se le puede volver a mandar.</div>
   </div>
   <div class="card" style="margin-top:16px">
     <div class="results-header">
@@ -2161,14 +2162,51 @@ function copiarSorteoMsg(){const t=`Hola [Nombre]!\n\nSabemos lo mucho que quere
 function clExportar(){const rows=[['Nombre','Localidad','Telefono','Articulo','Zona'],...clFiltered.map(c=>[c.nombre,c.localidad,c.telefono,c.articulo,esLocal(c.localidad)?'Local':'Fuera'])];const csv=rows.map(r=>r.map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='clientes_wankun.csv';a.click();URL.revokeObjectURL(url);}
 
 // ── RESEÑAS GOOGLE ───────────────────────────────────────────────────────────
+// El registro de reseñas pedidas vive en la hoja "Resenas" de la planilla de Ventas
+// (vía Apps Script), así es el mismo en todos los dispositivos. localStorage queda
+// solo como copia de respaldo por si la planilla no responde.
 let resenasData=[];
 const RS_LINK='https://g.page/r/CWpl5hrUBgqFEBM/review';
-function rsKey(tel,nombre){const t=(tel||'').toString().replace(/\D/g,'');return t?('tel:'+t):('nom:'+(nombre||'').trim().toLowerCase());}
-function rsGetEstado(key){try{const raw=localStorage.getItem('wankun_resenas');const map=raw?JSON.parse(raw):{};return map[key]||{pedida:false,dejada:false,nombre:'',telefono:''};}catch(e){return{pedida:false,dejada:false,nombre:'',telefono:''};}}
-function rsSetEstado(key,estado){try{const raw=localStorage.getItem('wankun_resenas');const map=raw?JSON.parse(raw):{};map[key]=estado;localStorage.setItem('wankun_resenas',JSON.stringify(map));}catch(e){console.error(e);}}
+const RS_API='PEGAR_URL_APPS_SCRIPT';
+let rsMapa={};          // clave -> {telefono,nombre,pedida(bool),fechaPedida,dejada}
+let rsRemotoOk=false;
+function rsNormTel(t){let d=(t||'').toString().replace(/\D/g,'');if(d.startsWith('54'))d=d.slice(2);if(d.startsWith('9')&&d.length===11)d=d.slice(1);return d;}
+function rsKey(tel,nombre){const t=rsNormTel(tel);return t?('tel:'+t):('nom:'+(nombre||'').trim().toLowerCase());}
+function rsLocalLeer(){try{const raw=localStorage.getItem('wankun_resenas');return raw?JSON.parse(raw):{};}catch(e){return{};}}
+function rsLocalGuardar(){try{localStorage.setItem('wankun_resenas',JSON.stringify(rsMapa));}catch(e){}}
+async function rsCargarRemoto(){
+  // Respaldo local primero (normalizando claves viejas)
+  const local=rsLocalLeer();rsMapa={};
+  Object.values(local).forEach(v=>{const k=rsKey(v.telefono,v.nombre);rsMapa[k]={telefono:v.telefono||'',nombre:v.nombre||'',pedida:!!v.pedida,fechaPedida:v.fechaPedida||'',dejada:!!v.dejada};});
+  if(!RS_API||RS_API.startsWith('PEGAR')){rsRemotoOk=false;return;}
+  try{
+    const r=await fetch(RS_API,{cache:'no-store'});const j=await r.json();
+    if(!j.ok)throw new Error(j.error||'error');
+    const remoto={};
+    j.filas.forEach(f=>{const k=rsKey(f.telefono,f.nombre);remoto[k]={telefono:f.telefono,nombre:f.nombre,pedida:!!f.pedida,fechaPedida:f.pedida||'',dejada:!!f.dejada};});
+    // Lo que estaba marcado solo en este navegador y no en la planilla: se sube.
+    const subir=Object.entries(rsMapa).filter(([k,v])=>(v.pedida||v.dejada)&&!remoto[k]).map(([k,v])=>({telefono:v.telefono,nombre:v.nombre,pedida:v.pedida,dejada:v.dejada,origen:'migrado-navegador'}));
+    if(subir.length){await rsEnviar({lote:subir});subir.forEach(v=>{remoto[rsKey(v.telefono,v.nombre)]={...v,fechaPedida:''};});}
+    rsMapa=remoto;rsRemotoOk=true;rsLocalGuardar();
+  }catch(e){console.error('Reseñas: no se pudo leer la planilla',e);rsRemotoOk=false;}
+}
+async function rsEnviar(payload){
+  if(!RS_API||RS_API.startsWith('PEGAR'))return false;
+  try{const r=await fetch(RS_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});const j=await r.json();return !!j.ok;}catch(e){console.error('Reseñas: no se pudo guardar',e);return false;}
+}
+function rsGetEstado(key){return rsMapa[key]||{pedida:false,dejada:false,nombre:'',telefono:'',fechaPedida:''};}
+function rsSetEstado(key,estado){
+  const prev=rsMapa[key]||{};
+  const hoy=new Date().toISOString().slice(0,10);
+  rsMapa[key]={...prev,...estado,fechaPedida:prev.fechaPedida||(estado.pedida?hoy:'')};
+  rsLocalGuardar();
+  rsEnviar({telefono:estado.telefono,nombre:estado.nombre,pedida:estado.pedida,dejada:estado.dejada}).then(ok=>{if(!ok)alert('Ojo: no se pudo guardar en la planilla. Revisá la conexión y volvé a marcar.');});
+}
+function rsFechaCorta(f){if(!f)return'';const p=f.split('-');return p.length===3?(p[2]+'/'+p[1]):f;}
 function resenasWaLink(tel,nombre){const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];const msg='Hola '+primer+'! Te saluda Nacho de Wankun Club 🐾\n\nNos ayudarias muchisimo si nos dejas una resena en Google contandonos que te parecio el servicio. Te dejo este link, es cortito:\n'+RS_LINK+'\n\nMuchas gracias!';return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
 function rsEsAyer(fechaStr){const f=parseFecha(fechaStr);if(!f)return false;const h=new Date();const ayer=new Date(h.getFullYear(),h.getMonth(),h.getDate()-1);return f.getFullYear()===ayer.getFullYear()&&f.getMonth()===ayer.getMonth()&&f.getDate()===ayer.getDate();}
 async function resenasCargar(){
+  await rsCargarRemoto();
   const vRows=await fetchCSV('Ventas');
   const vistos={};
   const lista=[];
@@ -2183,11 +2221,13 @@ async function resenasCargar(){
     lista.push({nombre,telefono:tel,articulo});
   });
   lista.sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
-  resenasData=lista.map(c=>{const key=rsKey(c.telefono,c.nombre);const est=rsGetEstado(key);return{...c,key,pedida:est.pedida,dejada:est.dejada};});
+  resenasData=lista.map(c=>{const key=rsKey(c.telefono,c.nombre);const est=rsGetEstado(key);return{...c,key,pedida:est.pedida,dejada:est.dejada,fechaPedida:est.fechaPedida};});
   document.getElementById('rs-wrap').style.display='block';
+  rsAvisoEstado();
   resenasFiltrar();
   resenasCargarHistorial();
 }
+function rsAvisoEstado(){const el=document.getElementById('rs-sync');if(!el)return;el.textContent=rsRemotoOk?'Sincronizado con la planilla':'Sin conexión con la planilla: no pidas reseñas hasta que vuelva';el.style.background=rsRemotoOk?'#d1fae5':'#fee2e2';el.style.color=rsRemotoOk?'#065f46':'#991b1b';}
 function resenasMetricas(){
   const t=resenasData.length,p=resenasData.filter(c=>c.pedida).length,d=resenasData.filter(c=>c.dejada).length,pend=resenasData.filter(c=>!c.pedida).length;
   document.getElementById('rs-m-total').textContent=t;
@@ -2197,31 +2237,32 @@ function resenasMetricas(){
 }
 function resenasToggle(key,campo){
   const c=resenasData.find(x=>x.key===key);if(!c)return;
+  if(campo==='pedida'&&c.pedida){resenasFiltrar();return;} // una reseña pedida no se puede desmarcar
   c[campo]=!c[campo];
   if(campo==='dejada'&&c.dejada)c.pedida=true;
   rsSetEstado(key,{pedida:c.pedida,dejada:c.dejada,nombre:c.nombre,telefono:c.telefono});
+  c.fechaPedida=rsGetEstado(key).fechaPedida;
   resenasMetricas();resenasFiltrar();resenasCargarHistorial();
 }
 function resenasMarcarPedida(key){
   const c=resenasData.find(x=>x.key===key);if(!c||c.pedida)return;
-  c.pedida=true;rsSetEstado(key,{pedida:c.pedida,dejada:c.dejada,nombre:c.nombre,telefono:c.telefono});resenasMetricas();resenasFiltrar();resenasCargarHistorial();
+  c.pedida=true;rsSetEstado(key,{pedida:c.pedida,dejada:c.dejada,nombre:c.nombre,telefono:c.telefono});c.fechaPedida=rsGetEstado(key).fechaPedida;resenasMetricas();resenasFiltrar();resenasCargarHistorial();
 }
-function resenasCargarHistorial(){
+async function resenasCargarHistorial(){
   try{
-    const raw=localStorage.getItem('wankun_resenas');
-    const map=raw?JSON.parse(raw):{};
-    const entries=Object.entries(map).filter(([k,v])=>v.pedida||v.dejada).sort((a,b)=>(a[1].nombre||'').localeCompare(b[1].nombre||'','es'));
+    if(!Object.keys(rsMapa).length)await rsCargarRemoto();
+    rsAvisoEstado();
+    const entries=Object.entries(rsMapa).filter(([k,v])=>v.pedida||v.dejada).sort((a,b)=>(b[1].fechaPedida||'').localeCompare(a[1].fechaPedida||'')||(a[1].nombre||'').localeCompare(b[1].nombre||'','es'));
     const tb=document.getElementById('rs-hist-table');
     const wrap=document.getElementById('rs-hist-wrap');
     document.getElementById('rs-hist-count').textContent=entries.length+' clientes';
     if(!entries.length){wrap.style.display='block';tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin historial todavía</div>';return;}
     wrap.style.display='block';
     tb.innerHTML=entries.map(([key,v])=>{
-      const tel=(v.telefono||'').toString().replace(/\D/g,'');
       return`<div class="table-row" style="grid-template-columns:1fr 130px 80px 80px;${v.dejada?'opacity:0.5':''}">
       <span style="font-weight:500;${v.dejada?'text-decoration:line-through;color:var(--gris-dark)':''}">${v.nombre||key}</span>
       <span style="font-family:'DM Mono',monospace;font-size:12px">${v.telefono||'--'}</span>
-      <span style="text-align:center">${v.pedida?'<span style="color:#d97706;font-size:18px">✓</span>':'--'}</span>
+      <span style="text-align:center">${v.pedida?'<span style="color:#d97706;font-size:13px">✓ '+rsFechaCorta(v.fechaPedida)+'</span>':'--'}</span>
       <span style="text-align:center">${v.dejada?'<span style="color:var(--verde-claro);font-size:18px">✓</span>':'--'}</span>
     </div>`;}).join('');
   }catch(e){console.error(e);}
@@ -2240,15 +2281,19 @@ function resenasFiltrar(){
   tb.innerHTML=lista.map(c=>{
     const done=c.dejada;
     const asked=c.pedida&&!c.dejada;
-    const rowStyle=done?'opacity:0.45;':'asked'===''?'':'';
     const nameStyle=done?'text-decoration:line-through;color:var(--gris-dark)':asked?'color:var(--gris-dark)':'font-weight:500';
+    let accion;
+    if(c.pedida){accion=`<span style="font-size:11px;color:#92400e;background:#fef3c7;padding:2px 6px;border-radius:8px;text-align:center" title="Ya se le pidió reseña">Pedida ${rsFechaCorta(c.fechaPedida)}</span>`;}
+    else if(!rsRemotoOk){accion='<span style="font-size:11px;color:#991b1b" title="Sin conexión con la planilla">bloqueado</span>';}
+    else if(c.telefono){accion=`<a class="wa-link" href="${resenasWaLink(c.telefono,c.nombre)}" target="_blank" onclick="event.stopPropagation();resenasMarcarPedida('${c.key}')">WA</a>`;}
+    else{accion='<span style="color:var(--gris-dark);font-size:12px">--</span>';}
     return `<div class="table-row" style="grid-template-columns:1fr 1fr 120px 90px 90px 80px;${done?'opacity:0.45;':''}">
     <span style="${nameStyle}">${c.nombre}${asked?' <span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:8px;font-weight:500">pedida</span>':''}</span>
     <span style="font-size:12px;color:var(--gris-dark)">${c.articulo||'--'}</span>
     <span style="font-family:'DM Mono',monospace;font-size:12px">${c.telefono||'--'}</span>
-    <span style="text-align:center"><input type="checkbox" ${c.pedida?'checked':''} onchange="resenasToggle('${c.key}','pedida')" style="width:18px;height:18px;cursor:pointer"></span>
+    <span style="text-align:center"><input type="checkbox" ${c.pedida?'checked disabled':''} onchange="resenasToggle('${c.key}','pedida')" style="width:18px;height:18px;cursor:${c.pedida?'not-allowed':'pointer'}"></span>
     <span style="text-align:center"><input type="checkbox" ${c.dejada?'checked':''} onchange="resenasToggle('${c.key}','dejada')" style="width:18px;height:18px;cursor:pointer"></span>
-    ${c.telefono?`<a class="wa-link" href="${resenasWaLink(c.telefono,c.nombre)}" target="_blank" onclick="event.stopPropagation();resenasMarcarPedida('${c.key}')">WA</a>`:'<span style="color:var(--gris-dark);font-size:12px">--</span>'}
+    ${accion}
   </div>`;}).join('');
   resenasMetricas();
 }
