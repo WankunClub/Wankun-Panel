@@ -17,6 +17,9 @@ const GID_MAP = {
 
 const STOCK_SHEETS = ["Stock", "Meli", "Precios", "Movimientos"];
 
+// Registro de reseñas pedidas (Apps Script de la planilla de Ventas)
+const RESENAS_API = "https://script.google.com/macros/s/AKfycbzQabnMbn1s8fsQ1rDKn2_SXCX4UZLBX2NI_9p03IAveJZlK7ehiNbEtDjT6VP4yto3XA/exec";
+
 export default {
   async fetch(request) {
     const url = new URL(request.url);
@@ -24,12 +27,27 @@ export default {
 
     const headers = {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
       "Content-Type": "text/csv; charset=utf-8",
     };
 
     if (request.method === "OPTIONS") {
       return new Response(null, { headers });
+    }
+
+    // /resenas → reenvía al Apps Script (GET lee la lista, POST registra)
+    if (url.pathname === "/resenas") {
+      const jsonHeaders = { ...headers, "Content-Type": "application/json; charset=utf-8" };
+      try {
+        const init = request.method === "POST"
+          ? { method: "POST", body: await request.text(), headers: { "Content-Type": "text/plain;charset=utf-8" }, redirect: "follow" }
+          : { method: "GET", redirect: "follow" };
+        const res = await fetch(RESENAS_API, init);
+        return new Response(await res.text(), { status: res.ok ? 200 : 502, headers: jsonHeaders });
+      } catch (e) {
+        return new Response(JSON.stringify({ ok: false, error: e.message }), { status: 502, headers: jsonHeaders });
+      }
     }
 
     const isStock = STOCK_SHEETS.includes(sheet);
