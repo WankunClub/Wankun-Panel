@@ -2227,7 +2227,7 @@ async function resenasCargar(){
   resenasFiltrar();
   resenasCargarHistorial();
 }
-function rsAvisoEstado(){const el=document.getElementById('rs-sync');if(!el)return;el.textContent=rsRemotoOk?'Sincronizado con la planilla':'Sin conexión con la planilla: no pidas reseñas hasta que vuelva';el.style.background=rsRemotoOk?'#d1fae5':'#fee2e2';el.style.color=rsRemotoOk?'#065f46':'#991b1b';}
+function rsAvisoEstado(){const el=document.getElementById('rs-sync');if(!el)return;el.textContent='Guardado en este dispositivo';el.style.background='#d1fae5';el.style.color='#065f46';}
 function resenasMetricas(){
   const t=resenasData.length,p=resenasData.filter(c=>c.pedida).length,d=resenasData.filter(c=>c.dejada).length,pend=resenasData.filter(c=>!c.pedida).length;
   document.getElementById('rs-m-total').textContent=t;
@@ -2284,7 +2284,7 @@ function resenasFiltrar(){
     const nameStyle=done?'text-decoration:line-through;color:var(--gris-dark)':asked?'color:var(--gris-dark)':'font-weight:500';
     let accion;
     if(c.pedida){accion=`<span style="font-size:11px;color:#92400e;background:#fef3c7;padding:2px 6px;border-radius:8px;text-align:center" title="Ya se le pidió reseña">Pedida ${rsFechaCorta(c.fechaPedida)}</span>`;}
-    else if(!rsRemotoOk){accion='<span style="font-size:11px;color:#991b1b" title="Sin conexión con la planilla">bloqueado</span>';}
+    else if(false){/* rsRemotoOk ya no bloquea */}
     else if(c.telefono){accion=`<a class="wa-link" href="${resenasWaLink(c.telefono,c.nombre)}" target="_blank" rel="noopener" onclick="event.stopPropagation();setTimeout(()=>resenasMarcarPedida('${c.key}'),0)">WA 📨</a>`;}
     else{accion='<span style="color:var(--gris-dark);font-size:12px">--</span>';}
     return `<div class="table-row" style="grid-template-columns:1fr 1fr 120px 90px 90px 80px;${done?'opacity:0.45;':''}">
