@@ -2285,7 +2285,7 @@ function resenasFiltrar(){
     let accion;
     if(c.pedida){accion=`<span style="font-size:11px;color:#92400e;background:#fef3c7;padding:2px 6px;border-radius:8px;text-align:center" title="Ya se le pidió reseña">Pedida ${rsFechaCorta(c.fechaPedida)}</span>`;}
     else if(!rsRemotoOk){accion='<span style="font-size:11px;color:#991b1b" title="Sin conexión con la planilla">bloqueado</span>';}
-    else if(c.telefono){accion=`<a class="wa-link" href="${resenasWaLink(c.telefono,c.nombre)}" target="_blank" onclick="event.stopPropagation();resenasMarcarPedida('${c.key}')">WA</a>`;}
+    else if(c.telefono){accion=`<a class="wa-link" href="${resenasWaLink(c.telefono,c.nombre)}" target="_blank" rel="noopener" onclick="event.stopPropagation();setTimeout(()=>resenasMarcarPedida('${c.key}'),0)">WA 📨</a>`;}
     else{accion='<span style="color:var(--gris-dark);font-size:12px">--</span>';}
     return `<div class="table-row" style="grid-template-columns:1fr 1fr 120px 90px 90px 80px;${done?'opacity:0.45;':''}">
     <span style="${nameStyle}">${c.nombre}${asked?' <span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:8px;font-weight:500">pedida</span>':''}</span>
