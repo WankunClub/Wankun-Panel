@@ -2200,7 +2200,7 @@ function rsSetEstado(key,estado){
   const hoy=new Date().toISOString().slice(0,10);
   rsMapa[key]={...prev,...estado,fechaPedida:prev.fechaPedida||(estado.pedida?hoy:'')};
   rsLocalGuardar();
-  rsEnviar({telefono:estado.telefono,nombre:estado.nombre,pedida:estado.pedida,dejada:estado.dejada}).then(ok=>{if(!ok)alert('Ojo: no se pudo guardar en la planilla. Revisá la conexión y volvé a marcar.');});
+  // rsEnviar deshabilitado — estado solo en localStorage
 }
 function rsFechaCorta(f){if(!f)return'';const p=f.split('-');return p.length===3?(p[2]+'/'+p[1]):f;}
 function resenasWaLink(tel,nombre){const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];const msg='Hola '+primer+'! Te saluda Nacho de Wankun Club 🐾\n\nNos ayudarias muchisimo si nos dejas una resena en Google contandonos que te parecio el servicio. Te dejo este link, es cortito:\n'+RS_LINK+'\n\nMuchas gracias!';return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
