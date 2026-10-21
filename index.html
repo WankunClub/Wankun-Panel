@@ -1992,6 +1992,10 @@ async function clVerFicha(nombre){
     return false;
   });
   const tel=telClave||'';
+  // Proximo mensaje: usa el mismo calculo por producto que Recompras. Si Recompras todavia
+  // no se cargo en esta sesion, se carga sola (igual que clData arriba).
+  if(!avTodos.length){try{await avConectar();}catch(e){}}
+  pmActual={c:pmBuscar(tel,nombre)};
   const loc=registros[0].localidad||'';
   const dir=(registros.find(r=>r.fuente==='Flex Meli'&&r.direccion)||registros.find(r=>r.direccion))?.direccion||'';
   const compras=registros.filter(r=>r.fecha).sort((a,b)=>{const fa=parseFecha(a.fecha),fb=parseFecha(b.fecha);return fb&&fa?fb-fa:0;});
@@ -2029,7 +2033,9 @@ async function clVerFicha(nombre){
   // Ultimo producto
   const ultimoProd=compras[0]?.articulo||'--';
 
-  const waMsg=tel?`https://wa.me/54${tel.toString().replace(/\D/g,'')}?text=${encodeURIComponent('Hola '+(nombre.split(' ')[0])+', cómo está tu perrito? Te escribo porque debe estar por terminarse el alimento. ¿Te gustaría que coordinemos la reposición? Entregamos en el día y como siempre van los snacks de Filan.')}`:null;
+  const pmE0=pmActual&&pmActual.c?pmEstado(pmActual.c):null;
+  // Si hay proximo mensaje, el boton de WhatsApp vive en ese bloque (evita dos mensajes distintos).
+  const waMsg=(tel&&!pmE0)?(`https://wa.me/54${tel.toString().replace(/\D/g,'')}?text=${encodeURIComponent('Hola '+(nombre.split(' ')[0])+', cómo está tu perrito? Te escribo porque debe estar por terminarse el alimento. ¿Te gustaría que coordinemos la reposición? Entregamos en el día y como siempre van los snacks de Filan.')}`):null;
 
   const modal=document.createElement('div');
   modal.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
@@ -2063,6 +2069,9 @@ async function clVerFicha(nombre){
       </div>
     </div>
 
+    <!-- Proximo mensaje (se arma solo con cada compra, ajustable a mano) -->
+    <div id="pm-bloque" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin-bottom:20px">${pmBloqueHtml()}</div>
+
     <!-- Trazabilidad Flex Meli -> Directa -->
     <div style="font-size:13px;font-weight:600;margin-bottom:10px">Recorrido del cliente</div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
@@ -2080,7 +2089,7 @@ async function clVerFicha(nombre){
       </div>
       <div style="background:#dbeafe;border-radius:8px;padding:10px;text-align:center">
         <div style="font-size:10px;color:#1d4ed8;font-weight:600;text-transform:uppercase;margin-bottom:4px">Próximo mensaje</div>
-        <div style="font-size:13px;font-weight:700;color:${proxColor}">${proxLabel}</div>
+        <div id="pm-recorrido" style="font-size:13px;font-weight:700;color:${proxColor}">${proxLabel}</div>
       </div>
     </div>
 
@@ -2117,6 +2126,7 @@ async function clVerFicha(nombre){
     </div>
   </div>`;
   document.body.appendChild(modal);
+  pmRender();
 }
 
 function waLink(tel,nombre){
@@ -2708,12 +2718,13 @@ function avMostrarStockProx(){
   // Preferimos el ciclo del producto especifico que esta por vencer (prodProximo).
   // Si el cliente todavia no tiene 2 compras de un mismo producto (no hay ciclo propio
   // para ninguno), caemos al calculo general viejo para no perder a esos clientes.
-  const proxDe=c=>c.prodProximo?c.prodProximo.prox:c.prox;
+  // Si Nacho ajusto a mano la fecha del proximo mensaje en la ficha, manda esa fecha.
+  const proxDe=c=>{const aj=pmDiasAjuste(c);if(aj!==null)return aj;return c.prodProximo?c.prodProximo.prox:c.prox;};
   const prodDe=c=>c.prodProximo?c.prodProximo.producto:c.ultimoProd;
   const lista=avTodos.filter(function(c){if(c.fuente!=='Directa')return false;const p=proxDe(c);if(p===null||p===undefined)return false;return p>=0&&p<=5;}).sort(function(a,b){return(proxDe(a)||0)-(proxDe(b)||0);});
   const tb=document.getElementById('av-stock-prox');
   if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin entregas en los próximos 5 días</div>';return;}
-  tb.innerHTML=lista.map(function(c){const prox=proxDe(c);const prodPrincipal=prodDe(c);const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';const proxLabel=prox===0?'<span style="color:#c0392b;font-weight:700;font-size:11px">Hoy</span>':'<span style="color:#7c3aed;font-weight:700;font-size:11px">'+prox+'d</span>';const prodsBase=c.prodProximo?[prodPrincipal]:(c.ultimosProds&&c.ultimosProds.length?c.ultimosProds:[c.ultimoProd]);const prods=prodsBase.filter(Boolean).map(function(p){return'<span style="display:inline-block;background:#f3e8ff;color:#7c3aed;border-radius:4px;padding:2px 6px;font-size:10px;margin:1px">'+p+'</span>';}).join(' ');const tel=c.telefono||'';const waBtn=tel?'<a class="wa-link" href="'+avWaLink(tel,c.nombre,prodPrincipal)+'" target="_blank">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';const nombreEsc=c.nombre.replace(/'/g,"\\'");return '<div class="table-row" style="grid-template-columns:1fr 100px 60px 200px 70px"><span style="font-weight:500;cursor:pointer;color:var(--azul-med)" onclick="clVerFicha(\''+nombreEsc+'\')">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span>'+proxLabel+'<div>'+prods+'</div>'+waBtn+'</div>';}).join('');
+  tb.innerHTML=lista.map(function(c){const prox=proxDe(c);const prodPrincipal=prodDe(c);const zonaTag='<span class="'+(esLocal(c.localidad)?'local-tag':'fuera-tag')+'">'+(esLocal(c.localidad)?'local':'fuera')+'</span>';const proxLabel=prox===0?'<span style="color:#c0392b;font-weight:700;font-size:11px">Hoy</span>':'<span style="color:#7c3aed;font-weight:700;font-size:11px">'+prox+'d</span>';const prodsBase=c.prodProximo?[prodPrincipal]:(c.ultimosProds&&c.ultimosProds.length?c.ultimosProds:[c.ultimoProd]);const prods=prodsBase.filter(Boolean).map(function(p){return'<span style="display:inline-block;background:#f3e8ff;color:#7c3aed;border-radius:4px;padding:2px 6px;font-size:10px;margin:1px">'+p+'</span>';}).join(' ');const tel=c.telefono||'';const pmE=pmEstado(c);const waHref=pmE?pmWaLink(tel,pmE.texto):avWaLink(tel,c.nombre,prodPrincipal);const waBtn=tel?'<a class="wa-link" href="'+waHref+'" target="_blank">WA'+(pmE&&pmE.manual?' ✏️':'')+'</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';const nombreEsc=c.nombre.replace(/'/g,"\\'");return '<div class="table-row" style="grid-template-columns:1fr 100px 60px 200px 70px"><span style="font-weight:500;cursor:pointer;color:var(--azul-med)" onclick="clVerFicha(\''+nombreEsc+'\')">'+c.nombre+'</span><span style="font-size:11px">'+(c.localidad||'--')+' '+zonaTag+'</span>'+proxLabel+'<div>'+prods+'</div>'+waBtn+'</div>';}).join('');
 }
 
 // Chequeo manual de respaldo: sin importar ninguna frecuencia calculada, toda venta de un
@@ -2883,6 +2894,137 @@ function avWaLink(tel,nombre,prod){
   const num=tel.toString().replace(/\D/g,'');const full=num.startsWith('54')?num:'54'+num;const primer=(nombre||'').split(' ')[0];
   const msg='Hola '+primer+', cómo está tu perrito? Te escribo porque debe estar por terminarse el alimento. ¿Te gustaría que coordinemos la reposición? Entregamos en el día y como siempre van los snacks de Filan.';
   return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);
+}
+
+// ── PROXIMO MENSAJE POR CLIENTE (desde 21/10/2026) ──────────────────────────────
+// Cada compra deja "programado" el proximo mensaje de recompra en la ficha del cliente,
+// tomando como antecedente su ULTIMA compra. Solo canal directo (Flex Meli va por Migracion).
+// Ciclo usado, de mas confiable a menos: ciclo propio del producto (2+ compras de ese producto,
+// mediana) -> ciclo general del cliente -> 25 dias por defecto (primera compra).
+// Nacho puede ajustar fecha y/o texto a mano: se guarda en localStorage (solo este navegador)
+// junto con la fecha de la ultima compra al momento del ajuste. Si el cliente vuelve a comprar,
+// el ajuste se descarta solo y se recalcula. Un ajuste de fecha tambien mueve "Preparar stock".
+const PM_KEY='wankun_proxmsg_v1';
+const PM_DEFECTO=25;
+let pmActual=null;
+function pmStore(){try{return JSON.parse(localStorage.getItem(PM_KEY)||'{}');}catch(e){return{};}}
+function pmSetStore(s){try{localStorage.setItem(PM_KEY,JSON.stringify(s));}catch(e){}}
+function pmKey(c){const t=(c.telefono||'').toString().replace(/\D/g,'');return t.length>=8?'T:'+t:'N:'+(c.nombre||'').toLowerCase().trim();}
+function pmEsc(s){return(s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function pmHoy(){const h=new Date();h.setHours(0,0,0,0);return h;}
+function pmDiasHasta(f){const d=new Date(f);d.setHours(0,0,0,0);return Math.round((d-pmHoy())/864e5);}
+function pmIso(f){const d=new Date(f);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function pmFmt(f){return new Date(f).toLocaleDateString('es-AR',{weekday:'short',day:'2-digit',month:'2-digit'});}
+function pmTextoAuto(nombre,prod){
+  const primer=(nombre||'').split(' ')[0];
+  const p=(prod&&prod!=='Sin especificar')?('el '+prod.replace(/\s*-\s*/g,' ')):'el alimento';
+  return 'Hola '+primer+', cómo está tu perrito? Te escribo porque debe estar por terminarse '+p+'. ¿Te gustaría que coordinemos la reposición? Entregamos en el día y como siempre van los snacks de Filan.';
+}
+function pmWaLink(tel,texto){const num=(tel||'').toString().replace(/\D/g,'');if(!num)return null;const full=num.startsWith('54')?num:'54'+num;return 'https://wa.me/'+full+'?text='+encodeURIComponent(texto);}
+// Calculo automatico: candidatos = productos de la ultima compra + productos con ciclo propio
+// que siguen "vivos" (no pasaron mas de 2 ciclos sin comprarlos). Gana el que vence antes.
+function pmAuto(c){
+  if(!c||!c.ultima)return null;
+  const ultMs=c.ultima.getTime();
+  const cands=(c.ciclosProducto||[]).filter(cp=>cp.ultima.getTime()===ultMs||(cp.freq&&cp.dias<=cp.freq*2));
+  let best=null;
+  cands.forEach(cp=>{
+    let ciclo,base;
+    if(cp.freq){ciclo=cp.freq;base='producto';}
+    else if(c.freq){ciclo=c.freq;base='general';}
+    else{ciclo=PM_DEFECTO;base='defecto';}
+    const f=new Date(cp.ultima);f.setDate(f.getDate()+ciclo);
+    if(!best||f<best.fecha)best={fecha:f,producto:cp.producto,ciclo,base,ultimaProd:cp.ultima};
+  });
+  if(!best){const ciclo=c.freq||PM_DEFECTO;const f=new Date(c.ultima);f.setDate(f.getDate()+ciclo);best={fecha:f,producto:c.ultimoProd,ciclo,base:c.freq?'general':'defecto',ultimaProd:c.ultima};}
+  return best;
+}
+// Ajuste manual vigente (o null). Si hubo una compra posterior al ajuste, lo borra.
+function pmAjuste(c){
+  if(!c||!c.ultima)return null;
+  const s=pmStore();const k=pmKey(c);const o=s[k];
+  if(!o)return null;
+  if((o.ultimaRef||0)<c.ultima.getTime()){delete s[k];pmSetStore(s);return null;}
+  return o;
+}
+function pmEstado(c){
+  const a=pmAuto(c);if(!a)return null;
+  const o=pmAjuste(c);
+  const textoAuto=pmTextoAuto(c.nombre,a.producto);
+  if(o){const f=o.fecha?parseFecha(o.fecha):null;return Object.assign({},a,{fecha:f||a.fecha,texto:o.texto||textoAuto,textoAuto,manual:true});}
+  return Object.assign({},a,{texto:textoAuto,textoAuto,manual:false});
+}
+// Dias hasta la fecha ajustada a mano (null si no hay ajuste) -> lo usa "Preparar stock".
+function pmDiasAjuste(c){const o=pmAjuste(c);if(!o||!o.fecha)return null;const f=parseFecha(o.fecha);return f?pmDiasHasta(f):null;}
+function pmBuscar(tel,nombre){
+  const t=(tel||'').toString().replace(/\D/g,'');
+  const directa=avTodos.filter(c=>c.fuente==='Directa');
+  if(t.length>=8){const m=directa.find(c=>(c.telefono||'').toString().replace(/\D/g,'')===t);if(m)return m;}
+  const n=(nombre||'').toLowerCase().trim();
+  return directa.find(c=>(c.nombre||'').toLowerCase().trim()===n)||null;
+}
+function pmBloqueHtml(){
+  if(!pmActual||!pmActual.c)return`<div style="font-size:12px;color:var(--gris-dark)">Sin compras en el canal directo. Si viene de Flex Meli, el seguimiento va por Migración.</div>`;
+  const c=pmActual.c;const e=pmEstado(c);
+  if(!e)return`<div style="font-size:12px;color:var(--gris-dark)">Sin datos de compra para calcular.</div>`;
+  const dias=pmDiasHasta(e.fecha);
+  const cuando=dias<0?`hace ${Math.abs(dias)}d (atrasado)`:dias===0?'hoy':`en ${dias}d`;
+  const colorCuando=dias<0?'#c0392b':dias<=5?'#856404':'var(--verde)';
+  const baseTxt=e.base==='producto'?`${e.ciclo} días (ciclo de este producto)`:e.base==='general'?`${e.ciclo} días (ciclo general del cliente)`:`${e.ciclo} días (por defecto, primera compra)`;
+  const ult=new Date(e.ultimaProd).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+  const wa=pmWaLink(c.telefono,e.texto);
+  const fila=(k,v)=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-size:12px"><span style="color:var(--gris-dark)">${k}</span><span style="text-align:right">${v}</span></div>`;
+  return`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+      <div style="font-size:13px;font-weight:600">Próximo mensaje</div>
+      ${e.manual?'<span style="font-size:11px;padding:2px 10px;border-radius:6px;background:#fff3cd;color:#856404;font-weight:600">Ajustado manualmente</span>':''}
+    </div>
+    ${fila('Última compra',ult+' · '+pmEsc(e.producto||'--'))}
+    ${fila('Ciclo',baseTxt)}
+    ${fila('Enviar el',`<b>${pmFmt(e.fecha)}</b> <span style="color:${colorCuando};font-weight:600">· ${cuando}</span>`)}
+    <div id="pm-vista" style="background:#fff;border:1px solid var(--gris-med);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;margin:10px 0;white-space:pre-wrap">${pmEsc(e.texto)}</div>
+    <div id="pm-editor" style="display:none;margin:10px 0">
+      <div style="font-size:11px;color:var(--gris-dark);font-weight:600;margin-bottom:4px">Fecha de envío</div>
+      <input type="date" id="pm-fecha" value="${pmIso(e.fecha)}" oninput="document.getElementById('pm-err').textContent=''" style="width:100%;padding:8px;border:1px solid var(--gris-med);border-radius:6px;font-size:13px;margin-bottom:8px;box-sizing:border-box">
+      <div style="font-size:11px;color:var(--gris-dark);font-weight:600;margin-bottom:4px">Texto del mensaje</div>
+      <textarea id="pm-texto" rows="5" oninput="document.getElementById('pm-err').textContent=''" style="width:100%;padding:8px;border:1px solid var(--gris-med);border-radius:6px;font-size:12px;font-family:inherit;line-height:1.5;box-sizing:border-box">${pmEsc(e.texto)}</textarea>
+      <div id="pm-err" style="font-size:12px;color:#c0392b;margin-top:4px"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap" id="pm-botones">
+      ${wa?`<a href="${wa}" target="_blank" style="font-size:12px;padding:6px 12px;border-radius:6px;background:var(--verde-bg);color:var(--verde);font-weight:600;text-decoration:none">WhatsApp 🐾</a>`:'<span style="font-size:12px;color:var(--gris-dark);padding:6px 0">Sin teléfono</span>'}
+      <button id="pm-b-ajustar" onclick="pmAbrirEditor()" style="font-size:12px;padding:6px 12px;border-radius:6px;background:#fff;border:1px solid var(--gris-med);cursor:pointer;font-weight:600">✏️ Ajustar</button>
+      <button id="pm-b-guardar" onclick="pmGuardar()" style="display:none;font-size:12px;padding:6px 12px;border-radius:6px;background:var(--azul-med);color:#fff;border:none;cursor:pointer;font-weight:600">Guardar</button>
+      <button id="pm-b-cancelar" onclick="pmRender()" style="display:none;font-size:12px;padding:6px 12px;border-radius:6px;background:#fff;border:1px solid var(--gris-med);cursor:pointer">Cancelar</button>
+      ${e.manual?'<button onclick="pmReset()" style="font-size:12px;padding:6px 12px;border-radius:6px;background:#fff;border:1px solid var(--gris-med);cursor:pointer">↺ Volver al automático</button>':''}
+    </div>`;
+}
+function pmRender(){const el=document.getElementById('pm-bloque');if(el)el.innerHTML=pmBloqueHtml();const t=document.getElementById('pm-recorrido');if(t&&pmActual&&pmActual.c){const e=pmEstado(pmActual.c);if(e){const d=pmDiasHasta(e.fecha);t.textContent=pmFmt(e.fecha)+(e.manual?' ✏️':'');t.style.color=d<0?'#c0392b':d<=5?'#856404':'var(--verde)';}}}
+function pmAbrirEditor(){
+  document.getElementById('pm-editor').style.display='block';
+  document.getElementById('pm-vista').style.display='none';
+  document.getElementById('pm-b-ajustar').style.display='none';
+  document.getElementById('pm-b-guardar').style.display='inline-block';
+  document.getElementById('pm-b-cancelar').style.display='inline-block';
+}
+function pmGuardar(){
+  if(!pmActual||!pmActual.c)return;
+  const fecha=document.getElementById('pm-fecha').value;
+  const texto=document.getElementById('pm-texto').value.trim();
+  const err=document.getElementById('pm-err');
+  if(!fecha){err.textContent='Poné una fecha';return;}
+  if(!texto){err.textContent='El mensaje no puede quedar vacío';return;}
+  const c=pmActual.c;const e=pmEstado(c);
+  const s=pmStore();
+  s[pmKey(c)]={fecha,texto:texto===e.textoAuto?'':texto,ultimaRef:c.ultima.getTime(),nombre:c.nombre,guardado:new Date().toISOString()};
+  pmSetStore(s);
+  pmRender();
+  if(document.getElementById('av-stock-prox'))avMostrarStockProx();
+}
+function pmReset(){
+  if(!pmActual||!pmActual.c)return;
+  const s=pmStore();delete s[pmKey(pmActual.c)];pmSetStore(s);
+  pmRender();
+  if(document.getElementById('av-stock-prox'))avMostrarStockProx();
 }
 
 function avProyeccion(){
