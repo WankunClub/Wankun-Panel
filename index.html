@@ -240,8 +240,16 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
           <option value="kg">Más kg</option>
         </select>
       </div>
+      <div class="filtro-group">
+        <label>Gráfico</label>
+        <select id="diaria-ver-sel" onchange="renderVentaDiaria()">
+          <option value="fac">Pesos</option>
+          <option value="kg">Kg</option>
+        </select>
+      </div>
     </div>
-    <div id="venta-diaria-tabla" style="margin-top:12px"></div>
+    <div id="venta-diaria-analisis" style="margin-top:14px"></div>
+    <div id="venta-diaria-tabla" style="margin-top:4px"></div>
   </div>
   <div class="card-grid">
     <div class="card"><div class="card-title">Top zonas</div><div id="zonas-bars"></div></div>
@@ -1615,6 +1623,7 @@ function renderVentaDiaria(){
   const sel=document.getElementById('diaria-mes-sel');
   if(!el||!sel||!diarioData.byMesDia)return;
   const mes=sel.value;
+  renderVentaDiariaAnalisis(mes);
   const dias=diarioData.byMesDia[mes]||{};
   const[y,mo]=mes.split('-').map(Number);
   const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -1635,6 +1644,130 @@ function renderVentaDiaria(){
   const n=lista.length;
   html+='<tr style="background:var(--gris);font-weight:600"><td style="padding:10px 14px">Promedio por día de venta <span style="font-weight:400;color:var(--gris-dark);font-size:12px">('+n+' días)</span></td><td style="padding:10px 14px;text-align:right">'+fmt$(totF/n)+'</td><td style="padding:10px 14px;text-align:right">'+fmtKg(totK/n)+'</td></tr>';
   html+='</tbody></table>';
+  el.innerHTML=html;
+}
+
+// ── ANÁLISIS VENTA DIARIA: proyección, promedios, días de la semana, gráfico ──
+const FERIADOS_AR={
+  '2025-01-01':1,'2025-03-03':1,'2025-03-04':1,'2025-03-24':1,'2025-04-02':1,'2025-04-18':1,'2025-05-01':1,'2025-05-02':1,'2025-05-25':1,'2025-06-16':1,'2025-06-20':1,'2025-07-09':1,'2025-08-15':1,'2025-08-17':1,'2025-10-12':1,'2025-11-21':1,'2025-11-24':1,'2025-12-08':1,'2025-12-25':1,
+  '2026-01-01':1,'2026-02-16':1,'2026-02-17':1,'2026-03-23':1,'2026-03-24':1,'2026-04-02':1,'2026-04-03':1,'2026-05-01':1,'2026-05-25':1,'2026-06-15':1,'2026-06-20':1,'2026-07-09':1,'2026-07-10':1,'2026-08-17':1,'2026-10-12':1,'2026-11-23':1,'2026-12-07':1,'2026-12-08':1,'2026-12-25':1
+};
+function vdKey(y,m,d){return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+function vdNoLaborable(y,m,d){return new Date(y,m-1,d).getDay()===0||!!FERIADOS_AR[vdKey(y,m,d)];}
+function vdMesPrev(mes,n){const[y,m]=mes.split('-').map(Number);const dt=new Date(y,m-1-n,1);return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');}
+function vdTot(dias){let f=0,k=0,n=0;Object.keys(dias||{}).forEach(d=>{const v=dias[d];if(v.fac>0||v.kg>0){f+=v.fac;k+=v.kg;n++;}});return{f,k,n};}
+function vdM(v){return'$ '+(v/1e6).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+'M';}
+function vdPct(a,b){if(!b)return'';const p=Math.round((a-b)/b*100);return'<span style="color:'+(p>=0?'var(--verde)':'#c0392b')+';font-weight:600">'+(p>=0?'+':'')+p+'%</span>';}
+
+function renderVentaDiariaAnalisis(mes){
+  const el=document.getElementById('venta-diaria-analisis');
+  if(!el||!diarioData.byMesDia)return;
+  const B=diarioData.byMesDia;
+  const dias=B[mes]||{};
+  const[y,mo]=mes.split('-').map(Number);
+  const ult=new Date(y,mo,0).getDate();
+  const hoy=new Date();
+  const esActual=hoy.getFullYear()===y&&hoy.getMonth()+1===mo;
+  const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const DOW_L=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const ver=(document.getElementById('diaria-ver-sel')||{}).value||'fac';
+  const fmtKg=v=>Math.round(v).toLocaleString('es-AR')+' kg';
+
+  // Promedio por día de la semana: 3 meses previos al mes elegido
+  const ventana=[vdMesPrev(mes,3),vdMesPrev(mes,2),vdMesPrev(mes,1)].filter(k=>B[k]);
+  const dw={};
+  ventana.forEach(k=>{const[yy,mm]=k.split('-').map(Number);Object.keys(B[k]).forEach(d=>{const v=B[k][d];if(!(v.fac>0||v.kg>0))return;const w=new Date(yy,mm-1,+d).getDay();dw[w]=dw[w]||{n:0,f:0,k:0};dw[w].n++;dw[w].f+=v.fac;dw[w].k+=v.kg;});});
+  const prom={};Object.keys(dw).forEach(w=>{prom[w]={f:dw[w].f/dw[w].n,k:dw[w].k/dw[w].n,n:dw[w].n};});
+  const NOMC=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const ventanaTxt=ventana.length?(NOMC[+ventana[0].split('-')[1]]+'–'+NOMC[+ventana[ventana.length-1].split('-')[1]]):'sin historial';
+
+  // Totales y proyección
+  const t=vdTot(dias);
+  const tPrev=vdTot(B[vdMesPrev(mes,1)]);
+  let proyF=0,proyK=0,faltan=0;const proyDia={};
+  if(esActual){
+    for(let d=hoy.getDate();d<=ult;d++){
+      if(vdNoLaborable(y,mo,d))continue;
+      if(d===hoy.getDate()&&dias[d]&&dias[d].fac>0)continue;
+      const p=prom[new Date(y,mo-1,d).getDay()];if(!p)continue;
+      proyF+=p.f;proyK+=p.k;faltan++;proyDia[d]=p;
+    }
+  }
+  const cierreF=t.f+proyF,cierreK=t.k+proyK;
+  const promF=t.n?t.f/t.n:0,promK=t.n?t.k/t.n:0;
+  const promPrevF=tPrev.n?tPrev.f/tPrev.n:0;
+  let mejor=null;Object.keys(dias).forEach(d=>{if(dias[d].fac>0&&(!mejor||dias[d].fac>dias[mejor].fac))mejor=+d;});
+
+  const tile=(lbl,val,sub)=>'<div style="background:var(--gris);border-radius:10px;padding:12px 14px"><div style="font-size:11px;color:var(--gris-dark);text-transform:uppercase;letter-spacing:.4px">'+lbl+'</div><div style="font-size:20px;font-weight:700;margin:4px 0 2px">'+val+'</div><div style="font-size:12px;color:var(--gris-dark)">'+sub+'</div></div>';
+  let html='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:18px">';
+  html+=tile('Vendido'+(esActual?' a hoy':''),vdM(t.f),fmtKg(t.k)+' · '+t.n+' días de venta');
+  if(esActual)html+=tile('Proyección cierre',vdM(cierreF),fmtKg(cierreK)+' · '+vdPct(cierreF,tPrev.f)+' vs mes ant.<br>faltan '+faltan+' días de venta');
+  else html+=tile('Cierre vs mes anterior',vdPct(t.f,tPrev.f)||'—','mes anterior: '+vdM(tPrev.f));
+  html+=tile('Promedio por día de venta',vdM(promF),fmtKg(promK)+' · '+(vdPct(promF,promPrevF)||'')+' vs mes ant.');
+  html+=tile('Mejor día',mejor?DOW[new Date(y,mo-1,mejor).getDay()]+' '+mejor+'/'+mo:'—',mejor?vdM(dias[mejor].fac)+' · '+fmtKg(dias[mejor].kg):'');
+  html+='</div>';
+
+  // Gráfico de barras del mes
+  const val=d=>dias[d]?(ver==='kg'?dias[d].kg:dias[d].fac):0;
+  const valP=d=>proyDia[d]?(ver==='kg'?proyDia[d].k:proyDia[d].f):0;
+  const promV=ver==='kg'?promK:promF;
+  let maxV=promV;for(let d=1;d<=ult;d++)maxV=Math.max(maxV,val(d),valP(d));maxV=maxV||1;
+  const bw=26,H=190,top=22,base=H-26,W=ult*bw+10;
+  const yv=v=>base-(v/maxV)*(base-top);
+  const lbl=v=>ver==='kg'?Math.round(v)+' kg':(v/1e6).toLocaleString('es-AR',{maximumFractionDigits:2})+'M';
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block" font-family="DM Sans,sans-serif">';
+  for(let d=1;d<=ult;d++){
+    const x=5+(d-1)*bw;const v=val(d);const nl=vdNoLaborable(y,mo,d);
+    const wd=DOW[new Date(y,mo-1,d).getDay()];
+    if(v>0){
+      const c=v>=promV?VERDE:'#e0a526';
+      svg+='<rect x="'+(x+3)+'" y="'+yv(v)+'" width="'+(bw-6)+'" height="'+(base-yv(v))+'" rx="3" fill="'+c+'"><title>'+wd+' '+d+'/'+mo+' — '+vdM(dias[d].fac)+' · '+fmtKg(dias[d].kg)+'</title></rect>';
+    }else if(valP(d)>0){
+      svg+='<rect x="'+(x+3)+'" y="'+yv(valP(d))+'" width="'+(bw-6)+'" height="'+(base-yv(valP(d)))+'" rx="3" fill="none" stroke="#9aa5a0" stroke-dasharray="3 2"><title>'+wd+' '+d+'/'+mo+' — proyectado '+lbl(valP(d))+'</title></rect>';
+    }else if(nl){
+      svg+='<text x="'+(x+bw/2)+'" y="'+(base-5)+'" text-anchor="middle" font-size="9" fill="#9aa5a0">'+(new Date(y,mo-1,d).getDay()===0?'D':'F')+'</text>';
+    }
+    svg+='<text x="'+(x+bw/2)+'" y="'+(base+13)+'" text-anchor="middle" font-size="10" fill="'+(nl?'#b5bdb9':'#5f6b66')+'">'+d+'</text>';
+    svg+='<text x="'+(x+bw/2)+'" y="'+(base+23)+'" text-anchor="middle" font-size="7.5" fill="#9aa5a0">'+wd.charAt(0)+'</text>';
+  }
+  if(promV>0){svg+='<line x1="5" x2="'+(W-5)+'" y1="'+yv(promV)+'" y2="'+yv(promV)+'" stroke="#1d3557" stroke-width="1" stroke-dasharray="5 4"/>';
+    svg+='<text x="'+(W-6)+'" y="'+(yv(promV)-4)+'" text-anchor="end" font-size="10" fill="#1d3557" font-weight="600">Promedio '+lbl(promV)+'</text>';}
+  svg+='</svg>';
+  html+='<div style="font-size:13px;font-weight:600;margin-bottom:6px">Ventas por día del mes <span style="font-weight:400;color:var(--gris-dark);font-size:12px">— '+(ver==='kg'?'kg':'pesos')+'</span></div>';
+  html+=svg;
+  html+='<div style="display:flex;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--gris-dark);margin:6px 0 18px">'+
+    '<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+VERDE+';vertical-align:-1px"></span> Sobre el promedio</span>'+
+    '<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e0a526;vertical-align:-1px"></span> Bajo el promedio</span>'+
+    (esActual?'<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;border:1px dashed #9aa5a0;vertical-align:-1px"></span> Proyectado</span>':'')+
+    '<span>D domingo · F feriado</span></div>';
+
+  // Tramos del mes
+  const tr=[[1,10,'Del 1 al 10'],[11,20,'Del 11 al 20'],[21,ult,'Del 21 al '+ult]].map(([a,b,n])=>{let f=0,k=0,c=0;for(let d=a;d<=b;d++){if(dias[d]&&dias[d].fac>0){f+=dias[d].fac;k+=dias[d].kg;c++;}}return{n,f,k,c,curso:esActual&&hoy.getDate()>=a&&hoy.getDate()<b};});
+  const maxTr=Math.max(...tr.map(x=>x.c?x.f/x.c:0));
+  html+='<div style="font-size:13px;font-weight:600;margin-bottom:8px">Momentos del mes <span style="font-weight:400;color:var(--gris-dark);font-size:12px">— promedio por día de venta en cada tramo</span></div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:18px">';
+  tr.forEach(x=>{const p=x.c?x.f/x.c:0;const top1=p>0&&p===maxTr;
+    html+='<div style="border:1px solid '+(top1?'var(--verde-claro)':'var(--gris-med)')+';background:'+(top1?'var(--verde-bg)':'#fff')+';border-radius:10px;padding:10px 14px">'+
+      '<div style="font-size:12px;color:var(--gris-dark)">'+x.n+(x.curso?' (en curso)':'')+'</div>'+
+      '<div style="font-size:17px;font-weight:700;margin:3px 0">'+(x.c?vdM(p)+' /día':'—')+'</div>'+
+      '<div style="font-size:12px;color:var(--gris-dark)">'+vdM(x.f)+' · '+fmtKg(x.k)+' · '+x.c+' días</div></div>';});
+  html+='</div>';
+
+  // Ranking días de la semana
+  const ws=Object.keys(prom).map(Number).sort((a,b)=>prom[b].f-prom[a].f);
+  if(ws.length){
+    const maxF=prom[ws[0]].f;
+    html+='<div style="font-size:13px;font-weight:600;margin-bottom:8px">Demanda por día de la semana <span style="font-weight:400;color:var(--gris-dark);font-size:12px">— promedio '+ventanaTxt+'</span></div>';
+    html+='<div style="margin-bottom:18px">';
+    ws.forEach((w,i)=>{const p=prom[w];const tag=i===0?'<span class="tag-ok" style="font-size:10px;padding:2px 8px;border-radius:20px;margin-left:6px">Mayor demanda</span>':(i===ws.length-1?'<span class="tag-bad" style="font-size:10px;padding:2px 8px;border-radius:20px;margin-left:6px">Menor demanda</span>':'');
+      html+='<div style="display:grid;grid-template-columns:150px 1fr 90px 70px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--gris-med);font-size:13px">'+
+        '<span>'+DOW_L[w]+tag+'</span>'+
+        '<div style="background:var(--gris);border-radius:4px;height:14px;overflow:hidden"><div style="width:'+Math.round(p.f/maxF*100)+'%;height:100%;background:'+(i===0?VERDE:i===ws.length-1?'#e0a526':VERDE_CL)+'"></div></div>'+
+        '<span style="text-align:right;font-weight:600">'+vdM(p.f)+'</span>'+
+        '<span style="text-align:right;color:var(--gris-dark)">'+fmtKg(p.k)+'</span></div>';});
+    html+='</div>';
+  }
+  html+='<div style="font-size:13px;font-weight:600;margin-bottom:4px">Detalle por día</div>';
   el.innerHTML=html;
 }
 
