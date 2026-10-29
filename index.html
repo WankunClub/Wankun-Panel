@@ -260,6 +260,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
           <option value="fecha">Fecha</option>
           <option value="fac">Mayor facturación</option>
           <option value="kg">Más kg</option>
+          <option value="ventas">Más ventas</option>
         </select>
       </div>
       <div class="filtro-group">
@@ -1629,9 +1630,19 @@ function buildGraficoDiario(rows){
     const kg=parseFloat((r['kg']||0).toString().replace(',','.'))||0;
     const fac=parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0);
     if(!byMesDia[mes])byMesDia[mes]={};
-    if(!byMesDia[mes][dia])byMesDia[mes][dia]={kg:0,fac:0};
+    if(!byMesDia[mes][dia])byMesDia[mes][dia]={kg:0,fac:0,ventas:0,_g:[]};
     byMesDia[mes][dia].kg+=kg;
     byMesDia[mes][dia].fac+=fac;
+    if(!(fac>0||kg>0))return;
+    // Una "venta" = un cliente en un día, aunque lleve 2 o más alimentos.
+    // Cliente por teléfono (columna TELEFONO o, si el encabezado no coincide, columna K) y nombre de respaldo.
+    let tel=(getCol(r,'TELEFONO','Telefono','Teléfono','Celular')||'').toString().replace(/\D/g,'');
+    if(tel.length<8){const k=(Object.values(r)[10]||'').toString().replace(/\D/g,'');tel=k.length>=8&&k.length<=13?k:'';}
+    const nom=(r['CLIENTE']||r['Cliente']||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+    const gs=byMesDia[mes][dia]._g;
+    const g=(tel||nom)?gs.find(x=>(tel&&x.tels.includes(tel))||(nom&&x.noms.includes(nom))):null;
+    if(g){if(tel&&!g.tels.includes(tel))g.tels.push(tel);if(nom&&!g.noms.includes(nom))g.noms.push(nom);}
+    else{gs.push({tels:tel?[tel]:[],noms:nom?[nom]:[]});byMesDia[mes][dia].ventas++;}
   });
   const meses=Object.keys(byMesDia).sort().slice(-3);
   diarioData={meses,byMesDia};
@@ -1663,21 +1674,22 @@ function renderVentaDiaria(){
   const[y,mo]=mes.split('-').map(Number);
   const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   const orden=(document.getElementById('diaria-orden-sel')||{}).value||'fecha';
-  const lista=Object.keys(dias).map(Number).filter(d=>dias[d].fac>0||dias[d].kg>0).sort((a,b)=>orden==='fac'?dias[b].fac-dias[a].fac:orden==='kg'?dias[b].kg-dias[a].kg:b-a);
+  const lista=Object.keys(dias).map(Number).filter(d=>dias[d].fac>0||dias[d].kg>0).sort((a,b)=>orden==='fac'?dias[b].fac-dias[a].fac:orden==='kg'?dias[b].kg-dias[a].kg:orden==='ventas'?(dias[b].ventas||0)-(dias[a].ventas||0):b-a);
   if(!lista.length){el.innerHTML='<div style="padding:16px;text-align:center;color:var(--gris-dark);font-size:13px">Sin ventas cargadas en este mes</div>';return;}
   const fmt$=v=>'$ '+Math.round(v).toLocaleString('es-AR');
   const fmtKg=v=>v.toLocaleString('es-AR',{maximumFractionDigits:1});
   const th='padding:8px 14px;font-size:11px;font-weight:600;color:var(--gris-dark);text-transform:uppercase;border-bottom:2px solid var(--gris-med)';
-  let totF=0,totK=0;
+  let totF=0,totK=0,totV=0;
+  const tk=(f,v)=>v?fmt$(f/v):'—';
   let html='<table style="width:100%;border-collapse:collapse;font-size:13px">';
-  html+='<thead><tr style="background:var(--gris)"><th style="'+th+';text-align:left">Día</th><th style="'+th+';text-align:right">Facturación</th><th style="'+th+';text-align:right">Kg</th></tr></thead><tbody>';
+  html+='<thead><tr style="background:var(--gris)"><th style="'+th+';text-align:left">Día</th><th style="'+th+';text-align:right">Facturación</th><th style="'+th+';text-align:right">Kg</th><th style="'+th+';text-align:right">Ventas</th><th style="'+th+';text-align:right">Ticket prom.</th></tr></thead><tbody>';
   lista.forEach(d=>{
-    const v=dias[d];totF+=v.fac;totK+=v.kg;
-    html+='<tr style="border-bottom:1px solid var(--gris-med)"><td style="padding:9px 14px">'+DOW[new Date(y,mo-1,d).getDay()]+' '+d+'/'+mo+'</td><td style="padding:9px 14px;text-align:right">'+fmt$(v.fac)+'</td><td style="padding:9px 14px;text-align:right">'+fmtKg(v.kg)+'</td></tr>';
+    const v=dias[d];totF+=v.fac;totK+=v.kg;totV+=v.ventas||0;
+    html+='<tr style="border-bottom:1px solid var(--gris-med)"><td style="padding:9px 14px">'+DOW[new Date(y,mo-1,d).getDay()]+' '+d+'/'+mo+'</td><td style="padding:9px 14px;text-align:right">'+fmt$(v.fac)+'</td><td style="padding:9px 14px;text-align:right">'+fmtKg(v.kg)+'</td><td style="padding:9px 14px;text-align:right">'+(v.ventas||0)+'</td><td style="padding:9px 14px;text-align:right">'+tk(v.fac,v.ventas)+'</td></tr>';
   });
-  html+='<tr style="background:var(--verde-bg);font-weight:700;color:var(--verde)"><td style="padding:10px 14px">Total mes</td><td style="padding:10px 14px;text-align:right">'+fmt$(totF)+'</td><td style="padding:10px 14px;text-align:right">'+fmtKg(totK)+'</td></tr>';
+  html+='<tr style="background:var(--verde-bg);font-weight:700;color:var(--verde)"><td style="padding:10px 14px">Total mes</td><td style="padding:10px 14px;text-align:right">'+fmt$(totF)+'</td><td style="padding:10px 14px;text-align:right">'+fmtKg(totK)+'</td><td style="padding:10px 14px;text-align:right">'+totV+'</td><td style="padding:10px 14px;text-align:right">'+tk(totF,totV)+'</td></tr>';
   const n=lista.length;
-  html+='<tr style="background:var(--gris);font-weight:600"><td style="padding:10px 14px">Promedio por día de venta <span style="font-weight:400;color:var(--gris-dark);font-size:12px">('+n+' días)</span></td><td style="padding:10px 14px;text-align:right">'+fmt$(totF/n)+'</td><td style="padding:10px 14px;text-align:right">'+fmtKg(totK/n)+'</td></tr>';
+  html+='<tr style="background:var(--gris);font-weight:600"><td style="padding:10px 14px">Promedio por día de venta <span style="font-weight:400;color:var(--gris-dark);font-size:12px">('+n+' días)</span></td><td style="padding:10px 14px;text-align:right">'+fmt$(totF/n)+'</td><td style="padding:10px 14px;text-align:right">'+fmtKg(totK/n)+'</td><td style="padding:10px 14px;text-align:right">'+(totV/n).toLocaleString('es-AR',{maximumFractionDigits:1})+'</td><td style="padding:10px 14px;text-align:right">'+tk(totF,totV)+'</td></tr>';
   html+='</tbody></table>';
   el.innerHTML=html;
 }
@@ -1690,7 +1702,7 @@ const FERIADOS_AR={
 function vdKey(y,m,d){return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
 function vdNoLaborable(y,m,d){return new Date(y,m-1,d).getDay()===0||!!FERIADOS_AR[vdKey(y,m,d)];}
 function vdMesPrev(mes,n){const[y,m]=mes.split('-').map(Number);const dt=new Date(y,m-1-n,1);return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');}
-function vdTot(dias){let f=0,k=0,n=0;Object.keys(dias||{}).forEach(d=>{const v=dias[d];if(v.fac>0||v.kg>0){f+=v.fac;k+=v.kg;n++;}});return{f,k,n};}
+function vdTot(dias){let f=0,k=0,n=0,v=0;Object.keys(dias||{}).forEach(d=>{const x=dias[d];if(x.fac>0||x.kg>0){f+=x.fac;k+=x.kg;n++;v+=x.ventas||0;}});return{f,k,n,v};}
 function vdM(v){return'$ '+(v/1e6).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})+'M';}
 function vdPct(a,b){if(!b)return'';const p=Math.round((a-b)/b*100);return'<span style="color:'+(p>=0?'var(--verde)':'#c0392b')+';font-weight:600">'+(p>=0?'+':'')+p+'%</span>';}
 
@@ -1711,8 +1723,8 @@ function renderVentaDiariaAnalisis(mes){
   // Promedio por día de la semana: 3 meses previos al mes elegido
   const ventana=[vdMesPrev(mes,3),vdMesPrev(mes,2),vdMesPrev(mes,1)].filter(k=>B[k]);
   const dw={};
-  ventana.forEach(k=>{const[yy,mm]=k.split('-').map(Number);Object.keys(B[k]).forEach(d=>{const v=B[k][d];if(!(v.fac>0||v.kg>0))return;const w=new Date(yy,mm-1,+d).getDay();dw[w]=dw[w]||{n:0,f:0,k:0};dw[w].n++;dw[w].f+=v.fac;dw[w].k+=v.kg;});});
-  const prom={};Object.keys(dw).forEach(w=>{prom[w]={f:dw[w].f/dw[w].n,k:dw[w].k/dw[w].n,n:dw[w].n};});
+  ventana.forEach(k=>{const[yy,mm]=k.split('-').map(Number);Object.keys(B[k]).forEach(d=>{const v=B[k][d];if(!(v.fac>0||v.kg>0))return;const w=new Date(yy,mm-1,+d).getDay();dw[w]=dw[w]||{n:0,f:0,k:0,v:0};dw[w].n++;dw[w].f+=v.fac;dw[w].k+=v.kg;dw[w].v+=v.ventas||0;});});
+  const prom={};Object.keys(dw).forEach(w=>{prom[w]={f:dw[w].f/dw[w].n,k:dw[w].k/dw[w].n,n:dw[w].n,v:dw[w].v/dw[w].n};});
   const NOMC=['','ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   const ventanaTxt=ventana.length?(NOMC[+ventana[0].split('-')[1]]+'–'+NOMC[+ventana[ventana.length-1].split('-')[1]]):'sin historial';
 
@@ -1735,11 +1747,13 @@ function renderVentaDiariaAnalisis(mes){
 
   const tile=(lbl,val,sub)=>'<div style="background:var(--gris);border-radius:10px;padding:12px 14px"><div style="font-size:11px;color:var(--gris-dark);text-transform:uppercase;letter-spacing:.4px">'+lbl+'</div><div style="font-size:20px;font-weight:700;margin:4px 0 2px">'+val+'</div><div style="font-size:12px;color:var(--gris-dark)">'+sub+'</div></div>';
   let html='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:18px">';
-  html+=tile('Vendido'+(esActual?' a hoy':''),vdM(t.f),fmtKg(t.k)+' · '+t.n+' días de venta');
+  html+=tile('Vendido'+(esActual?' a hoy':''),vdM(t.f),fmtKg(t.k)+' · '+t.v+' ventas en '+t.n+' días');
+  const tk=t.v?t.f/t.v:0,tkPrev=tPrev.v?tPrev.f/tPrev.v:0;
   if(esActual)html+=tile('Proyección cierre',vdM(cierreF),fmtKg(cierreK)+' · '+vdPct(cierreF,tPrev.f)+' vs mes ant.<br>faltan '+faltan+' días de venta');
   else html+=tile('Cierre vs mes anterior',vdPct(t.f,tPrev.f)||'—','mes anterior: '+vdM(tPrev.f));
   html+=tile('Promedio por día de venta',vdM(promF),fmtKg(promK)+' · '+(vdPct(promF,promPrevF)||'')+' vs mes ant.');
-  html+=tile('Mejor día',mejor?DOW[new Date(y,mo-1,mejor).getDay()]+' '+mejor+'/'+mo:'—',mejor?vdM(dias[mejor].fac)+' · '+fmtKg(dias[mejor].kg):'');
+  html+=tile('Ticket promedio',tk?'$ '+Math.round(tk).toLocaleString('es-AR'):'—',(t.n?(t.v/t.n).toLocaleString('es-AR',{maximumFractionDigits:1})+' ventas por día · ':'')+(vdPct(tk,tkPrev)||'')+' vs mes ant.');
+  html+=tile('Mejor día',mejor?DOW[new Date(y,mo-1,mejor).getDay()]+' '+mejor+'/'+mo:'—',mejor?vdM(dias[mejor].fac)+' · '+fmtKg(dias[mejor].kg)+' · '+(dias[mejor].ventas||0)+' ventas':'');
   html+='</div>';
 
   // Gráfico de barras del mes
@@ -1756,7 +1770,7 @@ function renderVentaDiariaAnalisis(mes){
     const wd=DOW[new Date(y,mo-1,d).getDay()];
     if(v>0){
       const c=v>=promV?VERDE:'#e0a526';
-      svg+='<rect x="'+(x+3)+'" y="'+yv(v)+'" width="'+(bw-6)+'" height="'+(base-yv(v))+'" rx="3" fill="'+c+'"><title>'+wd+' '+d+'/'+mo+' — '+vdM(dias[d].fac)+' · '+fmtKg(dias[d].kg)+'</title></rect>';
+      svg+='<rect x="'+(x+3)+'" y="'+yv(v)+'" width="'+(bw-6)+'" height="'+(base-yv(v))+'" rx="3" fill="'+c+'"><title>'+wd+' '+d+'/'+mo+' — '+vdM(dias[d].fac)+' · '+fmtKg(dias[d].kg)+' · '+(dias[d].ventas||0)+' ventas</title></rect>';
     }else if(valP(d)>0){
       svg+='<rect x="'+(x+3)+'" y="'+yv(valP(d))+'" width="'+(bw-6)+'" height="'+(base-yv(valP(d)))+'" rx="3" fill="none" stroke="#9aa5a0" stroke-dasharray="3 2"><title>'+wd+' '+d+'/'+mo+' — proyectado '+lbl(valP(d))+'</title></rect>';
     }else if(nl){
@@ -1777,7 +1791,7 @@ function renderVentaDiariaAnalisis(mes){
     '<span>D domingo · F feriado</span></div>';
 
   // Tramos del mes
-  const tr=[[1,10,'Del 1 al 10'],[11,20,'Del 11 al 20'],[21,ult,'Del 21 al '+ult]].map(([a,b,n])=>{let f=0,k=0,c=0;for(let d=a;d<=b;d++){if(dias[d]&&dias[d].fac>0){f+=dias[d].fac;k+=dias[d].kg;c++;}}return{n,f,k,c,curso:esActual&&hoy.getDate()>=a&&hoy.getDate()<b};});
+  const tr=[[1,10,'Del 1 al 10'],[11,20,'Del 11 al 20'],[21,ult,'Del 21 al '+ult]].map(([a,b,n])=>{let f=0,k=0,c=0,v=0;for(let d=a;d<=b;d++){if(dias[d]&&dias[d].fac>0){f+=dias[d].fac;k+=dias[d].kg;c++;v+=dias[d].ventas||0;}}return{n,f,k,c,v,curso:esActual&&hoy.getDate()>=a&&hoy.getDate()<b};});
   const maxTr=Math.max(...tr.map(x=>x.c?x.f/x.c:0));
   html+='<div style="font-size:13px;font-weight:600;margin-bottom:8px">Momentos del mes <span style="font-weight:400;color:var(--gris-dark);font-size:12px">— promedio por día de venta en cada tramo</span></div>';
   html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:18px">';
@@ -1785,7 +1799,7 @@ function renderVentaDiariaAnalisis(mes){
     html+='<div style="border:1px solid '+(top1?'var(--verde-claro)':'var(--gris-med)')+';background:'+(top1?'var(--verde-bg)':'#fff')+';border-radius:10px;padding:10px 14px">'+
       '<div style="font-size:12px;color:var(--gris-dark)">'+x.n+(x.curso?' (en curso)':'')+'</div>'+
       '<div style="font-size:17px;font-weight:700;margin:3px 0">'+(x.c?vdM(p)+' /día':'—')+'</div>'+
-      '<div style="font-size:12px;color:var(--gris-dark)">'+vdM(x.f)+' · '+fmtKg(x.k)+' · '+x.c+' días</div></div>';});
+      '<div style="font-size:12px;color:var(--gris-dark)">'+vdM(x.f)+' · '+fmtKg(x.k)+' · '+x.v+' ventas · '+x.c+' días</div></div>';});
   html+='</div>';
 
   // Ranking días de la semana
@@ -1795,11 +1809,12 @@ function renderVentaDiariaAnalisis(mes){
     html+='<div style="font-size:13px;font-weight:600;margin-bottom:8px">Demanda por día de la semana <span style="font-weight:400;color:var(--gris-dark);font-size:12px">— promedio '+ventanaTxt+'</span></div>';
     html+='<div style="margin-bottom:18px">';
     ws.forEach((w,i)=>{const p=prom[w];const tag=i===0?'<span class="tag-ok" style="font-size:10px;padding:2px 8px;border-radius:20px;margin-left:6px">Mayor demanda</span>':(i===ws.length-1?'<span class="tag-bad" style="font-size:10px;padding:2px 8px;border-radius:20px;margin-left:6px">Menor demanda</span>':'');
-      html+='<div style="display:grid;grid-template-columns:150px 1fr 90px 70px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--gris-med);font-size:13px">'+
+      html+='<div style="display:grid;grid-template-columns:150px 1fr 90px 70px 90px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--gris-med);font-size:13px">'+
         '<span>'+DOW_L[w]+tag+'</span>'+
         '<div style="background:var(--gris);border-radius:4px;height:14px;overflow:hidden"><div style="width:'+Math.round(p.f/maxF*100)+'%;height:100%;background:'+(i===0?VERDE:i===ws.length-1?'#e0a526':VERDE_CL)+'"></div></div>'+
         '<span style="text-align:right;font-weight:600">'+vdM(p.f)+'</span>'+
-        '<span style="text-align:right;color:var(--gris-dark)">'+fmtKg(p.k)+'</span></div>';});
+        '<span style="text-align:right;color:var(--gris-dark)">'+fmtKg(p.k)+'</span>'+
+        '<span style="text-align:right;color:var(--gris-dark)">'+p.v.toLocaleString('es-AR',{maximumFractionDigits:1})+' ventas</span></div>';});
     html+='</div>';
   }
   html+='<div style="font-size:13px;font-weight:600;margin-bottom:4px">Detalle por día</div>';
