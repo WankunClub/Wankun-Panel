@@ -139,6 +139,27 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
 .hr-logchk{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--gris-dark);padding:0 6px;cursor:pointer;white-space:nowrap}
 .hr-vacio{padding:20px;text-align:center;color:var(--gris-dark);font-size:13px}
 @media (max-width:760px){.hr-add{grid-template-columns:1fr 1fr}.hr-add .btn{grid-column:1/-1}.hr-row{grid-template-columns:28px 1fr auto}.hr-row .hr-in{grid-column:2/4}.hr-row .hr-nomwrap{grid-column:2/3}}
+.pr-search{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.pr-search input{flex:1;font-family:'DM Sans',sans-serif;font-size:16px;padding:12px 16px;border:1px solid var(--gris-med);border-radius:10px;outline:none;background:var(--blanco)}
+.pr-search input:focus{border-color:var(--azul-med);box-shadow:0 0 0 3px rgba(69,123,157,.15)}
+.pr-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.pr-chip{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--gris-med);background:var(--blanco);cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--texto)}
+.pr-chip.on{background:var(--azul);border-color:var(--azul);color:#fff}
+.pr-meta{font-size:12px;color:var(--gris-dark);margin-left:auto}
+.pr-group{background:var(--blanco);border-radius:var(--radio);box-shadow:var(--sombra);padding:14px 18px;margin-bottom:10px}
+.pr-name{font-size:14px;font-weight:600}
+.pr-sub{font-size:11px;color:var(--gris-dark);margin-top:2px;text-transform:uppercase;letter-spacing:.4px}
+.pr-row{display:grid;grid-template-columns:70px 1fr 1fr 1fr 70px;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--gris-med);font-size:13px}
+.pr-row:first-of-type{margin-top:10px}
+.pr-kg{font-weight:600}
+.pr-pr{font-family:'DM Mono',monospace;font-size:14px}
+.pr-pr small{display:block;font-family:'DM Sans',sans-serif;font-size:10px;color:var(--gris-dark);text-transform:uppercase;letter-spacing:.4px}
+.pr-pr.t{color:var(--verde);font-weight:500}
+.pr-sku{font-family:'DM Mono',monospace;font-size:11px;color:var(--gris-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr-copy{font-size:11px;padding:5px 8px;border-radius:6px;border:1px solid var(--gris-med);background:var(--blanco);cursor:pointer;font-family:'DM Sans',sans-serif}
+.pr-copy.ok{background:var(--verde-bg);color:var(--verde);border-color:var(--verde-bg)}
+.pr-vacio{padding:30px;text-align:center;color:var(--gris-dark);font-size:13px}
+@media (max-width:760px){.pr-row{grid-template-columns:56px 1fr 1fr 60px}.pr-sku{display:none}}
 </style>
 </head>
 <body>
@@ -151,6 +172,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="nav-section">Principal</div>
     <div class="nav-item active" onclick="irA('inicio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Inicio</div>
     <div class="nav-item" onclick="irA('ventas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Ventas</div>
+    <div class="nav-item" onclick="irA('precios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Precios</div>
     <div class="nav-section">Finanzas</div>
     <div class="nav-item" onclick="irA('financiero')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Financiero</div>
     <div class="nav-item" onclick="irA('vete')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Vete</div>
@@ -970,6 +992,18 @@ Vamos Argentina!</div>
 
 
 <!-- ROADMAP -->
+<!-- PRECIOS -->
+<div class="page" id="page-precios">
+  <div class="pr-search"><input id="pr-q" type="search" placeholder="Buscá por marca, producto, kilos o SKU — ej: pro plan large puppy, mini adult 7.5, renal" autocomplete="off" oninput="prRender()" onkeydown="if(event.key==='Escape'){this.value='';prRender();}"></div>
+  <div class="pr-chips">
+    <button class="pr-chip on" data-e="Todos" onclick="prEsp(this)">Todos</button>
+    <button class="pr-chip" data-e="Perro" onclick="prEsp(this)">Perros</button>
+    <button class="pr-chip" data-e="Gato" onclick="prEsp(this)">Gatos</button>
+    <span class="pr-meta" id="pr-meta">Cargando lista…</span>
+  </div>
+  <div id="pr-res"></div>
+</div>
+
 <div class="page" id="page-roadmap">
   <div class="card">
     <div class="card-title">Roadmap - consolidacion 15 km</div>
@@ -1016,11 +1050,12 @@ function irA(p){
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
   if(p==='stock'){setTimeout(function(){skRenderTabla();skRenderMetricas();},50);}
-  const t={'inicio':'Inicio','ventas':'Ventas','financiero':'Financiero','vete':'Vete','clientes':'Clientes','recompras':'Recompras','migracion':'Migración','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','ruta':'Hoja de ruta','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','stock':'Control de Stock'};
+  const t={'inicio':'Inicio','ventas':'Ventas','financiero':'Financiero','vete':'Vete','clientes':'Clientes','recompras':'Recompras','migracion':'Migración','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','ruta':'Hoja de ruta','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','precios':'Precios','stock':'Control de Stock'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
   if(p==='resenas'){resenasCargarHistorial();}
   if(p==='ruta'){hrInit();}
+  if(p==='precios'){prInit();}
   if(p==='financiero'){if(!FIN_DATA)finCargar();}
   if(p==='vete'){if(!VETE_DATA)veteCargar();}
 }
@@ -4187,6 +4222,45 @@ function hrImprimir(){
   w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Hoja de ruta '+hrFmtFecha(hrFecha)+'</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#111}h1{font-size:20px;margin:0 0 4px}p{color:#555;margin:0 0 16px;font-size:13px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #ccc;padding:8px 6px;text-align:left;vertical-align:top}th{font-size:11px;text-transform:uppercase;color:#555}td.n{font-weight:700;width:24px}</style></head><body><h1>Hoja de ruta — Wankun Club</h1><p>'+hrFmtFecha(hrFecha)+' · '+hrPropias().length+' paradas</p><table><tr><th>#</th><th>Cliente</th><th>Dirección</th><th>Alimento</th></tr>'+
     hrPropias().map((p,i)=>'<tr><td class="n">'+(i+1)+'</td><td>'+hrEsc(p.nombre)+'</td><td>'+hrEsc([p.direccion,p.localidad].filter(Boolean).join(', '))+'</td><td>'+hrEsc(p.alimento)+'</td></tr>').join('')+'</table></body></html>');
   w.document.close();w.focus();setTimeout(()=>w.print(),300);
+}
+
+// ── Precios: buscador rápido sobre precios.json (generado desde wc426.xlsx) ──
+let PRECIOS=null,PR_ESP='Todos';
+const PR_SIN={cachorro:['cachorro','puppy','junior','kitten'],puppy:['puppy','cachorro'],adulto:['adult'],adult:['adult'],gato:['gato','cat'],cat:['cat','gato'],perro:['perro','dog'],dog:['dog','perro'],rc:['royal canin'],pp:['pro plan'],chico:['mini','small','pequeñ','toy'],pequeño:['mini','small','pequeñ'],grande:['large','maxi','grande','giant'],mediano:['medium','mediano'],castrado:['castrado','sterilized'],light:['light','weight','reduced','fit','satiety']};
+function prN(s){return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+function prKg(k){return (k%1?String(k).replace('.',','):String(k))+' kg';}
+function prArs(n){return '$ '+Math.round(n).toLocaleString('es-AR');}
+async function prInit(){
+  const q=document.getElementById('pr-q');
+  if(!PRECIOS){
+    try{const r=await fetch('precios.json?v='+Date.now());PRECIOS=await r.json();
+      PRECIOS.items.forEach(x=>{x.h=prN([x.m,x.l,x.p,x.e,x.s,x.k+'kg',x.k+' kg',String(x.k).replace('.',',')+'kg'].join(' '));});
+    }catch(e){document.getElementById('pr-meta').textContent='No se pudo cargar la lista de precios';return;}
+  }
+  prRender();setTimeout(()=>q.focus(),30);
+}
+function prEsp(b){PR_ESP=b.dataset.e;document.querySelectorAll('.pr-chip').forEach(x=>x.classList.toggle('on',x===b));prRender();}
+function prTok(t,h){const alts=PR_SIN[t]?PR_SIN[t].map(prN):[t];if(/^\d+([.,]\d+)?$/.test(t)){const k=t.replace(',','.');return h.includes(k+'kg')||h.includes(t);}return alts.some(a=>h.includes(a));}
+function prRender(){
+  if(!PRECIOS)return;
+  const toks=prN(document.getElementById('pr-q').value).replace(/\s*kg\b/g,'').split(/\s+/).filter(Boolean);
+  const hits=PRECIOS.items.filter(x=>(PR_ESP==='Todos'||x.e===PR_ESP)&&toks.every(t=>prTok(t,x.h)));
+  const g=new Map();hits.forEach(x=>{const key=x.m+'|'+x.p+'|'+x.e;if(!g.has(key))g.set(key,[]);g.get(key).push(x);});
+  const v=new Date(PRECIOS.vigente+'T12:00').toLocaleDateString('es-AR');
+  document.getElementById('pr-meta').textContent=hits.length+' presentaciones · lista vigente desde '+v;
+  const out=[];let n=0;
+  for(const arr of g.values()){
+    if(++n>80){out.push('<div class="pr-vacio">Hay más resultados: afiná la búsqueda.</div>');break;}
+    arr.sort((a,b)=>a.k-b.k);const f=arr[0];
+    out.push('<div class="pr-group"><div class="pr-name">'+f.m+' '+f.p+'</div><div class="pr-sub">'+f.e+(f.l?' · '+f.l:'')+'</div>'+
+      arr.map(x=>'<div class="pr-row"><span class="pr-kg">'+prKg(x.k)+'</span><span class="pr-pr t"><small>Transferencia</small>'+prArs(x.t)+'</span><span class="pr-pr"><small>Tarjeta</small>'+prArs(x.c)+'</span><span class="pr-sku" title="'+x.s+'">'+x.s+'</span><button class="pr-copy" onclick="prCopy(this,\''+x.s+'\','+x.k+')">Copiar</button></div>').join('')+'</div>');
+  }
+  document.getElementById('pr-res').innerHTML=out.join('')||'<div class="pr-vacio">No encontré nada con esa búsqueda.</div>';
+}
+function prCopy(b,sku,k){
+  const x=PRECIOS.items.find(i=>i.s===sku&&i.k===k);
+  const txt=x.m+' '+x.p+' '+prKg(x.k)+': '+prArs(x.t)+' por transferencia / '+prArs(x.c)+' con tarjeta de crédito';
+  navigator.clipboard.writeText(txt).then(()=>{b.textContent='Copiado';b.classList.add('ok');setTimeout(()=>{b.textContent='Copiar';b.classList.remove('ok');},1400);});
 }
 </script>
 </body>
