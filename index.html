@@ -331,6 +331,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     </div>
     <div class="card">
       <div class="card-title">Facturación por canal — Wkn Club vs Mercado Libre</div>
+      <div id="fin-canal-chart" style="margin-top:8px"></div>
       <div class="table-wrap" style="margin-top:8px">
         <div class="table-head" style="grid-template-columns:1fr 1.2fr 1.2fr 1fr"><span>Mes</span><span>Wkn Club</span><span>Mercado Libre</span><span>% Directo</span></div>
         <div class="table-body" id="fin-tabla-canal"></div>
@@ -1436,9 +1437,41 @@ function finRenderTodo(){
       +'<span style="font-weight:600">'+pctDirecto+'%</span>'
       +'</div>';
   }
+  renderCanalTotal('fin-canal-chart',wknMeses,mlMeses);
   tbodyCanal.innerHTML=canalHtml||'<div style="padding:20px;color:var(--gris-dark);font-size:13px">Sin datos</div>';
 
   renderPeq('fin-gastos-bars',{'Gastos Fijos':gfMes.real||0.01,'Gastos Variables':gvMes.real||0.01},AZUL);
+}
+
+// ── Negocio completo: barras apiladas Wkn Club (directo) + Mercado Libre, total y variación vs mes anterior ──
+function renderCanalTotal(id,wkn,ml){
+  const el=document.getElementById(id);if(!el)return;
+  const NOM=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const rows=[];
+  for(let m=0;m<12;m++){
+    const d=(wkn[m]&&wkn[m].real)||0,l=(ml[m]&&ml[m].real)||0;
+    if(d>0||l>0)rows.push({lab:NOM[m],d,l,t:d+l});
+  }
+  if(!rows.length){el.innerHTML='';return;}
+  const n=rows.length,bw=56,H=230,top=34,base=H-22,W=n*bw;
+  const maxT=Math.max(...rows.map(r=>r.t),1);
+  const hh=v=>(v/maxT)*(base-top);
+  const fk=v=>Math.round(v).toLocaleString('es-AR');
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block" font-family="DM Sans,sans-serif">';
+  rows.forEach((r,i)=>{
+    const x=i*bw+8,w=bw-16,cx=i*bw+bw/2,hd=hh(r.d),hl=hh(r.l);
+    const tip=r.lab+' — Total $ '+fk(r.t)+' · Directo $ '+fk(r.d)+' ('+Math.round(r.d/r.t*100)+'%) · Mercado Libre $ '+fk(r.l);
+    svg+='<rect x="'+x+'" y="'+(base-hd)+'" width="'+w+'" height="'+hd+'" fill="'+VERDE+'"><title>'+tip+'</title></rect>';
+    if(hl>0)svg+='<rect x="'+x+'" y="'+(base-hd-hl)+'" width="'+w+'" height="'+hl+'" fill="#f2c14e"><title>'+tip+'</title></rect>';
+    svg+='<text x="'+cx+'" y="'+(base-hd-hl-5)+'" text-anchor="middle" font-size="10" font-weight="600" fill="#2b2b2b">'+(r.t/1e6).toLocaleString('es-AR',{maximumFractionDigits:1})+'M</text>';
+    if(i>0&&rows[i-1].t>0){
+      const v=Math.round((r.t-rows[i-1].t)/rows[i-1].t*100);
+      svg+='<text x="'+cx+'" y="'+(base-hd-hl-17)+'" text-anchor="middle" font-size="9" font-weight="600" fill="'+(v>=0?VERDE:'#c0392b')+'">'+(v>=0?'+':'')+v+'%</text>';
+    }
+    svg+='<text x="'+cx+'" y="'+(base+14)+'" text-anchor="middle" font-size="10" fill="#5f6b66">'+r.lab+'</text>';
+  });
+  svg+='</svg>';
+  el.innerHTML='<div style="display:flex;gap:16px;font-size:11px;color:var(--gris-dark);margin-bottom:6px;flex-wrap:wrap"><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+VERDE+';vertical-align:-1px"></span> Wkn Club (directo)</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f2c14e;vertical-align:-1px"></span> Mercado Libre</span><span>Arriba: total del negocio y variación vs mes anterior</span></div>'+svg;
 }
 
 let ZONAS_DATA={},MARCAS_DATA={};
