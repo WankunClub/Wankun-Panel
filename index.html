@@ -236,8 +236,9 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="metric"><div class="metric-label">Royal Canin</div><div class="metric-value">~66%</div><div class="metric-delta">de facturacion</div></div>
   </div>
   <div class="card">
-    <div class="card-title">Facturacion mensual</div>
-    <div class="bar-chart" id="bar-ventas"></div>
+    <div class="card-title">Facturación y kilos por mes</div>
+    <div id="bar-ventas"></div>
+    <div id="ventas-kg-resumen"></div>
   </div>
   <div class="card">
     <div class="card-title">Objetivo vs. real — 2026</div>
@@ -1042,6 +1043,7 @@ document.getElementById('m-mes-label').textContent=MESES_LARGO[MES_ACTUAL_IDX]+'
 // Se usan solo mientras carga el live. Incluye Jun con 0 para que el panel
 // no muestre mayo como mes "actual".
 let MESES_LIVE=['Sep','Oct','Nov','Dic','Ene','Feb','Mar','Abr','May','Jun'];
+let KG_LIVE=[],KEYS_LIVE=[];
 let FAC_LIVE=   [4351700,7950760,8804030,9844900,9661745,11334800,16575600,19314000,19700000,0];
 
 function irA(p){
@@ -1053,7 +1055,7 @@ function irA(p){
   if(p==='stock'){setTimeout(function(){skRenderTabla();skRenderMetricas();},50);}
   const t={'inicio':'Inicio','ventas':'Ventas','financiero':'Financiero','vete':'Vete','clientes':'Clientes','recompras':'Recompras','migracion':'Migración','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','ruta':'Hoja de ruta','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','precios':'Precios','stock':'Control de Stock'};
   document.getElementById('page-title').textContent=t[p]||p;
-  if(p==='ventas'){renderBarras('bar-ventas');renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
+  if(p==='ventas'){renderMensualKg();renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
   if(p==='resenas'){resenasCargarHistorial();}
   if(p==='ruta'){hrInit();}
   if(p==='precios'){prInit();}
@@ -1454,6 +1456,52 @@ function renderBarras(id,fac,mes){
   }).join('');
 }
 
+// ── Facturación y kilos por mes: barras $ + curva kg + crecimiento real ──
+function renderMensualKg(){
+  const el=document.getElementById('bar-ventas');if(!el)return;
+  const fac=FAC_LIVE,kg=KG_LIVE,lab=MESES_LIVE,n=lab.length;
+  if(!n||kg.length!==n){renderBarras('bar-ventas');return;}
+  const maxF=Math.max(...fac,1),maxK=Math.max(...kg,1);
+  const bw=56,H=210,top=24,base=H-34,W=n*bw;
+  const yF=v=>base-(v/maxF)*(base-top),yK=v=>base-(v/maxK)*(base-top);
+  const fmtK=v=>Math.round(v).toLocaleString('es-AR');
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block" font-family="DM Sans,sans-serif">';
+  const pts=[];
+  for(let i=0;i<n;i++){
+    const x=i*bw,cx=x+bw/2,last=i===n-1;
+    if(fac[i]>0){
+      svg+='<rect x="'+(x+8)+'" y="'+yF(fac[i])+'" width="'+(bw-16)+'" height="'+(base-yF(fac[i]))+'" rx="4" fill="'+(last?AZUL:VERDE_CL)+'"><title>'+lab[i]+' — $ '+fmtK(fac[i])+' · '+fmtK(kg[i])+' kg'+(kg[i]?' · $ '+fmtK(fac[i]/kg[i])+'/kg':'')+'</title></rect>';
+      svg+='<text x="'+cx+'" y="'+(yF(fac[i])-5)+'" text-anchor="middle" font-size="10" font-weight="600" fill="#2b2b2b">'+(fac[i]/1e6).toLocaleString('es-AR',{maximumFractionDigits:1})+'M</text>';
+    }
+    if(kg[i]>0)pts.push([cx,yK(kg[i])]);
+    svg+='<text x="'+cx+'" y="'+(base+14)+'" text-anchor="middle" font-size="10" fill="#5f6b66">'+lab[i]+'</text>';
+    svg+='<text x="'+cx+'" y="'+(base+27)+'" text-anchor="middle" font-size="9" fill="#1d3557">'+(kg[i]?fmtK(kg[i])+' kg':'')+'</text>';
+  }
+  if(pts.length>1)svg+='<polyline points="'+pts.map(p=>p.join(',')).join(' ')+'" fill="none" stroke="#1d3557" stroke-width="2"/>';
+  pts.forEach(p=>{svg+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3" fill="#1d3557"/>';});
+  svg+='</svg>';
+  el.innerHTML='<div style="display:flex;gap:16px;font-size:11px;color:var(--gris-dark);margin-bottom:6px"><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+VERDE_CL+';vertical-align:-1px"></span> Pesos</span><span><span style="display:inline-block;width:14px;height:2px;background:#1d3557;vertical-align:3px"></span> Kilos</span></div>'+svg;
+
+  // Crecimiento real: pesos vs kilos vs precio por kilo
+  const r=document.getElementById('ventas-kg-resumen');if(!r)return;
+  const pc=(a,b)=>b?Math.round((a-b)/b*100):null;
+  const fp=v=>v===null?'—':'<span style="color:'+(v>=0?'var(--verde)':'#c0392b')+';font-weight:600">'+(v>=0?'+':'')+v+'%</span>';
+  const linea=(tit,f,k,f0,k0)=>'<div style="padding:8px 0;border-top:1px solid var(--gris-med);font-size:13px"><span style="color:var(--gris-dark)">'+tit+'</span>&nbsp;&nbsp;Pesos '+fp(pc(f,f0))+' · Kilos '+fp(pc(k,k0))+' · Precio por kilo '+fp(k&&k0?pc(f/k,f0/k0):null)+'</div>';
+  const NOM=['','enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const hoy=new Date(),keyHoy=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+  const K=KEYS_LIVE;let html='';
+  const iA=K.indexOf(keyHoy);
+  const iC=iA>=0?iA-1:K.length-1; // último mes cerrado
+  if(iC>=1)html+=linea(NOM[+K[iC].split('-')[1]]+' vs '+NOM[+K[iC-1].split('-')[1]],fac[iC],kg[iC],fac[iC-1],kg[iC-1]);
+  const B=diarioData.byMesDia;
+  if(iA>=1&&B&&B[keyHoy]){
+    const dHoy=hoy.getDate(),sum=m=>{let f=0,k=0;Object.keys(B[m]||{}).forEach(d=>{if(+d<=dHoy){f+=B[m][d].fac||0;k+=B[m][d].kg||0;}});return{f,k};};
+    const a=sum(keyHoy),b=sum(K[iA-1]);
+    if(a.f>0)html+=linea(NOM[+keyHoy.split('-')[1]]+' vs '+NOM[+K[iA-1].split('-')[1]]+', al día '+dHoy,a.f,a.k,b.f,b.k);
+  }
+  r.innerHTML=html?'<div style="margin-top:10px">'+html+'</div>':'';
+}
+
 function renderPeq(id,data,color){
   const el=document.getElementById(id);if(!el)return;
   if(!Object.keys(data).length){el.innerHTML='<div style="padding:20px;color:var(--gris-dark);font-size:13px">Cargando...</div>';return;}
@@ -1536,6 +1584,7 @@ async function cargarVentasLive(){
 
     MESES_LIVE=labels;
     FAC_LIVE=facs;
+    KEYS_LIVE=keys;KG_LIVE=keys.map(k=>porMesKg[k]||0);
     ZONAS_DATA=Object.fromEntries(Object.entries(zonas).sort((a,b)=>b[1]-a[1]).slice(0,8));
     MARCAS_DATA=Object.fromEntries(Object.entries(marcas).sort((a,b)=>b[1]-a[1]).slice(0,8));
 
@@ -1601,7 +1650,7 @@ async function cargarVentasLive(){
     document.getElementById('m-total-rango').textContent='Sep 2025 - '+MESES_LARGO[MES_ACTUAL_IDX]+' '+ANIO_ACTUAL;
 
     renderBarras('bar-inicio',facs,labels);
-    renderBarras('bar-ventas',facs,labels);
+    renderMensualKg();
     const real2026=[],obj2026=[];
     for(let m=1;m<=12;m++){const key='2026-'+String(m).padStart(2,'0');real2026.push(porMes[key]||null);obj2026.push(OBJETIVO_2026[key]||null);}
     renderObjetivoReal('objetivo-real-chart',real2026,obj2026,MESES_ABR_2026);
@@ -1646,6 +1695,7 @@ function buildGraficoDiario(rows){
   });
   const meses=Object.keys(byMesDia).sort().slice(-3);
   diarioData={meses,byMesDia};
+  renderMensualKg();
   renderComparativoTabla(byMesDia);
   initVentaDiaria();
 }
