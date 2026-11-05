@@ -507,7 +507,7 @@ Vamos Argentina!</div>
 <div class="page" id="page-aviso">
   <div class="card" style="border-left:4px solid #d97706">
     <div class="card-title" style="color:#d97706">Sin reparto lunes 9, martes 10 y miércoles 11</div>
-    <div style="font-size:13px;color:var(--gris-dark);line-height:1.5">Clientes que compraron entre el <b>6 y el 14 de octubre</b> y todavía <b>no compraron en noviembre</b>. El botón WA abre el chat con el mensaje armado con su nombre y el alimento que llevó. Cuando lo mandes, tocá <b>Enviado</b>. Si un cliente compra, desaparece solo de la lista.</div>
+    <div style="font-size:13px;color:var(--gris-dark);line-height:1.5">Clientes que compraron entre el <b>6 y el 14 de octubre</b> y todavía <b>no compraron en noviembre</b>. El botón WA abre el chat con el mensaje armado con su nombre y el alimento que llevó. Al tocar WA el cliente pasa solo a <b>Enviados</b>; si al final no lo mandaste, lo volvés desde ahí con <b>Deshacer</b>. Si un cliente compra, desaparece solo de la lista.</div>
     <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
       <button class="btn btn-primary" onclick="apCargar()">Actualizar</button>
       <span class="conn-status conn-err" id="ap-status">Sin cargar</span>
@@ -517,7 +517,7 @@ Vamos Argentina!</div>
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="ap-filtros">
     <button class="btn btn-primary" data-apf="pend" onclick="apFiltro('pend')">Por mandar</button>
     <button class="btn" data-apf="volv" onclick="apFiltro('volv')">Volvieron a fin de oct</button>
-    <button class="btn" data-apf="env" onclick="apFiltro('env')">Enviados</button>
+    <button class="btn" data-apf="env" onclick="apFiltro('env')">Notificados</button>
     <button class="btn" data-apf="all" onclick="apFiltro('all')">Todos</button>
   </div>
   <div class="card">
@@ -1144,13 +1144,15 @@ async function apCargar(){
   apCargando=false;
 }
 function apFiltro(f){apFiltroAct=f;document.querySelectorAll('[data-apf]').forEach(b=>b.className='btn'+(b.dataset.apf===f?' btn-primary':''));apRender();}
+// Al abrir WhatsApp desde el boton WA se marca como notificado; el re-render va con demora para no cortar la apertura del link.
+function apAbrio(k){const m=apEnviados();if(!m[k]){m[k]=Date.now();apGuardar(m);}setTimeout(apRender,400);}
 function apToggle(k){const m=apEnviados();if(m[k])delete m[k];else m[k]=Date.now();apGuardar(m);apRender();}
 function apRender(){
   const env=apEnviados();
   const tot=apLista.length, nEnv=apLista.filter(c=>env[c.key]).length, nVolv=apLista.filter(c=>c.volvio).length;
   document.getElementById('ap-metrics').innerHTML=
     '<div class="metric"><div class="metric-label">Clientes a avisar</div><div class="metric-value">'+tot+'</div></div>'+
-    '<div class="metric"><div class="metric-label">Enviados</div><div class="metric-value" style="color:var(--verde)">'+nEnv+'</div></div>'+
+    '<div class="metric"><div class="metric-label">Notificados</div><div class="metric-value" style="color:var(--verde)">'+nEnv+'</div></div>'+
     '<div class="metric"><div class="metric-label">Faltan</div><div class="metric-value">'+(tot-nEnv)+'</div></div>'+
     '<div class="metric"><div class="metric-label">Volvieron a fin de oct</div><div class="metric-value" style="color:#d97706">'+nVolv+'</div></div>';
   const fil=apLista.filter(c=>apFiltroAct==='all'||(apFiltroAct==='env'?env[c.key]:apFiltroAct==='volv'?c.volvio:!env[c.key]));
@@ -1159,8 +1161,8 @@ function apRender(){
   const fd=d=>d.getDate()+'/'+(d.getMonth()+1);
   tb.innerHTML=fil.map(c=>{
     const e=!!env[c.key];
-    const wa=c.tel?'<a class="wa-link" href="'+apWa(c.tel,c.msg)+'" target="_blank" rel="noopener">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';
-    const btn='<button class="wa-link" style="background:'+(e?'var(--verde)':'var(--gris-med)')+';color:'+(e?'#fff':'var(--texto)')+'" onclick="apToggle(\''+c.key+'\')">'+(e?'✓ Enviado':'Enviado')+'</button>';
+    const wa=c.tel?'<a class="wa-link" href="'+apWa(c.tel,c.msg)+'" target="_blank" rel="noopener" onclick="apAbrio(\''+c.key+'\')">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';
+    const btn='<button class="wa-link" style="background:'+(e?'var(--verde)':'var(--gris-med)')+';color:'+(e?'#fff':'var(--texto)')+'" onclick="apToggle(\''+c.key+'\')">'+(e?'Deshacer':'Enviado')+'</button>';
     const flag=c.volvio?'<div style="font-size:11px;color:#d97706">Volvió a comprar el '+fd(c.volvio)+'</div>':'';
     return '<div class="table-row" style="grid-template-columns:1.2fr 1fr 1.4fr 70px 150px;'+(e?'opacity:.55':'')+'"><span style="font-weight:500">'+c.nombre+flag+'</span><span style="font-size:12px">'+(c.loc||'--')+'</span><span style="font-size:12px">'+c.prods.join(' · ')+'</span><span style="font-size:12px">'+fd(c.fecha)+'</span><span style="display:flex;gap:6px">'+wa+btn+'</span></div>';
   }).join('');
