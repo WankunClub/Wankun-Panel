@@ -158,8 +158,15 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
 .pr-sku{font-family:'DM Mono',monospace;font-size:11px;color:var(--gris-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pr-copy{font-size:11px;padding:5px 8px;border-radius:6px;border:1px solid var(--gris-med);background:var(--blanco);cursor:pointer;font-family:'DM Sans',sans-serif}
 .pr-copy.ok{background:var(--verde-bg);color:var(--verde);border-color:var(--verde-bg)}
+.pr-lock{display:flex;gap:6px;align-items:center}
+.pr-lock input{font-family:'DM Sans',sans-serif;font-size:13px;padding:6px 10px;border:1px solid var(--gris-med);border-radius:8px;width:150px}
+.pr-lock .err{font-size:12px;color:#c0392b}
+.pr-pr.cost{color:var(--azul-med)}
+.pr-row.wc{grid-template-columns:62px 1fr 1fr 1fr 1fr 1fr 64px}
+.pr-imp{font-size:12px;color:var(--gris-dark);display:flex;align-items:center;gap:4px}.pr-imp input{width:48px;font-family:'DM Sans',sans-serif;font-size:12px;padding:4px 6px;border:1px solid var(--gris-med);border-radius:6px}
+.pr-pr.neto{color:var(--verde);font-weight:600}
 .pr-vacio{padding:30px;text-align:center;color:var(--gris-dark);font-size:13px}
-@media (max-width:760px){.pr-row{grid-template-columns:56px 1fr 1fr 60px}.pr-sku{display:none}}
+@media (max-width:760px){.pr-row{grid-template-columns:56px 1fr 1fr 60px}.pr-row.wc{grid-template-columns:48px 1fr 1fr 1fr 1fr 1fr}.pr-row.wc .pr-sku{display:none}.pr-row.wc .pr-copy{display:none}.pr-sku{display:none}.pr-lock input{width:110px}}
 </style>
 </head>
 <body>
@@ -1032,6 +1039,7 @@ Vamos Argentina!</div>
     <button class="pr-chip" data-e="Perro" onclick="prEsp(this)">Perros</button>
     <button class="pr-chip" data-e="Gato" onclick="prEsp(this)">Gatos</button>
     <span class="pr-meta" id="pr-meta">Cargando lista…</span>
+    <span class="pr-lock" id="pr-lock"><input id="pr-clave" type="password" placeholder="Clave de costos" onkeydown="if(event.key==='Enter')prDesbloquear()"><button class="pr-chip" onclick="prDesbloquear()">Ver costos</button><span class="err" id="pr-err"></span></span>
   </div>
   <div id="pr-res"></div>
 </div>
@@ -4446,7 +4454,27 @@ function hrImprimir(){
 }
 
 // ── Precios: buscador rápido sobre precios.json (generado desde wc426.xlsx) ──
-let PRECIOS=null,PR_ESP='Todos';
+let PRECIOS=null,PR_ESP='Todos',PR_COSTOS=null;
+function prB64(t){return Uint8Array.from(atob(t),c=>c.charCodeAt(0));}
+async function prDescifrar(clave){
+  const x=PRECIOS.x;const enc=new TextEncoder();
+  const base=await crypto.subtle.importKey('raw',enc.encode(clave),'PBKDF2',false,['deriveKey']);
+  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:prB64(x.s),iterations:x.n,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:prB64(x.i)},key,prB64(x.c));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+async function prDesbloquear(clave){
+  const inp=document.getElementById('pr-clave');clave=clave||inp.value;
+  if(!clave||!PRECIOS||!PRECIOS.x)return;
+  try{PR_COSTOS=await prDescifrar(clave);
+    try{sessionStorage.setItem('wk_pr_clave',clave);}catch(e){}
+    document.getElementById('pr-lock').innerHTML='<span class="pr-imp">Impuestos s/venta <input id="pr-imp" type="number" step="0.5" min="0" value="'+prImp()+'" oninput="prSetImp(this.value)">%</span><button class="pr-chip on" onclick="prBloquear()">Ocultar costos</button>';prRender();
+  }catch(e){document.getElementById('pr-err').textContent='Clave incorrecta';inp.select();}
+}
+function prImp(){let v=5;try{const s=localStorage.getItem('wk_pr_imp');if(s!==null&&s!=='')v=parseFloat(s);}catch(e){}return isNaN(v)?5:v;}
+function prSetImp(v){try{localStorage.setItem('wk_pr_imp',v);}catch(e){}prRender();}
+function prBloquear(){PR_COSTOS=null;try{sessionStorage.removeItem('wk_pr_clave');}catch(e){}
+  document.getElementById('pr-lock').innerHTML='<input id="pr-clave" type="password" placeholder="Clave de costos" onkeydown="if(event.key===\'Enter\')prDesbloquear()"><button class="pr-chip" onclick="prDesbloquear()">Ver costos</button><span class="err" id="pr-err"></span>';prRender();}
 const PR_SIN={cachorro:['cachorro','puppy','junior','kitten'],puppy:['puppy','cachorro'],adulto:['adult'],adult:['adult'],gato:['gato','cat'],cat:['cat','gato'],perro:['perro','dog'],dog:['dog','perro'],rc:['royal canin'],pp:['pro plan'],chico:['mini','small','pequeñ','toy'],pequeño:['mini','small','pequeñ'],grande:['large','maxi','grande','giant'],mediano:['medium','mediano'],castrado:['castrado','sterilized'],light:['light','weight','reduced','fit','satiety']};
 function prN(s){return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
 function prKg(k){return (k%1?String(k).replace('.',','):String(k))+' kg';}
@@ -4459,6 +4487,7 @@ async function prInit(){
     }catch(e){document.getElementById('pr-meta').textContent='No se pudo cargar la lista de precios';return;}
   }
   prRender();setTimeout(()=>q.focus(),30);
+  if(!PR_COSTOS){let c=null;try{c=sessionStorage.getItem('wk_pr_clave');}catch(e){}if(c)prDesbloquear(c);}
 }
 function prEsp(b){PR_ESP=b.dataset.e;document.querySelectorAll('.pr-chip').forEach(x=>x.classList.toggle('on',x===b));prRender();}
 function prTok(t,h){const alts=PR_SIN[t]?PR_SIN[t].map(prN):[t];if(/^\d+([.,]\d+)?$/.test(t)){const k=t.replace(',','.');return h.includes(k+'kg')||h.includes(t);}return alts.some(a=>h.includes(a));}
@@ -4474,7 +4503,7 @@ function prRender(){
     if(++n>80){out.push('<div class="pr-vacio">Hay más resultados: afiná la búsqueda.</div>');break;}
     arr.sort((a,b)=>a.k-b.k);const f=arr[0];
     out.push('<div class="pr-group"><div class="pr-name">'+f.m+' '+f.p+'</div><div class="pr-sub">'+f.e+(f.l?' · '+f.l:'')+'</div>'+
-      arr.map(x=>'<div class="pr-row"><span class="pr-kg">'+prKg(x.k)+'</span><span class="pr-pr t"><small>Transferencia</small>'+prArs(x.t)+'</span><span class="pr-pr"><small>Tarjeta</small>'+prArs(x.c)+'</span><span class="pr-sku" title="'+x.s+'">'+x.s+'</span><button class="pr-copy" onclick="prCopy(this,\''+x.s+'\','+x.k+')">Copiar</button></div>').join('')+'</div>');
+      arr.map(x=>{const co=PR_COSTOS?PR_COSTOS[x.s+'|'+x.k.toFixed(1)]:null;let cc='';if(PR_COSTOS){if(co){const imp=prImp()/100,neto=x.t-co-x.t*imp;cc='<span class="pr-pr cost"><small>Costo</small>'+prArs(co)+'</span><span class="pr-pr"><small>Rentabilidad</small>'+Math.round((x.t/co-1)*100)+'%</span><span class="pr-pr neto"><small>Margen neto</small>'+prArs(neto)+' · '+Math.round(neto/x.t*100)+'%</span>';}else{cc='<span class="pr-pr cost"><small>Costo</small>—</span><span></span><span></span>';}}return '<div class="pr-row'+(PR_COSTOS?' wc':'')+'"><span class="pr-kg">'+prKg(x.k)+'</span><span class="pr-pr t"><small>Transferencia</small>'+prArs(x.t)+'</span><span class="pr-pr"><small>Tarjeta</small>'+prArs(x.c)+'</span>'+cc+'<span class="pr-sku" title="'+x.s+'">'+x.s+'</span><button class="pr-copy" onclick="prCopy(this,\''+x.s+'\','+x.k+')">Copiar</button></div>';}).join('')+'</div>');
   }
   document.getElementById('pr-res').innerHTML=out.join('')||'<div class="pr-vacio">No encontré nada con esa búsqueda.</div>';
 }
