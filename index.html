@@ -179,6 +179,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="nav-section">Clientes</div>
     <div class="nav-item" onclick="irA('clientes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</div>
     <div class="nav-item" onclick="irA('recompras')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Recompras</div>
+    <div class="nav-item" onclick="irA('aviso')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Aviso 9–11 nov <span style="font-size:9px;background:#d97706;color:#fff;border-radius:4px;padding:1px 5px;margin-left:2px">TEMP</span></div>
     <div class="nav-item" onclick="irA('migracion')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>Migración</div>
     <div class="nav-item" onclick="irA('analisis')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Análisis clientes</div>
     <div class="nav-item" onclick="irA('resenas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Reseñas</div>
@@ -495,6 +496,34 @@ Vamos Argentina!</div>
     <div class="card">
       <div class="card-title">Proyeccion del mes</div>
       <div class="metrics-grid" id="av-proyeccion"></div>
+    </div>
+  </div>
+</div>
+
+<!-- AVISO TEMPORAL (nov 2026): sin logistica lunes 9, martes 10 y miercoles 11 por la visita del Papa.
+     Lista: clientes que compraron entre el 6 y el 14 de octubre y todavia no compraron en noviembre.
+     Se recalcula en vivo desde la hoja Ventas, asi que el que vuelve a comprar sale solo.
+     Borrar esta seccion (pagina, item del menu y bloque JS "AVISO TEMPORAL") despues del 12/11. -->
+<div class="page" id="page-aviso">
+  <div class="card" style="border-left:4px solid #d97706">
+    <div class="card-title" style="color:#d97706">Sin reparto lunes 9, martes 10 y miércoles 11</div>
+    <div style="font-size:13px;color:var(--gris-dark);line-height:1.5">Clientes que compraron entre el <b>6 y el 14 de octubre</b> y todavía <b>no compraron en noviembre</b>. El botón WA abre el chat con el mensaje armado con su nombre y el alimento que llevó. Cuando lo mandes, tocá <b>Enviado</b>. Si un cliente compra, desaparece solo de la lista.</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="apCargar()">Actualizar</button>
+      <span class="conn-status conn-err" id="ap-status">Sin cargar</span>
+    </div>
+  </div>
+  <div class="metrics-grid" id="ap-metrics"></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="ap-filtros">
+    <button class="btn btn-primary" data-apf="pend" onclick="apFiltro('pend')">Por mandar</button>
+    <button class="btn" data-apf="volv" onclick="apFiltro('volv')">Volvieron a fin de oct</button>
+    <button class="btn" data-apf="env" onclick="apFiltro('env')">Enviados</button>
+    <button class="btn" data-apf="all" onclick="apFiltro('all')">Todos</button>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <div class="table-head" style="grid-template-columns:1.2fr 1fr 1.4fr 70px 150px"><span>Cliente</span><span>Zona</span><span>Llevó en octubre</span><span>Fecha</span><span>Acción</span></div>
+      <div class="table-body" id="ap-tabla" style="max-height:none"></div>
     </div>
   </div>
 </div>
@@ -1047,6 +1076,97 @@ let MESES_LIVE=['Sep','Oct','Nov','Dic','Ene','Feb','Mar','Abr','May','Jun'];
 let KG_LIVE=[],KEYS_LIVE=[];
 let FAC_LIVE=   [4351700,7950760,8804030,9844900,9661745,11334800,16575600,19314000,19700000,0];
 
+// ── AVISO TEMPORAL (nov 2026) — sin reparto 9, 10 y 11 de noviembre ──────────
+// Borrar este bloque, la pagina page-aviso y su item del menu despues del 12/11.
+const AP_KEY='wankun_aviso_papa_v1';
+const AP_DESDE=new Date(2026,9,6), AP_HASTA=new Date(2026,9,14), AP_NOV=new Date(2026,10,1);
+let apLista=[], apFiltroAct='pend', apCargando=false;
+function apEnviados(){try{return JSON.parse(localStorage.getItem(AP_KEY)||'{}');}catch(e){return{};}}
+function apGuardar(m){try{localStorage.setItem(AP_KEY,JSON.stringify(m));}catch(e){}}
+function apNorm(s){return (s||'').toString().normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim();}
+function apProd(marca,prod){
+  let p=((marca&&!/^vac/i.test(marca)?marca+' ':'')+(prod||'')).replace(/\s+/g,' ').trim();
+  const fix=[[/\bMed Adu(lt)?\b/gi,'Medium Adult'],[/\bMax(i)? Adu(lt)?\b/gi,'Maxi Adult'],[/\bHypo Puppt\b/gi,'Hypoallergenic Puppy'],[/\bHypo\b/gi,'Hypoallergenic'],[/\bDiabetc\b/gi,'Diabetic'],[/\bWC\b/g,'Weight Care'],[/^royal canin/i,'Royal Canin'],[/^Balance Medium$/i,'Balanced Medium Adult']];
+  fix.forEach(f=>{p=p.replace(f[0],f[1]);});
+  return p;
+}
+function apMensaje(nombre,prods){
+  const primer=(nombre||'').trim().split(/[\s\-]+/)[0];
+  const n=primer.charAt(0).toUpperCase()+primer.slice(1).toLowerCase();
+  const pt=prods.length===1?prods[0]:prods.slice(0,-1).join(', ')+' y '+prods[prods.length-1];
+  return '¡Hola '+n+'! 🐾 Te saluda Nacho de Wankun Club para avisarte con tiempo: el lunes 9, martes 10 y miércoles 11 de noviembre no vamos a tener entregas por la visita del Papa.\n\n'+
+    'Como en octubre te llevaste '+pt+', puede que se te esté terminando justo por esos días. Para que no te quedes sin alimento, te lo podemos mandar antes del lunes o agendarlo para el jueves 12.\n\n'+
+    '¿Qué te queda mejor? Avisame y te lo reservo 🙌';
+}
+function apWa(tel,msg){const d=(tel||'').replace(/\D/g,'');const full=d.length===10?'549'+d:(d.startsWith('54')?d:'54'+d);return 'https://wa.me/'+full+'?text='+encodeURIComponent(msg);}
+async function apCargar(){
+  if(apCargando)return; apCargando=true;
+  const st=document.getElementById('ap-status');
+  st.textContent='Cargando…'; st.className='conn-status';
+  try{
+    const rows=await fetchCSV('Ventas');
+    const grupos={};
+    const EXCL=/shampoo|perfume|desparasit|piedras|artrin|bit trio|churrasq|golocan|humedo|pouch|lata|flura|recovery|moscu/i;
+    rows.forEach(r=>{
+      const f=parseFecha(r['FECHA']||r['Fecha']||''); if(!f||isNaN(f))return;
+      const nombre=(r['CLIENTE']||r['Cliente']||'').trim(); const nn=apNorm(nombre);
+      if(!nn||nn==='xx'||nn==='vete'||nn==='lulo')return;
+      let tel=(getCol(r,'TELEFONO','Telefono','Teléfono')||r['_col10']||'').toString().replace(/\D/g,'');
+      if(tel.length<10)tel='';
+      const key=tel?('t'+tel.slice(-10)):('n'+nn);
+      (grupos[key]=grupos[key]||[]).push({f,nombre,tel,loc:(r['Barrio/Localidad']||r['Localidad']||'').trim(),marca:r['Marca']||'',prod:r['producto']||r['Producto']||''});
+    });
+    // Unir por nombre completo los grupos sin telefono con los que si tienen
+    const porNombre={};
+    Object.keys(grupos).forEach(k=>{if(k[0]==='t')grupos[k].forEach(x=>{const nn=apNorm(x.nombre);if(nn.split(' ').length>=2)porNombre[nn]=k;});});
+    Object.keys(grupos).forEach(k=>{if(k[0]==='n'){const nn=k.slice(1);if(porNombre[nn]){grupos[porNombre[nn]].push(...grupos[k]);delete grupos[k];}}});
+    const lista=[];
+    Object.keys(grupos).forEach(k=>{
+      const g=grupos[k];
+      const oct=g.filter(x=>x.f>=AP_DESDE&&x.f<=AP_HASTA);
+      if(!oct.length)return;
+      if(g.some(x=>x.f>=AP_NOV))return;
+      const ult=new Date(Math.max(...oct.map(x=>x.f)));
+      let ps=oct.filter(x=>+x.f===+ult&&!EXCL.test(x.prod));
+      if(!ps.length)ps=oct.filter(x=>+x.f===+ult);
+      const prods=[...new Set(ps.map(x=>apProd(x.marca,x.prod)).filter(Boolean))];
+      const desp=g.filter(x=>x.f>AP_HASTA&&x.f<AP_NOV).sort((a,b)=>b.f-a.f)[0];
+      const nombre=oct.map(x=>x.nombre).sort((a,b)=>b.length-a.length)[0];
+      const tel=(g.slice().reverse().find(x=>x.tel)||{}).tel||'';
+      const loc=(g.slice().reverse().find(x=>x.loc)||{}).loc||'';
+      lista.push({key:k,nombre,tel,loc,fecha:ult,prods,volvio:desp?desp.f:null,msg:apMensaje(nombre,prods)});
+    });
+    lista.sort((a,b)=>a.fecha-b.fecha||a.nombre.localeCompare(b.nombre));
+    apLista=lista;
+    st.textContent='Actualizado '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); st.className='conn-status conn-ok';
+    apRender();
+  }catch(e){st.textContent='No se pudo leer la hoja Ventas. Tocá Actualizar de nuevo.';st.className='conn-status conn-err';}
+  apCargando=false;
+}
+function apFiltro(f){apFiltroAct=f;document.querySelectorAll('[data-apf]').forEach(b=>b.className='btn'+(b.dataset.apf===f?' btn-primary':''));apRender();}
+function apToggle(k){const m=apEnviados();if(m[k])delete m[k];else m[k]=Date.now();apGuardar(m);apRender();}
+function apRender(){
+  const env=apEnviados();
+  const tot=apLista.length, nEnv=apLista.filter(c=>env[c.key]).length, nVolv=apLista.filter(c=>c.volvio).length;
+  document.getElementById('ap-metrics').innerHTML=
+    '<div class="metric"><div class="metric-label">Clientes a avisar</div><div class="metric-value">'+tot+'</div></div>'+
+    '<div class="metric"><div class="metric-label">Enviados</div><div class="metric-value" style="color:var(--verde)">'+nEnv+'</div></div>'+
+    '<div class="metric"><div class="metric-label">Faltan</div><div class="metric-value">'+(tot-nEnv)+'</div></div>'+
+    '<div class="metric"><div class="metric-label">Volvieron a fin de oct</div><div class="metric-value" style="color:#d97706">'+nVolv+'</div></div>';
+  const fil=apLista.filter(c=>apFiltroAct==='all'||(apFiltroAct==='env'?env[c.key]:apFiltroAct==='volv'?c.volvio:!env[c.key]));
+  const tb=document.getElementById('ap-tabla');
+  if(!fil.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">'+(apLista.length?'No queda nadie en esta vista':'Tocá Actualizar para armar la lista')+'</div>';return;}
+  const fd=d=>d.getDate()+'/'+(d.getMonth()+1);
+  tb.innerHTML=fil.map(c=>{
+    const e=!!env[c.key];
+    const wa=c.tel?'<a class="wa-link" href="'+apWa(c.tel,c.msg)+'" target="_blank" rel="noopener">WA</a>':'<span style="color:var(--gris-dark);font-size:12px">Sin tel</span>';
+    const btn='<button class="wa-link" style="background:'+(e?'var(--verde)':'var(--gris-med)')+';color:'+(e?'#fff':'var(--texto)')+'" onclick="apToggle(\''+c.key+'\')">'+(e?'✓ Enviado':'Enviado')+'</button>';
+    const flag=c.volvio?'<div style="font-size:11px;color:#d97706">Volvió a comprar el '+fd(c.volvio)+'</div>':'';
+    return '<div class="table-row" style="grid-template-columns:1.2fr 1fr 1.4fr 70px 150px;'+(e?'opacity:.55':'')+'"><span style="font-weight:500">'+c.nombre+flag+'</span><span style="font-size:12px">'+(c.loc||'--')+'</span><span style="font-size:12px">'+c.prods.join(' · ')+'</span><span style="font-size:12px">'+fd(c.fecha)+'</span><span style="display:flex;gap:6px">'+wa+btn+'</span></div>';
+  }).join('');
+}
+// ── fin AVISO TEMPORAL ──────────────────────────────────────────────────────
+
 function irA(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
@@ -1054,7 +1174,7 @@ function irA(p){
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
   if(p==='stock'){setTimeout(function(){skRenderTabla();skRenderMetricas();},50);}
-  const t={'inicio':'Inicio','ventas':'Ventas','financiero':'Financiero','vete':'Vete','clientes':'Clientes','recompras':'Recompras','migracion':'Migración','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','ruta':'Hoja de ruta','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','precios':'Precios','stock':'Control de Stock'};
+  const t={'inicio':'Inicio','ventas':'Ventas','financiero':'Financiero','vete':'Vete','clientes':'Clientes','recompras':'Recompras','migracion':'Migración','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','ruta':'Hoja de ruta','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','precios':'Precios','stock':'Control de Stock','aviso':'Aviso sin reparto 9–11 nov'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderMensualKg();renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
   if(p==='resenas'){resenasCargarHistorial();}
@@ -1062,6 +1182,7 @@ function irA(p){
   if(p==='precios'){prInit();}
   if(p==='financiero'){if(!FIN_DATA)finCargar();}
   if(p==='vete'){if(!VETE_DATA)veteCargar();}
+  if(p==='aviso'){if(!apLista.length)apCargar();else apRender();}
 }
 
 document.getElementById('fecha-hoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
