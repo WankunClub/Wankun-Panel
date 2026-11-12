@@ -3664,7 +3664,7 @@ function inRender(){
     const wa='<a class="wa-link" href="https://wa.me/549'+x.tel+'" target="_blank">WA</a>';
     const btn='<button class="wa-link" style="background:'+(hecho?'var(--gris-med)':'#e0e7ff')+';color:'+(hecho?'var(--gris-dark)':'#3730a3')+'" onclick="inToggle(\''+x.tel+'\')">'+(hecho?'Contactado':'Marcar')+'</button>';
     return '<div class="table-row" style="grid-template-columns:1.3fr 1fr 1.3fr 100px 80px 70px 100px 150px;'+(hecho?'opacity:.55':'')+'">'+
-      '<span style="font-weight:500">'+x.nombre+'</span>'+
+      '<span style="font-weight:500;cursor:pointer;color:var(--azul-med)" onclick="clVerFicha(\''+x.nombre.replace(/\\/g,'').replace(/'/g,"\\'")+'\')">'+x.nombre+'</span>'+
       '<span style="font-size:12px">'+(x.loc||'--')+'</span>'+
       '<span style="font-size:12px">'+x.prod+'</span>'+
       '<span style="font-size:12px">'+x.tipo+'</span>'+
