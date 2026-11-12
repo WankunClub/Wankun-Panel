@@ -188,6 +188,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div class="nav-item" onclick="irA('recompras')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Recompras</div>
     <div class="nav-item" onclick="irA('aviso')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Aviso 9–11 nov <span style="font-size:9px;background:#d97706;color:#fff;border-radius:4px;padding:1px 5px;margin-left:2px">TEMP</span></div>
     <div class="nav-item" onclick="irA('migracion')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>Migración</div>
+    <div class="nav-item" onclick="irA('inactivos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>Dejaron de comprar</div>
     <div class="nav-item" onclick="irA('analisis')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>Análisis clientes</div>
     <div class="nav-item" onclick="irA('resenas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Reseñas</div>
     <div class="nav-item" onclick="irA('envios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Envíos</div>
@@ -565,6 +566,37 @@ Vamos Argentina!</div>
       <div class="table-wrap">
         <div class="table-head" style="grid-template-columns:1fr 130px 90px 90px"><span>Cliente</span><span>Zona</span><span>2da compra</span><span></span></div>
         <div class="table-body" id="mig-convertidos" style="max-height:300px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INACTIVOS: migrados de Flex Meli al canal directo que dejaron de comprar -->
+<div class="page" id="page-inactivos">
+  <div class="conn-card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="font-size:14px;font-weight:600">Migrados que dejaron de comprar</span>
+      <span class="conn-status conn-err" id="in-status">Sin cargar</span>
+    </div>
+    <div style="font-size:12px;color:var(--gris-dark);margin-bottom:12px;line-height:1.5">Clientes que llegaron por Flex Meli, compraron al menos una vez por canal directo y ya pasaron su fecha esperada de recompra. Se considera inactivo a quien lleva más de 45 días sin comprar, o más de 1,5 veces su ciclo habitual si compra seguido con ciclo largo. Se recalcula solo cada vez que abrís esta sección.</div>
+    <button class="btn btn-primary" onclick="inCargar()">Actualizar</button>
+  </div>
+  <div id="in-panel" style="display:none">
+    <div class="metrics-grid" id="in-metrics"></div>
+    <div class="card">
+      <div class="results-header">
+        <div class="card-title" style="margin:0">Clientes a recuperar</div>
+        <div class="btn-row">
+          <div class="filtro-group"><label>Segmento</label><select id="in-f-seg" onchange="inRender()"><option value="todos">Todos</option><option value="Enfriándose">Enfriándose (46–75 días)</option><option value="Dormido">Dormido (76–150 días)</option><option value="Frío">Frío (+150 días)</option></select></div>
+          <div class="filtro-group"><label>Tipo de alimento</label><select id="in-f-tipo" onchange="inRender()"><option value="todos">Todos</option><option value="Cachorro">Cachorro</option><option value="Medicado">Medicado</option><option value="Mantenimiento">Mantenimiento</option></select></div>
+          <div class="filtro-group"><label>Contacto</label><select id="in-f-cont" onchange="inRender()"><option value="todos">Todos</option><option value="no">Sin contactar</option><option value="si">Contactados</option></select></div>
+          <div class="filtro-group"><label>Orden</label><select id="in-f-ord" onchange="inRender()"><option value="fac">Más facturado</option><option value="dias">Menos días sin comprar</option><option value="compras">Más compras</option></select></div>
+          <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500;align-self:flex-end" id="in-count">0</span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head" style="grid-template-columns:1.3fr 1fr 1.3fr 100px 80px 70px 100px 150px"><span>Cliente</span><span>Zona</span><span>Último producto</span><span>Tipo</span><span>Sin comprar</span><span>Compras</span><span>Facturado</span><span></span></div>
+        <div class="table-body" id="in-tabla" style="max-height:600px"></div>
       </div>
     </div>
   </div>
@@ -1184,7 +1216,7 @@ function irA(p){
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
   if(p==='stock'){setTimeout(function(){skRenderTabla();skRenderMetricas();},50);}
-  const t={'inicio':'Inicio','ventas':'Ventas','financiero':'Financiero','vete':'Vete','clientes':'Clientes','recompras':'Recompras','migracion':'Migración','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','ruta':'Hoja de ruta','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','precios':'Precios','stock':'Control de Stock','aviso':'Aviso sin reparto 9–11 nov'};
+  const t={'inicio':'Inicio','ventas':'Ventas','financiero':'Financiero','vete':'Vete','clientes':'Clientes','recompras':'Recompras','migracion':'Migración','inactivos':'Migrados que dejaron de comprar','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','ruta':'Hoja de ruta','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','precios':'Precios','stock':'Control de Stock','aviso':'Aviso sin reparto 9–11 nov'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderMensualKg();renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}
   if(p==='resenas'){resenasCargarHistorial();}
@@ -1193,6 +1225,7 @@ function irA(p){
   if(p==='financiero'){if(!FIN_DATA)finCargar();}
   if(p==='vete'){if(!VETE_DATA)veteCargar();}
   if(p==='aviso'){if(!apLista.length)apCargar();else apRender();}
+  if(p==='inactivos'){inCargar();}
 }
 
 document.getElementById('fecha-hoy').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
@@ -3542,6 +3575,104 @@ async function migConectar(){
     migMetricas();migRenderTabla();migRenderConvertidos();
     migProductoCalcular(vRows,fRows,mlRows);
   }catch(e){st.className='conn-status conn-err';st.textContent='Error: '+e.message;console.error(e);}
+}
+
+// ── INACTIVOS: migrados Flex Meli -> directo, con al menos 1 compra directa, que dejaron de comprar ────
+let inLista=[];
+const IN_KEY='wankun_inactivos_contactados_v1';
+function inContactados(){try{return JSON.parse(localStorage.getItem(IN_KEY)||'{}');}catch(e){return{};}}
+function inGuardar(m){try{localStorage.setItem(IN_KEY,JSON.stringify(m));}catch(e){}}
+function inTel(t){let d=(t||'').toString().replace(/\D/g,'');if(d.startsWith('549'))d=d.slice(3);else if(d.startsWith('54'))d=d.slice(2);if(d.startsWith('0'))d=d.slice(1);return d.length>=10?d.slice(-10):'';}
+function inNom(s){return (s||'').toString().normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z ]/g,'').replace(/\s+/g,' ').trim();}
+function inTipo(p){const s=(p||'').toLowerCase();if(/hypo|diab|renal|anal|urin|gastro|mobil|hepat|satiet|cardiac|derma|obes|sensib/.test(s))return'Medicado';if(/pupp|junior|cachorr|kitten|starter/.test(s))return'Cachorro';return'Mantenimiento';}
+async function inCargar(){
+  const st=document.getElementById('in-status');
+  st.className='conn-status conn-loading';st.textContent='Calculando...';
+  try{
+    const[vRows,fRows]=await Promise.all([fetchCSV('Ventas'),fetchCSV('Flex meli')]);
+    const hoy=new Date();hoy.setHours(0,0,0,0);
+    const DIA=86400000;
+    const valida=f=>f&&!isNaN(f)&&f<=hoy&&f.getFullYear()>=2023;
+    // Flex Meli por telefono: primera y ultima compra
+    const flex={};const nomFlex={};
+    fRows.forEach(r=>{
+      const tel=inTel(r['TELEFONO']);if(!tel)return;
+      const f=parseFecha(r['Fecha compra']||'');if(!valida(f))return;
+      if(!flex[tel])flex[tel]={primera:f,ultima:f,nombre:(r['NOMBRE']||'').trim(),loc:r['LOCALIDAD']||''};
+      if(f<flex[tel].primera)flex[tel].primera=f;
+      if(f>flex[tel].ultima)flex[tel].ultima=f;
+      const n=inNom(r['NOMBRE']);
+      if(n.includes(' ')){if(!nomFlex[n])nomFlex[n]=new Set();nomFlex[n].add(tel);}
+    });
+    // Ventas viejas sin telefono: se asocian por nombre completo solo si ese nombre es de un unico telefono en Flex
+    const telPorNombre=n=>(nomFlex[n]&&nomFlex[n].size===1)?[...nomFlex[n]][0]:'';
+    const dir={};
+    vRows.forEach(r=>{
+      const f=parseFecha(r['FECHA']||r['Fecha']||'');if(!valida(f))return;
+      const nombre=(r['CLIENTE']||r['Cliente']||'').trim();if(!nombre)return;
+      const tel=inTel(r['TELEFONO'])||telPorNombre(inNom(nombre));
+      if(!tel||!flex[tel])return;
+      if(!dir[tel])dir[tel]={nombre,compras:[],fac:0,loc:'',prod:'',ult:null};
+      const d=dir[tel];
+      d.compras.push(f);d.fac+=parseFac(r['Facturación']||r['Facturacion']||'');
+      if(!d.ult||f>=d.ult){d.ult=f;d.nombre=nombre;d.loc=r['Barrio/Localidad']||r['Localidad']||d.loc;d.prod=[r['Marca'],r['producto']].filter(x=>x&&x.toLowerCase()!=='vacía'&&x.toLowerCase()!=='vacia').join(' ');}
+    });
+    const lista=[];
+    Object.keys(dir).forEach(tel=>{
+      const d=dir[tel],fx=flex[tel];
+      const dias=[...new Set(d.compras.map(x=>x.getTime()))].sort((a,b)=>a-b);
+      if(dias[0]<fx.primera.getTime())return; // compraba directo antes de Flex: no es migrado
+      if(fx.ultima>d.ult)return;               // volvio a comprar por Meli despues: no esta inactivo, esta en Meli
+      const gaps=[];for(let i=1;i<dias.length;i++){const g=Math.round((dias[i]-dias[i-1])/DIA);if(g>=10)gaps.push(g);}
+      const ciclo=gaps.length?mediana(gaps):null;
+      const umbral=ciclo?Math.max(45,Math.round(ciclo*1.5)):45;
+      const sin=Math.floor((hoy-d.ult)/DIA);
+      if(sin<=umbral)return;
+      const seg=sin<=75?'Enfriándose':sin<=150?'Dormido':'Frío';
+      lista.push({tel,nombre:d.nombre||fx.nombre,loc:d.loc||fx.loc,prod:d.prod||'--',tipo:inTipo(d.prod),sin,ult:d.ult,compras:dias.length,fac:d.fac,ciclo,seg});
+    });
+    inLista=lista;
+    st.className='conn-status conn-ok';st.textContent=lista.length+' clientes a recuperar';
+    document.getElementById('in-panel').style.display='block';
+    inMetricas();inRender();
+  }catch(e){st.className='conn-status conn-err';st.textContent='Error: '+e.message;console.error(e);}
+}
+function inMetricas(){
+  const c=s=>inLista.filter(x=>x.seg===s).length;
+  const fac=inLista.reduce((a,x)=>a+x.fac,0);
+  const cont=inContactados();const nc=inLista.filter(x=>cont[x.tel]).length;
+  document.getElementById('in-metrics').innerHTML=
+    '<div class="metric"><div class="metric-label">A recuperar</div><div class="metric-value">'+inLista.length+'</div></div>'+
+    '<div class="metric"><div class="metric-label">Enfriándose (46–75 d)</div><div class="metric-value" style="color:#856404">'+c('Enfriándose')+'</div></div>'+
+    '<div class="metric"><div class="metric-label">Dormidos (76–150 d)</div><div class="metric-value" style="color:#c2410c">'+c('Dormido')+'</div></div>'+
+    '<div class="metric"><div class="metric-label">Fríos (+150 d)</div><div class="metric-value" style="color:#c0392b">'+c('Frío')+'</div></div>'+
+    '<div class="metric"><div class="metric-label">Facturaron históricamente</div><div class="metric-value">'+fmt(fac)+'</div></div>'+
+    '<div class="metric"><div class="metric-label">Contactados</div><div class="metric-value">'+nc+'</div></div>';
+}
+function inToggle(tel){const m=inContactados();if(m[tel])delete m[tel];else m[tel]=Date.now();inGuardar(m);inMetricas();inRender();}
+function inRender(){
+  const seg=document.getElementById('in-f-seg').value,tipo=document.getElementById('in-f-tipo').value,cont=document.getElementById('in-f-cont').value,ord=document.getElementById('in-f-ord').value;
+  const m=inContactados();
+  let l=inLista.filter(x=>(seg==='todos'||x.seg===seg)&&(tipo==='todos'||x.tipo===tipo)&&(cont==='todos'||(cont==='si'?!!m[x.tel]:!m[x.tel])));
+  l.sort((a,b)=>ord==='dias'?a.sin-b.sin:ord==='compras'?(b.compras-a.compras||b.fac-a.fac):b.fac-a.fac);
+  document.getElementById('in-count').textContent=l.length;
+  const segCls={'Enfriándose':'tag-warn','Dormido':'tag-warn','Frío':'tag-bad'};
+  const tb=document.getElementById('in-tabla');
+  if(!l.length){tb.innerHTML='<div style="padding:14px;color:var(--gris-dark);font-size:13px">No hay clientes con este filtro.</div>';return;}
+  tb.innerHTML=l.map(x=>{
+    const hecho=!!m[x.tel];
+    const wa='<a class="wa-link" href="https://wa.me/549'+x.tel+'" target="_blank">WA</a>';
+    const btn='<button class="wa-link" style="background:'+(hecho?'var(--gris-med)':'#e0e7ff')+';color:'+(hecho?'var(--gris-dark)':'#3730a3')+'" onclick="inToggle(\''+x.tel+'\')">'+(hecho?'Contactado':'Marcar')+'</button>';
+    return '<div class="table-row" style="grid-template-columns:1.3fr 1fr 1.3fr 100px 80px 70px 100px 150px;'+(hecho?'opacity:.55':'')+'">'+
+      '<span style="font-weight:500">'+x.nombre+'</span>'+
+      '<span style="font-size:12px">'+(x.loc||'--')+'</span>'+
+      '<span style="font-size:12px">'+x.prod+'</span>'+
+      '<span style="font-size:12px">'+x.tipo+'</span>'+
+      '<span><span class="'+segCls[x.seg]+'" style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600" title="'+x.seg+(x.ciclo?' · ciclo habitual '+x.ciclo+' d':'')+'">'+x.sin+' d</span></span>'+
+      '<span style="text-align:center;font-size:12px">'+x.compras+'</span>'+
+      '<span style="font-size:12px;font-weight:600">'+fmtARS(x.fac)+'</span>'+
+      '<span style="display:flex;gap:6px">'+wa+btn+'</span></div>';
+  }).join('');
 }
 
 // ── MIGRACION POR PRODUCTO Y MES: de los compradores Flex Meli de un producto en un mes, cuantos (por telefono) tienen despues alguna compra en canal directo ────
