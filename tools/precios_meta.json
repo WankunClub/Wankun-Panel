@@ -1,0 +1,1338 @@
+{
+"meta": {
+"PPCATKITT1": {
+"m": "Pro Plan",
+"l": "",
+"p": "Kitten Protection",
+"e": "Gato"
+},
+"PPCATKITT3": {
+"m": "Pro Plan",
+"l": "",
+"p": "Kitten Protection",
+"e": "Gato"
+},
+"PPCATADU3": {
+"m": "Pro Plan",
+"l": "",
+"p": "Gato Adulto",
+"e": "Gato"
+},
+"PPCATADU75": {
+"m": "Pro Plan",
+"l": "",
+"p": "Gato Adulto",
+"e": "Gato"
+},
+"PPCATADU+775": {
+"m": "Pro Plan",
+"l": "",
+"p": "Adult Cat 7+",
+"e": "Gato"
+},
+"PPCATURI75": {
+"m": "Pro Plan",
+"l": "",
+"p": "Urinary Cat",
+"e": "Gato"
+},
+"PPCATSTER3": {
+"m": "Pro Plan",
+"l": "",
+"p": "Sterilized Cat",
+"e": "Gato"
+},
+"EXCCATKITT75": {
+"m": "Excellent",
+"l": "",
+"p": "Gato Kitten",
+"e": "Gato"
+},
+"EXCCATADU3": {
+"m": "Excellent",
+"l": "",
+"p": "Gato Adulto",
+"e": "Gato"
+},
+"EXCCATADU75": {
+"m": "Excellent",
+"l": "",
+"p": "Gato Adulto",
+"e": "Gato"
+},
+"EXCCATADU15": {
+"m": "Excellent",
+"l": "",
+"p": "Gato Adulto",
+"e": "Gato"
+},
+"EXCECATSTERE7": {
+"m": "Excellent",
+"l": "",
+"p": "Gato Sterilized",
+"e": "Gato"
+},
+"EXCCATURINARY7": {
+"m": "Excellent",
+"l": "",
+"p": "Urinary Cat",
+"e": "Gato"
+},
+"FWCATADU3": {
+"m": "Fawna",
+"l": "",
+"p": "Adult Cat",
+"e": "Gato"
+},
+"FWCATADU75": {
+"m": "Fawna",
+"l": "",
+"p": "Adult Cat",
+"e": "Gato"
+},
+"FWCATURI75": {
+"m": "Fawna",
+"l": "",
+"p": "Urinary Cat",
+"e": "Gato"
+},
+"FWCATADUSTE75": {
+"m": "Fawna",
+"l": "",
+"p": "Adult Cat Sterilized",
+"e": "Gato"
+},
+"OPCATEQCC75": {
+"m": "Old Prince",
+"l": "",
+"p": "Equilibrium Cats Complete Care",
+"e": "Gato"
+},
+"OPCATEQIND75": {
+"m": "Old Prince",
+"l": "",
+"p": "Equilibrium Cats Indoor Care",
+"e": "Gato"
+},
+"OPCATEQURI75": {
+"m": "Old Prince",
+"l": "",
+"p": "Equilibrium Cats Urinary Care",
+"e": "Gato"
+},
+"OPCATADUCOR75": {
+"m": "Old Prince",
+"l": "",
+"p": "Gato Adulto Cordero",
+"e": "Gato"
+},
+"OPCATADUNOV75": {
+"m": "Old Prince",
+"l": "",
+"p": "Novel Gatos Adultos",
+"e": "Gato"
+},
+"OPCATADUNOVSTE75": {
+"m": "Old Prince",
+"l": "",
+"p": "Novel Adult Cat Sterilized",
+"e": "Gato"
+},
+"EUKACATADU3": {
+"m": "Eukanuba",
+"l": "",
+"p": "Adulto Top Condition",
+"e": "Gato"
+},
+"EUKACATADU7": {
+"m": "Eukanuba",
+"l": "",
+"p": "Adulto Top Condition",
+"e": "Gato"
+},
+"OSCATADU75": {
+"m": "Optimus",
+"l": "",
+"p": "Gato Adulto",
+"e": "Gato"
+},
+"UKKITTEN": {
+"m": "Unik",
+"l": "",
+"p": "Kitten",
+"e": "Gato"
+},
+"UKCATCAS2": {
+"m": "Unik",
+"l": "",
+"p": "Gato Castrado",
+"e": "Gato"
+},
+"UKCATCAS7": {
+"m": "Unik",
+"l": "",
+"p": "Gato Castrado",
+"e": "Gato"
+},
+"RCCATPER1": {
+"m": "Royal Canin",
+"l": "Por raza",
+"p": "Persian",
+"e": "Gato"
+},
+"RCCATPER7": {
+"m": "Royal Canin",
+"l": "Por raza",
+"p": "Persian",
+"e": "Gato"
+},
+"RCCATSIAM7": {
+"m": "Royal Canin",
+"l": "Por raza",
+"p": "Siamese",
+"e": "Gato"
+},
+"RCCATURIC1": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Urinary Care",
+"e": "Gato"
+},
+"RCCATURIC7": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Urinary Care",
+"e": "Gato"
+},
+"RCCATWC1": {
+"m": "Royal Canin",
+"l": "",
+"p": "Weight Care",
+"e": "Gato"
+},
+"RCCATWC7": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Weight Care",
+"e": "Gato"
+},
+"RCCATFIT1": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Fit",
+"e": "Gato"
+},
+"RCCATFIT3": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Fit",
+"e": "Gato"
+},
+"RCCATFIT7": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Fit",
+"e": "Gato"
+},
+"RCCATFIT15": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Fit",
+"e": "Gato"
+},
+"RCCATIND1": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Indoor",
+"e": "Gato"
+},
+"RCCATIND7": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Indoor",
+"e": "Gato"
+},
+"RCCATIND71": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Indoor 7+",
+"e": "Gato"
+},
+"RCCATIND77": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Indoor 7+",
+"e": "Gato"
+},
+"RCCATKITT1": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Kitten",
+"e": "Gato"
+},
+"RCCATKITT7": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Kitten",
+"e": "Gato"
+},
+"RCCATSEN1": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Sensible",
+"e": "Gato"
+},
+"RCCATSEN7": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Sensible",
+"e": "Gato"
+},
+"RCCATGAS2": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Gastro Intestinal",
+"e": "Gato"
+},
+"RCCATREN2": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Renal Feline",
+"e": "Gato"
+},
+"RCCATURISO1": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Urinary S/O High Dilution",
+"e": "Gato"
+},
+"RCCATURISO7": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Urinary S/O High Dilution",
+"e": "Gato"
+},
+"CPCATADU7": {
+"m": "Royal Canin",
+"l": "Club Performance",
+"p": "Club Performance Cat Adulto",
+"e": "Gato"
+},
+"CPCATKITT1": {
+"m": "Royal Canin",
+"l": "Club Performance",
+"p": "Club Performance Kitten",
+"e": "Gato"
+},
+"CPCATKITT7": {
+"m": "Royal Canin",
+"l": "Club Performance",
+"p": "Club Performance Kitten",
+"e": "Gato"
+},
+"RCCATCASWC1": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Gato Castrado Weight Control",
+"e": "Gato"
+},
+"RCCATCASWC3": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Gato Castrado Weight Control",
+"e": "Gato"
+},
+"RCCATCASWC7": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Gato Castrado Weight Control",
+"e": "Gato"
+},
+"RCCATCASWC12": {
+"m": "Royal Canin",
+"l": "Nutrición felina",
+"p": "Gato Castrado Weight Control",
+"e": "Gato"
+},
+"OPTDOGADUL20": {
+"m": "Optimus",
+"l": "",
+"p": "Perro Adulto",
+"e": "Perro"
+},
+"OPTDOGCACH15": {
+"m": "Optimus",
+"l": "",
+"p": "Cachorro",
+"e": "Perro"
+},
+"UKDOGCACHSMALL3": {
+"m": "Unik",
+"l": "",
+"p": "Perro Cachorro Pequeño",
+"e": "Perro"
+},
+"UKDOGCACHMED15": {
+"m": "Unik",
+"l": "",
+"p": "Perro Cachorro Mediano y Grande",
+"e": "Perro"
+},
+"UKDIGADUPEQCAS76": {
+"m": "Unik",
+"l": "",
+"p": "Perro Adulto Pequeño Castrado",
+"e": "Perro"
+},
+"UKDOGCAS15": {
+"m": "Unik",
+"l": "",
+"p": "Perro Adulto Mediano Castrado",
+"e": "Perro"
+},
+"UKDGOSMALL7": {
+"m": "Unik",
+"l": "",
+"p": "Perro Adulto Pequeño",
+"e": "Perro"
+},
+"UKDOGMED15": {
+"m": "Unik",
+"l": "",
+"p": "Perro Mediano y Grande",
+"e": "Perro"
+},
+"FWDOGCACHMED15": {
+"m": "Fawna",
+"l": "",
+"p": "Cachorro Mediano y Grande",
+"e": "Perro"
+},
+"FWDOGADUMED15": {
+"m": "Fawna",
+"l": "",
+"p": "Adulto Mediano y Grande",
+"e": "Perro"
+},
+"FWDOGADULIGHT15": {
+"m": "Fawna",
+"l": "",
+"p": "Perro Adulto Light",
+"e": "Perro"
+},
+"FWDOGSENIOR15": {
+"m": "Fawna",
+"l": "",
+"p": "Perro Adulto Senior",
+"e": "Perro"
+},
+"PRODOGPUPPYSM3": {
+"m": "Pro Plan",
+"l": "",
+"p": "Puppy Small Breed",
+"e": "Perro"
+},
+"PRODOGPUPPYSM7": {
+"m": "Pro Plan",
+"l": "",
+"p": "Puppy Small Breed",
+"e": "Perro"
+},
+"PRODOGPUPPYMED3": {
+"m": "Pro Plan",
+"l": "",
+"p": "Puppy Medium Breed",
+"e": "Perro"
+},
+"PRODOGPUPPYMED15": {
+"m": "Pro Plan",
+"l": "",
+"p": "Puppy Medium Breed",
+"e": "Perro"
+},
+"PRODOGPUPPYLARGE15": {
+"m": "Pro Plan",
+"l": "",
+"p": "Puppy Large Breed",
+"e": "Perro"
+},
+"PRODOGADUSMALL7": {
+"m": "Pro Plan",
+"l": "",
+"p": "Adulto Small Breed",
+"e": "Perro"
+},
+"PRODOGADUMED3": {
+"m": "Pro Plan",
+"l": "",
+"p": "Adulto Medium Breed",
+"e": "Perro"
+},
+"PRODOGADUMED15": {
+"m": "Pro Plan",
+"l": "",
+"p": "Adulto Medium Breed",
+"e": "Perro"
+},
+"PRODOGADULARGE15": {
+"m": "Pro Plan",
+"l": "",
+"p": "Adulto Large",
+"e": "Perro"
+},
+"PRODOGRC12": {
+"m": "Pro Plan",
+"l": "",
+"p": "Reduced Calories",
+"e": "Perro"
+},
+"OPDOGCACHNOVEL15": {
+"m": "Old Prince",
+"l": "",
+"p": "Novel Cachorro All Breeds",
+"e": "Perro"
+},
+"OPDOGADUEQWC15": {
+"m": "Old Prince",
+"l": "",
+"p": "Equilibrium Perro Adulto Weight Control",
+"e": "Perro"
+},
+"OPDOGADUSMALLNOV15": {
+"m": "Old Prince",
+"l": "",
+"p": "Novel Perro Adulto Small Breed",
+"e": "Perro"
+},
+"OPDOGADUMEDNOV15": {
+"m": "Old Prince",
+"l": "",
+"p": "Novel Perro Adulto Mediano y Grande",
+"e": "Perro"
+},
+"OPDOGSENNOV15": {
+"m": "Old Prince",
+"l": "",
+"p": "Novel Cordero Perro Senior",
+"e": "Perro"
+},
+"OPDOGSRWC15": {
+"m": "Old Prince",
+"l": "",
+"p": "Equilibrium Perro Adulto MYG",
+"e": "Perro"
+},
+"OPDOGLIGHTNOV15": {
+"m": "Old Prince",
+"l": "",
+"p": "Novel Light",
+"e": "Perro"
+},
+"RCDOGMAXWC10": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Maxi Weight Care",
+"e": "Perro"
+},
+"RCDOGMEDWC3": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Medium Weight Care",
+"e": "Perro"
+},
+"RCDOGMEDWC10": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Medium Weight Care",
+"e": "Perro"
+},
+"RCDOGMINIWC3": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Mini Weight Care",
+"e": "Perro"
+},
+"RCDOGMINIDERMA3": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Mini Dermacomfort",
+"e": "Perro"
+},
+"RCDOGMEDDERMA3": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Medium Dermacomfort",
+"e": "Perro"
+},
+"RCDOGMEDDERMA10": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Medium Dermacomfort",
+"e": "Perro"
+},
+"RCDOGMAXIDERMA10": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Maxi Dermacomfort",
+"e": "Perro"
+},
+"RCDOGHYPOPUPPY2": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Hypoallergenic Canine Puppy",
+"e": "Perro"
+},
+"RCDOGHYPOPUPPY10": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Hypoallergenic Canine Puppy",
+"e": "Perro"
+},
+"RCDOGANAL8": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Anallergenic Canine",
+"e": "Perro"
+},
+"RCDOGCARDIAC10": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Cardiac Canine",
+"e": "Perro"
+},
+"RCDOGDIABETIC2": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Diabetic Canine",
+"e": "Perro"
+},
+"RCDOGDIABETIC10": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Diabetic Canine",
+"e": "Perro"
+},
+"RCDOGGASTROMC10": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Gastro Intestinal MC",
+"e": "Perro"
+},
+"RCDOGGASTRO2": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Gastro Intestinal",
+"e": "Perro"
+},
+"RCDOGGASTRO10": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Gastro Intestinal",
+"e": "Perro"
+},
+"RCDOGHEPATIC1": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Hepatic Canine",
+"e": "Perro"
+},
+"RCDOGHEPATIC10": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Hepatic Canine",
+"e": "Perro"
+},
+"RCDOGHYPO2": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Hypoallergenic Canine",
+"e": "Perro"
+},
+"RCDOGHYPO10": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Hypoallergenic Canine",
+"e": "Perro"
+},
+"RCDOGMOBILITY10": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Mobility Canine",
+"e": "Perro"
+},
+"RCDOGMOBILITYLD15": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Mobility Larger Dog",
+"e": "Perro"
+},
+"RCDOGRENAL1": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Renal Canine",
+"e": "Perro"
+},
+"RCDOGRENAL10": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Renal Canine",
+"e": "Perro"
+},
+"RCDOGSATIETY7": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Satiety Canine",
+"e": "Perro"
+},
+"RCDOGSATIETY15": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Satiety Canine",
+"e": "Perro"
+},
+"RCDOGURI710": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Urinary Ageing 7+",
+"e": "Perro"
+},
+"RCDOGURISO10": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Urinary Care S/O",
+"e": "Perro"
+},
+"CPDOGJUN15": {
+"m": "Royal Canin",
+"l": "Club Performance",
+"p": "Club Performance Junior",
+"e": "Perro"
+},
+"CPDOGADU15": {
+"m": "Royal Canin",
+"l": "Club Performance",
+"p": "Club Performance Dog Adulto",
+"e": "Perro"
+},
+"CPDOGADU20": {
+"m": "Royal Canin",
+"l": "Club Performance",
+"p": "Club Performance Dog Adulto",
+"e": "Perro"
+},
+"CPDOGWC15": {
+"m": "Royal Canin",
+"l": "Club Performance",
+"p": "Club Performance Weight Control",
+"e": "Perro"
+},
+"RCDOGADUBOXER12": {
+"m": "Royal Canin",
+"l": "Por raza",
+"p": "Boxer Adulto",
+"e": "Perro"
+},
+"RCDOGADUBULL7": {
+"m": "Royal Canin",
+"l": "Por raza",
+"p": "Bulldog Francés Adulto",
+"e": "Perro"
+},
+"RCDOGADUCANICHE3": {
+"m": "Royal Canin",
+"l": "Por raza",
+"p": "Caniche Adulto",
+"e": "Perro"
+},
+"RCDOGADUCANICHE7": {
+"m": "Royal Canin",
+"l": "Por raza",
+"p": "Caniche Adulto",
+"e": "Perro"
+},
+"RCDOGADUDASCH3": {
+"m": "Royal Canin",
+"l": "Por raza",
+"p": "Dachshund Adulto",
+"e": "Perro"
+},
+"RCDOGADUGOLDEN12": {
+"m": "Royal Canin",
+"l": "Por raza",
+"p": "Golden Retriever Adulto",
+"e": "Perro"
+},
+"RCDOGADUJACK3": {
+"m": "Royal Canin",
+"l": "Por raza",
+"p": "Jack Russell Adulto",
+"e": "Perro"
+},
+"RCDOGADULABRADOR12": {
+"m": "Royal Canin",
+"l": "Por raza",
+"p": "Labrador Retriever Adulto",
+"e": "Perro"
+},
+"RCDOGADUOVEJEROpuppy12": {
+"m": "Royal Canin",
+"l": "Por raza",
+"p": "Ovejero Alemán Cachorro",
+"e": "Perro"
+},
+"RCDOGADUOVEJERO12": {
+"m": "Royal Canin",
+"l": "Por raza",
+"p": "Ovejero Alemán Adulto",
+"e": "Perro"
+},
+"RCDOGADUPUG7": {
+"m": "Royal Canin",
+"l": "Por raza",
+"p": "Pug Adulto",
+"e": "Perro"
+},
+"RCDOGPUPYGIANT15": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Giant Puppy",
+"e": "Perro"
+},
+"RCDOGMAXIPUPY3": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Maxi Puppy",
+"e": "Perro"
+},
+"RCDOGMAXIPUPY15": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Maxi Puppy",
+"e": "Perro"
+},
+"RCDOGMEDPUPY3": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Medium Puppy",
+"e": "Perro"
+},
+"RCDOGMEDPUPY15": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Medium Puppy",
+"e": "Perro"
+},
+"RCDOGMINIPUPY3": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Mini Puppy",
+"e": "Perro"
+},
+"RCDOGGIANTJUN15": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Giant Junior",
+"e": "Perro"
+},
+"RCDOGGIANTADU15": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Giant Adult",
+"e": "Perro"
+},
+"RCDOGMAXIADU15": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Maxi Adult",
+"e": "Perro"
+},
+"RCDOGMAXIADU515": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Maxi Adult 5+",
+"e": "Perro"
+},
+"RCDOGMAXAGEING815": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Maxi Ageing +8",
+"e": "Perro"
+},
+"RCDOGMEDADU3": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Medium Adult",
+"e": "Perro"
+},
+"RCDOGMEDADU7": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Medium Adult",
+"e": "Perro"
+},
+"RCDOGMEDADU15": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Medium Adult",
+"e": "Perro"
+},
+"RCDOGMEDADU73": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Medium Adult +7",
+"e": "Perro"
+},
+"RCDOGMEDADU715": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Medium Adult +7",
+"e": "Perro"
+},
+"RCDOGMEDADU1016": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Medium Adult +10",
+"e": "Perro"
+},
+"RCDOGMINIADU3": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Mini Adult",
+"e": "Perro"
+},
+"RCDOGMINIADU7": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Mini Adult",
+"e": "Perro"
+},
+"RCDOGMINIADU15": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Mini Adult",
+"e": "Perro"
+},
+"RCDOGMINIADU123": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Mini Ageing +12",
+"e": "Perro"
+},
+"RCDOGMINIADU83": {
+"m": "Royal Canin",
+"l": "Por tamaño",
+"p": "Mini Adult +8",
+"e": "Perro"
+},
+"EXDOGPUPYSMALL7": {
+"m": "Excellent",
+"l": "",
+"p": "Puppy Small Breed",
+"e": "Perro"
+},
+"EXDOGPUPYMED15": {
+"m": "Excellent",
+"l": "",
+"p": "Puppy Mediano y Grande",
+"e": "Perro"
+},
+"EXDOGADUSMALL3": {
+"m": "Excellent",
+"l": "",
+"p": "Perro Adulto Small",
+"e": "Perro"
+},
+"EXDOGADUSMALL7": {
+"m": "Excellent",
+"l": "",
+"p": "Perro Adulto Small",
+"e": "Perro"
+},
+"EXDOGADUSMALL15": {
+"m": "Excellent",
+"l": "",
+"p": "Perro Adulto Small",
+"e": "Perro"
+},
+"EXDOGADUMED3": {
+"m": "Excellent",
+"l": "",
+"p": "Perro Adulto Mediano",
+"e": "Perro"
+},
+"EXDOGADUMED15": {
+"m": "Excellent",
+"l": "",
+"p": "Perro Adulto Mediano",
+"e": "Perro"
+},
+"EXDOGSEN15": {
+"m": "Excellent",
+"l": "",
+"p": "Perro Senior",
+"e": "Perro"
+},
+"EXDOGSKIN15": {
+"m": "Excellent",
+"l": "",
+"p": "Adult Skin Care con Cordero",
+"e": "Perro"
+},
+"EXDOGADURC15": {
+"m": "Excellent",
+"l": "",
+"p": "Perro Adulto Reduced Calories",
+"e": "Perro"
+},
+"EKDOGPUPYLAMB3": {
+"m": "Eukanuba",
+"l": "",
+"p": "Puppy Lamb",
+"e": "Perro"
+},
+"EKDOGPUPYLAMB15": {
+"m": "Eukanuba",
+"l": "",
+"p": "Puppy Lamb",
+"e": "Perro"
+},
+"EKDOGPUPSMALL3": {
+"m": "Eukanuba",
+"l": "",
+"p": "Puppy Small Breed",
+"e": "Perro"
+},
+"EKDOGPUPMED3": {
+"m": "Eukanuba",
+"l": "",
+"p": "Puppy Medium",
+"e": "Perro"
+},
+"EKDOGPUPYMED15": {
+"m": "Eukanuba",
+"l": "",
+"p": "Puppy Medium",
+"e": "Perro"
+},
+"EKDOGPUPYLARGE3": {
+"m": "Eukanuba",
+"l": "",
+"p": "Puppy Large Breed",
+"e": "Perro"
+},
+"EKDOGPUPYLARGE15": {
+"m": "Eukanuba",
+"l": "",
+"p": "Puppy Large Breed",
+"e": "Perro"
+},
+"EKDOGADUSMALL3": {
+"m": "Eukanuba",
+"l": "",
+"p": "Adult Small Breed",
+"e": "Perro"
+},
+"EKDOGADUMED3": {
+"m": "Eukanuba",
+"l": "",
+"p": "Adult Medium Breed",
+"e": "Perro"
+},
+"EKDOGADUMED15": {
+"m": "Eukanuba",
+"l": "",
+"p": "Adult Medium Breed",
+"e": "Perro"
+},
+"EKDOGADULARG15": {
+"m": "Eukanuba",
+"l": "",
+"p": "Adulto Large Breed",
+"e": "Perro"
+},
+"EKDOGADULAMB15": {
+"m": "Eukanuba",
+"l": "",
+"p": "Adulto Lamb",
+"e": "Perro"
+},
+"EKDOGSENSMALL3": {
+"m": "Eukanuba",
+"l": "",
+"p": "Senior Small Breed",
+"e": "Perro"
+},
+"EKDOGSENMED3": {
+"m": "Eukanuba",
+"l": "",
+"p": "Senior Medium Breed",
+"e": "Perro"
+},
+"EKDOGSENMED15": {
+"m": "Eukanuba",
+"l": "",
+"p": "Senior Medium Breed",
+"e": "Perro"
+},
+"EKDOGSENLARGE15": {
+"m": "Eukanuba",
+"l": "",
+"p": "Senior Large Breed",
+"e": "Perro"
+},
+"EKDOGFITMED3": {
+"m": "Eukanuba",
+"l": "",
+"p": "Fit Body Medium Breed",
+"e": "Perro"
+},
+"EKDOGFBMED15": {
+"m": "Eukanuba",
+"l": "",
+"p": "Fit Body Medium Breed",
+"e": "Perro"
+},
+"EKDOGFBLARGE15": {
+"m": "Eukanuba",
+"l": "",
+"p": "Fit Body Large Breed",
+"e": "Perro"
+},
+"BALDOGRG20": {
+"m": "Balanced",
+"l": "",
+"p": "Perro Adulto Raza Grande",
+"e": "Perro"
+},
+"BALDOGMED20": {
+"m": "Balanced",
+"l": "",
+"p": "Perro Adulto Raza Mediana",
+"e": "Perro"
+},
+"BALDOGSENIORRP75": {
+"m": "Balanced",
+"l": "",
+"p": "Perro Senior Raza Pequeña",
+"e": "Perro"
+},
+"MONDOGCOR12": {
+"m": "Mon Ami",
+"l": "",
+"p": "Cordero",
+"e": "Perro"
+},
+"MONDOGCOR7": {
+"m": "Mon Ami",
+"l": "",
+"p": "Cordero",
+"e": "Perro"
+},
+"MONDOGPOLLO12": {
+"m": "Mon Ami",
+"l": "",
+"p": "Pollo",
+"e": "Perro"
+},
+"MONDOGPYM6": {
+"m": "Mon Ami",
+"l": "",
+"p": "Razas Pequeñas y Medianas",
+"e": "Perro"
+},
+"MONSUPERMYG5": {
+"m": "Mon Ami",
+"l": "",
+"p": "Superfood MYG",
+"e": "Perro"
+},
+"MONSUPERMYG12": {
+"m": "Mon Ami",
+"l": "",
+"p": "Superfood MYG",
+"e": "Perro"
+},
+"NURDOGLARGEPUPPY15": {
+"m": "Nutrique",
+"l": "",
+"p": "Large Puppy",
+"e": "Perro"
+},
+"nutdoglargeY15": {
+"m": "Nutrique",
+"l": "",
+"p": "Large Young Adult Dog",
+"e": "Perro"
+},
+"nutdogmedyoung12": {
+"m": "Nutrique",
+"l": "",
+"p": "Medium Young Adult Dog",
+"e": "Perro"
+},
+"nutdogmedpuppy12": {
+"m": "Nutrique",
+"l": "",
+"p": "Medium Puppy",
+"e": "Perro"
+},
+"NUTDOGTOYADU7,5": {
+"m": "Nutrique",
+"l": "",
+"p": "Toy & Mini Young Adult Dog",
+"e": "Perro"
+},
+"NUTDOGMEDADU+712": {
+"m": "Nutrique",
+"l": "",
+"p": "Medium Adult +7",
+"e": "Perro"
+},
+"NUTDOGLAR+615": {
+"m": "Nutrique",
+"l": "",
+"p": "Large Young Adult Dog +6",
+"e": "Perro"
+},
+"BALDOGMEDADU20": {
+"m": "Balanced",
+"l": "",
+"p": "Medium Adult",
+"e": "Perro"
+},
+"BALDOGLARADU20": {
+"m": "Balanced",
+"l": "",
+"p": "Large Adult",
+"e": "Perro"
+},
+"PROFDOGNUTRI20": {
+"m": "Prof Vet",
+"l": "",
+"p": "Nutrición",
+"e": "Perro"
+},
+"PROFDOGPRE20": {
+"m": "Prof Vet",
+"l": "",
+"p": "Premium",
+"e": "Perro"
+},
+"PROFVETCOR15": {
+"m": "Prof Vet",
+"l": "",
+"p": "Cordero",
+"e": "Perro"
+},
+"OPCATADUCOR3": {
+"m": "Old Prince",
+"l": "",
+"p": "Gato Adulto Cordero",
+"e": "Gato"
+},
+"RCDOGRENMOBLOAF1": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Lata Renal Mobility Loaf (pack 3x420g)",
+"e": "Perro"
+},
+"RCDOGRENMOB1": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Renal + Mobility Canine",
+"e": "Perro"
+},
+"RCDOGURISAT3": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Urinary S/O + Satiety Canine",
+"e": "Perro"
+},
+"RCDOGURISAT9": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Urinary S/O + Satiety Canine",
+"e": "Perro"
+},
+"RCCATCARDIAC1": {
+"m": "Royal Canin",
+"l": "Veterinaria",
+"p": "Cardiac Feline",
+"e": "Gato"
+},
+"EKCATADU1": {
+"m": "Eukanuba",
+"l": "",
+"p": "Adulto Top Condition",
+"e": "Gato"
+},
+"EKCATKITT3": {
+"m": "Eukanuba",
+"l": "",
+"p": "Kitten Healthy Start",
+"e": "Gato"
+},
+"EKCATKITT1": {
+"m": "Eukanuba",
+"l": "",
+"p": "Kitten Healthy Start",
+"e": "Gato"
+},
+"PRODOGGASTRO75": {
+"m": "Pro Plan",
+"l": "",
+"p": "Veterinary EN (Gastroenteric) Gastroentérico",
+"e": "Perro"
+},
+"PRODOGURI75": {
+"m": "Pro Plan",
+"l": "",
+"p": "Veterinary UR (Urinary) Vías urinarias",
+"e": "Perro"
+},
+"UKDOGLIGHT15": {
+"m": "Unik",
+"l": "",
+"p": "Perro Adulto Mediano y Grande Light",
+"e": "Perro"
+},
+"EXDOGPUPYSMALL3": {
+"m": "Excellent",
+"l": "",
+"p": "Puppy Small Breed",
+"e": "Perro"
+},
+"EXDOGPUPYMED3": {
+"m": "Excellent",
+"l": "",
+"p": "Puppy Mediano y Grande",
+"e": "Perro"
+},
+"PROFDOGLIGHT15": {
+"m": "Prof Vet",
+"l": "",
+"p": "Light",
+"e": "Perro"
+}
+},
+"ml_productos": {
+"Maxi Puppy · 15 kg": "RCDOGMAXIPUPY15",
+"Maxi Adult · 15 kg": "RCDOGMAXIADU15",
+"Medium Adult · 7,5 kg": "RCDOGMEDADU7",
+"DIABETIC CANINE · 10 kg": "RCDOGDIABETIC10",
+"HYPOALLERGENIC CANINE · 10 kg": "RCDOGHYPO10",
+"RENAL CANINE · 10 kg": "RCDOGRENAL10",
+"URINARY SO CANINE · 10 kg": "RCDOGURISO10",
+"HEPATIC CANINE · 10 kg": "RCDOGHEPATIC10",
+"Giant Puppy · 15 kg": "RCDOGPUPYGIANT15",
+"ANALLERGENIC CANINE · 8 kg": "RCDOGANAL8",
+"GASTROINTESTINAL CANINE · 10 kg": "RCDOGGASTRO10",
+"CARDIAC CANINE · 10 kg": "RCDOGCARDIAC10",
+"MOBILITY LARGER DOGS · 15 kg": "RCDOGMOBILITYLD15",
+"MOBILITY CANINE · 10 kg": "RCDOGMOBILITY10"
+},
+"fijos": {
+"PRODOGGASTRO75": 80600,
+"PRODOGURI75": 80600
+}
+}

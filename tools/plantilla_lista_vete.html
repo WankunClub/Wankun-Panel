@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lista de precios Wankun Club</title>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#1e1d1a;--mut:#77736a;--line:#e6e1d6;--acc:#2f5d50;--accl:#e3ece8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+header{position:sticky;top:0;background:var(--bg);padding:16px 16px 10px;border-bottom:1px solid var(--line);z-index:2}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:18px;margin:0 0 2px}.sub{color:var(--mut);font-size:13px;margin-bottom:10px}
+#q{width:100%;font-size:18px;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;background:#fff;outline:none}
+#q:focus{border-color:var(--acc)}
+.chips{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:14px;cursor:pointer;color:var(--ink)}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+main{padding:12px 16px 40px}
+.meta{color:var(--mut);font-size:13px;margin:4px 2px 10px}
+.g{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.n{font-weight:600}.d{color:var(--mut);font-size:13px;margin-bottom:6px}
+.r{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.r:first-of-type{border-top:0}
+.kg{min-width:62px;font-weight:600}
+.p{flex:1;display:flex;gap:16px;flex-wrap:wrap}
+.p small{display:block;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.03em}
+.p b{font-variant-numeric:tabular-nums;font-size:17px}
+.cp{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;color:var(--acc)}
+.cp.ok{background:var(--accl)}
+.vacio{text-align:center;color:var(--mut);padding:30px 0}
+</style></head><body>
+<header><div class="wrap">
+<h1>Lista de precios · Wankun Club</h1>
+<div class="sub">Vigente desde el 14/11/2026 · Transferencia y tarjeta</div>
+<input id="q" type="search" placeholder="Buscar: maxi puppy 15, renal, gato castrado…" autocomplete="off" autofocus>
+<div class="chips"><button class="chip on" data-e="Todos">Todos</button><button class="chip" data-e="Perro">Perro</button><button class="chip" data-e="Gato">Gato</button></div>
+</div></header>
+<main class="wrap"><div class="meta" id="meta"></div><div id="res"></div></main>
+<script>
+const D=__DATA__;
+const SIN={cachorro:['cachorro','puppy','junior','kitten'],puppy:['puppy','cachorro'],adulto:['adult'],gato:['gato','cat'],perro:['perro','dog'],rc:['royal canin'],royal:['royal canin'],pp:['pro plan'],chico:['mini','small','pequeñ','toy'],pequeño:['mini','small','pequeñ'],grande:['large','maxi','grande','giant'],mediano:['medium','mediano'],castrado:['castra','steril','weight control'],gastro:['gastro'],urinario:['urinary'],hipo:['hypo']};
+const N=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const kg=k=>(k%1?String(k).replace('.',','):String(k))+' kg';
+const ars=n=>'$ '+Math.round(n).toLocaleString('es-AR');
+D.forEach(x=>x.h=N([x.m,x.l,x.p,x.e,x.k+'kg',String(x.k).replace('.',',')+'kg'].join(' ')));
+let E='Todos';
+function tok(t,h){if(/^\d+([.,]\d+)?$/.test(t)){const k=t.replace(',','.');return h.includes(k+'kg')||h.includes(t+'kg');}const a=SIN[t]?SIN[t].map(N):[t];return a.some(v=>h.includes(v))||h.includes(t);}
+function render(){
+ const ts=N(document.getElementById('q').value).replace(/\s*kg\b/g,'').split(/\s+/).filter(Boolean);
+ const hits=D.filter(x=>(E==='Todos'||x.e===E)&&ts.every(t=>tok(t,x.h)));
+ const g=new Map();hits.forEach(x=>{const k=x.m+'|'+x.p+'|'+x.e;if(!g.has(k))g.set(k,[]);g.get(k).push(x);});
+ document.getElementById('meta').textContent=hits.length+(hits.length===1?' presentación':' presentaciones');
+ const out=[];
+ for(const a of g.values()){a.sort((p,q)=>p.k-q.k);const f=a[0];
+  out.push('<div class="g"><div class="n">'+f.m+' '+f.p+'</div><div class="d">'+f.e+(f.l?' · '+f.l:'')+'</div>'+
+  a.map(x=>'<div class="r"><span class="kg">'+kg(x.k)+'</span><span class="p"><span><small>Transferencia</small><b>'+ars(x.t)+'</b></span><span><small>Tarjeta</small><b>'+ars(x.c)+'</b></span></span><button class="cp" data-i="'+D.indexOf(x)+'">Copiar</button></div>').join('')+'</div>');}
+ document.getElementById('res').innerHTML=out.join('')||'<div class="vacio">No encontré nada con esa búsqueda.</div>';
+}
+document.getElementById('q').addEventListener('input',render);
+document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{E=b.dataset.e;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===b));render();});
+document.getElementById('res').addEventListener('click',e=>{const b=e.target.closest('.cp');if(!b)return;const x=D[+b.dataset.i];
+ const t=x.m+' '+x.p+' '+kg(x.k)+': '+ars(x.t)+' por transferencia / '+ars(x.c)+' con tarjeta';
+ try{navigator.clipboard.writeText(t).then(()=>{b.textContent='Copiado';b.classList.add('ok');setTimeout(()=>{b.textContent='Copiar';b.classList.remove('ok');},1400);}).catch(()=>{b.textContent='No se pudo';});}catch(err){b.textContent='No se pudo';}});
+render();
+</script></body></html>
