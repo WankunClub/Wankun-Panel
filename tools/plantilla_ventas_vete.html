@@ -91,8 +91,8 @@ input:focus{border-color:var(--acc)}
 <section id="t-cuenta" class="hide">
  <div class="kpis">
   <div class="kpi big"><small id="sLbl">Saldo</small><b id="sVal">$ 0</b><div class="nota" id="sNota"></div></div>
-  <div class="kpi"><small>Costo de lo que cobró la Vete</small><b id="cVe">$ 0</b></div>
-  <div class="kpi"><small>Ganancia de la Vete en lo que cobró Wankun</small><b id="cW">$ 0</b></div>
+  <div class="kpi"><small>La Vete te debe<br>(bolsas que cobró ella, a costo)</small><b id="cVe">$ 0</b></div>
+  <div class="kpi"><small>Vos le debés a la Vete<br>(su ganancia en las bolsas que cobraste vos)</small><b id="cW">$ 0</b></div>
   <div class="kpi"><small>Ganancia total de la Vete</small><b id="cU">$ 0</b></div>
   <div class="kpi"><small>Ventas sin costo todavía</small><b id="cP">0</b></div>
  </div>
@@ -185,9 +185,9 @@ function cuenta(){let cVe=0,gW=0,gT=0,pend=0;
  VENTAS.forEach(v=>{const c=COSTOS[v.id];if(typeof c!=='number'){pend++;return;}
   const g=v.d.precio-c;gT+=g;if(v.d.cobro==='Vete')cVe+=c;else gW+=g;});
  const s=cVe-gW;
- $('sLbl').textContent=s>=0?'La Vete le debe a Wankun Club':'Wankun Club le debe a la Vete';
+ $('sLbl').textContent=s>=0?'Saldo: la Vete te debe':'Saldo: vos le debés a la Vete';
  $('sVal').textContent=ars(Math.abs(s));
- $('sNota').textContent='Costo de lo que cobró la Vete − ganancia de la Vete en lo que cobró Wankun Club.';
+ $('sNota').textContent='Lo que la Vete te debe menos lo que vos le debés a ella.';
  $('cVe').textContent=ars(cVe);$('cW').textContent=ars(gW);$('cU').textContent=ars(gT);$('cP').textContent=pend;}
 
 (async()=>{
