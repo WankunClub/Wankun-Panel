@@ -121,6 +121,16 @@ def main():
         h = h.replace('__DATA__', json.dumps(data, ensure_ascii=False)).replace('Vigente desde el 14/11/2026', f'Vigente desde el {fecha}')
         open('/tmp/lista_vete.html', 'w').write(h)
 
+    # costos vigentes por SKU (para fijar el costo de las ventas de la vete)
+    json.dump({i['s']: costos.get(f"{i['s']}|{i['k']:.1f}") for i in items}, open('/tmp/costos_hoy.json', 'w'))
+    if hubo:
+        def kgtxt(k):
+            return (str(k).rstrip('0').rstrip('.') if k % 1 else str(int(k))).replace('.', ',')
+        pv = [{'s': i['s'], 'n': f"{i['m']} {i['p']} · {i['e']} · {kgtxt(i['k'])} kg".strip(), 't': i['t'], 'c': i['c']}
+              for i in sorted(items, key=lambda i: (i['m'], i['p'], i['k']))]
+        hv = open(os.path.join(AQUI, 'plantilla_ventas_vete.html')).read()
+        open('/tmp/ventas_vete.html', 'w').write(hv.replace('__DATA__', json.dumps(pv, ensure_ascii=False)))
+
     print(json.dumps({'hubo_cambios': hubo, 'productos': len(items), 'cambios_hoja': cambios_hoja,
                       'avisos': avisos}, ensure_ascii=False, indent=1))
 

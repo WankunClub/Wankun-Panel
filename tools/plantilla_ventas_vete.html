@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ventas Vete · Wankun Club</title>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#1e1d1a;--mut:#77736a;--line:#e6e1d6;--acc:#2f5d50;--accl:#e3ece8;--warn:#a5481f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);z-index:5}
+h1{font-size:18px;margin:14px 0 8px}
+nav{display:flex;gap:6px;padding-bottom:10px}
+nav button{flex:1;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 6px;font-size:15px;cursor:pointer;color:var(--ink)}
+nav button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+main{padding:14px 0 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:13px;color:var(--mut);margin:12px 0 5px}
+label:first-child{margin-top:0}
+input{width:100%;font-size:17px;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;outline:none;color:var(--ink)}
+input:focus{border-color:var(--acc)}
+.opts{display:flex;gap:6px;flex-wrap:wrap}
+.opt{flex:1;min-width:30%;border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:10px 6px;font-size:15px;cursor:pointer;color:var(--ink)}
+.opt.on{border-color:var(--acc);background:var(--accl);font-weight:600}
+.sug{border:1px solid var(--line);border-radius:10px;margin-top:4px;max-height:260px;overflow:auto;background:#fff}
+.sug div{padding:9px 12px;border-top:1px solid var(--line);cursor:pointer}
+.sug div:first-child{border-top:0}.sug div:hover{background:var(--accl)}
+.sel{margin-top:6px;padding:9px 12px;border-radius:10px;background:var(--accl);font-weight:600;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.sel button{border:0;background:none;color:var(--acc);font-size:14px;cursor:pointer}
+.row2{display:flex;gap:10px}.row2>div{flex:1}
+.go{width:100%;margin-top:16px;background:var(--acc);color:#fff;border:0;border-radius:12px;padding:14px;font-size:17px;font-weight:600;cursor:pointer}
+.go:disabled{opacity:.5}
+.msg{margin-top:10px;font-size:14px;min-height:20px}.msg.err{color:var(--warn)}.msg.ok{color:var(--acc)}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.kpi small{display:block;color:var(--mut);font-size:12px}.kpi b{font-size:19px;font-variant-numeric:tabular-nums}
+.kpi.big{grid-column:1/-1}.kpi.big b{font-size:24px}
+.mes{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.mes button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:16px}
+.mes span{flex:1;text-align:center;font-weight:600;text-transform:capitalize}
+.v{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.v:first-child{border-top:0}
+.v .a{flex:1;min-width:0}.v .n{font-weight:600}.v .d{color:var(--mut);font-size:13px}
+.v .p{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:999px;background:var(--accl);color:var(--acc)}
+.tag.v2{background:#f3e7dc;color:var(--warn)}
+.del{border:0;background:none;color:var(--mut);font-size:12px;cursor:pointer;padding:2px 0}
+.vacio{text-align:center;color:var(--mut);padding:24px 0}
+.nota{font-size:13px;color:var(--mut);margin-top:6px}
+.hide{display:none}
+</style></head><body>
+<header><div class="wrap">
+<h1>Ventas Vete · Wankun Club</h1>
+<nav><button data-t="cargar" class="on">Cargar venta</button><button data-t="ventas">Ventas</button><button data-t="cuenta" class="hide" id="tabCuenta">Cuenta</button></nav>
+</div></header>
+<main class="wrap">
+
+<section id="t-cargar">
+<div class="card">
+ <label>Alimento</label>
+ <input id="q" placeholder="Escribí: maxi puppy 15, renal, gato…" autocomplete="off">
+ <div id="sug" class="sug hide"></div>
+ <div id="sel" class="sel hide"><span id="selN"></span><button id="selX">Cambiar</button></div>
+
+ <label>¿Cómo pagó?</label>
+ <div class="opts" id="medio"><button class="opt" data-v="Efectivo">Efectivo</button><button class="opt" data-v="Transferencia">Transferencia</button><button class="opt" data-v="Tarjeta">Tarjeta</button></div>
+
+ <label>Precio</label>
+ <input id="precio" inputmode="numeric" placeholder="Se completa solo">
+
+ <label>¿A quién le llegó la plata?</label>
+ <div class="opts" id="cobro"><button class="opt" data-v="Vete">Vete</button><button class="opt" data-v="Wankun Club">Wankun Club</button></div>
+
+ <div class="row2"><div><label>Cliente</label><input id="cli" autocomplete="off"></div><div><label>Teléfono</label><input id="tel" inputmode="tel" autocomplete="off"></div></div>
+ <label>Domicilio (opcional)</label><input id="dom" autocomplete="off">
+ <label>Fecha</label><input id="fecha" type="date">
+
+ <button class="go" id="guardar">Guardar venta</button>
+ <div class="msg" id="msg"></div>
+</div>
+</section>
+
+<section id="t-ventas" class="hide">
+ <div class="mes"><button id="mAnt">‹</button><span id="mLbl"></span><button id="mSig">›</button></div>
+ <div class="kpis">
+  <div class="kpi"><small>Bolsas</small><b id="kB">0</b></div>
+  <div class="kpi"><small>Vendido</small><b id="kV">$ 0</b></div>
+  <div class="kpi"><small>Cobró la Vete</small><b id="kVe">$ 0</b></div>
+  <div class="kpi"><small>Cobró Wankun Club</small><b id="kW">$ 0</b></div>
+ </div>
+ <div class="card" id="lista"><div class="vacio">Cargando…</div></div>
+</section>
+
+<section id="t-cuenta" class="hide">
+ <div class="kpis">
+  <div class="kpi big"><small id="sLbl">Saldo</small><b id="sVal">$ 0</b><div class="nota" id="sNota"></div></div>
+  <div class="kpi"><small>Costo de lo que cobró la Vete</small><b id="cVe">$ 0</b></div>
+  <div class="kpi"><small>Ganancia de la Vete en lo que cobró Wankun</small><b id="cW">$ 0</b></div>
+  <div class="kpi"><small>Ganancia total de la Vete</small><b id="cU">$ 0</b></div>
+  <div class="kpi"><small>Ventas sin costo todavía</small><b id="cP">0</b></div>
+ </div>
+ <div class="nota">Todo el período, desde la primera venta cargada. El costo de cada venta queda fijo con la lista del día siguiente a la venta (se completa solo cada mañana).</div>
+</section>
+</main>
+
+<script>
+const P=__DATA__;
+const N=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const ars=n=>'$ '+Math.round(n||0).toLocaleString('es-AR');
+const $=id=>document.getElementById(id);
+P.forEach(x=>x.h=N(x.n+' '+x.s));
+const SIN={cachorro:['cachorro','puppy','junior','kitten'],gato:['gato','cat'],perro:['perro','dog'],rc:['royal canin'],royal:['royal canin'],pp:['pro plan'],castrado:['castra','steril','weight control'],chico:['mini','small','pequen','toy'],grande:['large','maxi','grande','giant']};
+function match(t,h){if(/^\d+([.,]\d+)?$/.test(t)){const k=t.replace('.',',');return h.includes(' '+k+' kg');}const a=SIN[t]?SIN[t]:[t];return a.some(v=>h.includes(v));}
+
+let db=null,user=null,soyDueno=false,miId=null,VENTAS=[],COSTOS={};
+let prod=null,medio='',cobro='',precioTocado=false;
+const hoy=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+$('fecha').value=hoy();
+
+// pestañas
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));['cargar','ventas','cuenta'].forEach(t=>$('t-'+t).classList.toggle('hide',t!==b.dataset.t));});
+
+// buscador de alimento
+$('q').addEventListener('input',()=>{const ts=N($('q').value).replace(/\s*kg\b/g,'').split(/\s+/).filter(Boolean);
+ if(!ts.length){$('sug').classList.add('hide');return;}
+ const hits=P.filter(x=>ts.every(t=>match(t,x.h))).slice(0,30);
+ $('sug').innerHTML='';hits.forEach(x=>{const d=document.createElement('div');d.textContent=x.n;d.onclick=()=>elegir(x);$('sug').appendChild(d);});
+ if(!hits.length){const d=document.createElement('div');d.textContent='No encontré ese alimento';$('sug').appendChild(d);}
+ $('sug').classList.remove('hide');});
+function elegir(x){prod=x;$('selN').textContent=x.n;$('sel').classList.remove('hide');$('q').classList.add('hide');$('sug').classList.add('hide');ponerPrecio();}
+$('selX').onclick=()=>{prod=null;$('sel').classList.add('hide');$('q').classList.remove('hide');$('q').value='';$('q').focus();if(!precioTocado)$('precio').value='';};
+function grupo(id,set){$(id).querySelectorAll('.opt').forEach(b=>b.onclick=()=>{$(id).querySelectorAll('.opt').forEach(o=>o.classList.toggle('on',o===b));set(b.dataset.v);});}
+grupo('medio',v=>{medio=v;ponerPrecio();});grupo('cobro',v=>{cobro=v;});
+function ponerPrecio(){if(precioTocado||!prod)return;const p=medio==='Tarjeta'?prod.c:prod.t;$('precio').value=p.toLocaleString('es-AR');}
+$('precio').addEventListener('input',()=>{precioTocado=true;});
+const numero=s=>parseInt(String(s).replace(/\D/g,''),10)||0;
+
+function msg(t,cls){$('msg').textContent=t;$('msg').className='msg '+(cls||'');}
+$('guardar').onclick=async()=>{
+ if(!prod)return msg('Elegí el alimento.','err');
+ if(!medio)return msg('Marcá cómo pagó.','err');
+ const precio=numero($('precio').value);if(!precio)return msg('Falta el precio.','err');
+ if(!cobro)return msg('Marcá a quién le llegó la plata.','err');
+ if(!db)return msg('No hay conexión para guardar. Probá recargar la página.','err');
+ $('guardar').disabled=true;msg('Guardando…');
+ const v={fecha:$('fecha').value||hoy(),sku:prod.s,alimento:prod.n,medio,precio,cobro,
+  cliente:$('cli').value.trim(),telefono:$('tel').value.trim(),domicilio:$('dom').value.trim(),
+  precioLista:medio==='Tarjeta'?prod.c:prod.t,por:miId||'',creado:new Date().toISOString()};
+ try{await db.collection('ventas').add(v);
+  msg('Venta guardada ✓','ok');
+  prod=null;medio='';cobro='';precioTocado=false;['q','precio','cli','tel','dom'].forEach(i=>$(i).value='');
+  $('sel').classList.add('hide');$('q').classList.remove('hide');document.querySelectorAll('.opt').forEach(o=>o.classList.remove('on'));
+ }catch(e){msg(e&&e.code==='invalid_argument'?'No tenés permiso para cargar ventas. Pedile a Nacho que te dé acceso de Editor.':'No se pudo guardar. Probá de nuevo.','err');}
+ $('guardar').disabled=false;};
+
+// ventas por mes
+let mes=new Date();mes.setDate(1);
+$('mAnt').onclick=()=>{mes.setMonth(mes.getMonth()-1);pintar();};
+$('mSig').onclick=()=>{mes.setMonth(mes.getMonth()+1);pintar();};
+async function pintar(){
+ $('mLbl').textContent=mes.toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+ const pre=mes.getFullYear()+'-'+String(mes.getMonth()+1).padStart(2,'0');
+ const vs=VENTAS.filter(v=>String(v.d.fecha).startsWith(pre)).sort((a,b)=>(b.d.fecha+b.d.creado).localeCompare(a.d.fecha+a.d.creado));
+ let tot=0,ve=0,w=0;vs.forEach(v=>{tot+=v.d.precio;if(v.d.cobro==='Vete')ve+=v.d.precio;else w+=v.d.precio;});
+ $('kB').textContent=vs.length;$('kV').textContent=ars(tot);$('kVe').textContent=ars(ve);$('kW').textContent=ars(w);
+ let nombres={};if(user){const ids=[...new Set(vs.map(v=>v.d.por).filter(Boolean))];if(ids.length)nombres=await user.profiles(ids);}
+ const L=$('lista');L.innerHTML='';
+ if(!vs.length){L.innerHTML='<div class="vacio">No hay ventas cargadas en este mes.</div>';return;}
+ vs.forEach(v=>{const r=document.createElement('div');r.className='v';
+  const a=document.createElement('div');a.className='a';
+  const n=document.createElement('div');n.className='n';n.textContent=v.d.alimento;
+  const d=document.createElement('div');d.className='d';
+  const f=v.d.fecha.split('-').reverse().join('/');
+  const quien=v.d.por&&nombres[v.d.por]&&nombres[v.d.por].name?' · cargó '+nombres[v.d.por].name:'';
+  d.textContent=f+' · '+(v.d.cliente||'sin nombre')+(v.d.telefono?' · '+v.d.telefono:'')+' · '+v.d.medio+quien;
+  a.append(n,d);
+  if(soyDueno||v.d.por===miId){const x=document.createElement('button');x.className='del';x.textContent='Borrar';x.onclick=()=>borrar(v,x);a.append(x);}
+  const p=document.createElement('div');p.className='p';
+  const t=document.createElement('div');t.textContent=ars(v.d.precio);
+  const g=document.createElement('span');g.className='tag'+(v.d.cobro==='Vete'?'':' v2');g.textContent=v.d.cobro;
+  p.append(t,g);r.append(a,p);L.append(r);});
+}
+async function borrar(v,b){if(b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent='¿Seguro? Tocá de nuevo';setTimeout(()=>{b.dataset.ok='';b.textContent='Borrar';},4000);return;}
+ try{await db.collection('ventas').doc(v.id).delete();}catch(e){b.textContent='No se pudo borrar';}}
+
+// cuenta (solo Nacho)
+function cuenta(){let cVe=0,gW=0,gT=0,pend=0;
+ VENTAS.forEach(v=>{const c=COSTOS[v.id];if(typeof c!=='number'){pend++;return;}
+  const g=v.d.precio-c;gT+=g;if(v.d.cobro==='Vete')cVe+=c;else gW+=g;});
+ const s=cVe-gW;
+ $('sLbl').textContent=s>=0?'La Vete le debe a Wankun Club':'Wankun Club le debe a la Vete';
+ $('sVal').textContent=ars(Math.abs(s));
+ $('sNota').textContent='Costo de lo que cobró la Vete − ganancia de la Vete en lo que cobró Wankun Club.';
+ $('cVe').textContent=ars(cVe);$('cW').textContent=ars(gW);$('cU').textContent=ars(gT);$('cP').textContent=pend;}
+
+(async()=>{
+ db=await claude.use('db');user=await claude.use('user');
+ if(user){soyDueno=await user.isOwner();miId=await user.id();}
+ if(!db){$('lista').innerHTML='<div class="vacio">No se pueden ver las ventas en esta vista.</div>';return;}
+ const t=setTimeout(()=>{$('lista').innerHTML='<div class="vacio">No se pudo conectar todavía…</div>';},10000);
+ db.collection('ventas').onSnapshot(s=>{clearTimeout(t);VENTAS=s.docs.map(d=>({id:d.id,d:d.data()}));pintar();if(soyDueno)cuenta();},
+  e=>{clearTimeout(t);$('lista').innerHTML='<div class="vacio">No se pudieron cargar las ventas.</div>';});
+ if(soyDueno){$('tabCuenta').classList.remove('hide');
+  db.collection('costos').onSnapshot(s=>{COSTOS={};s.docs.forEach(d=>{COSTOS[d.id]=d.data().costo;});cuenta();},()=>{});}
+})();
+</script></body></html>
