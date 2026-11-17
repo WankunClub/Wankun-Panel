@@ -249,6 +249,22 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div id="bar-ventas"></div>
     <div id="ventas-kg-resumen"></div>
   </div>
+  <div class="card" id="series-card">
+    <div class="results-header">
+      <div class="card-title" style="margin:0">Series históricas — ¿qué se movió?</div>
+      <div class="filtro-group"><label>Medida</label>
+        <select id="ser-medida" onchange="seriesRender()"><option value="kg">Kg</option><option value="fac">Pesos</option></select></div>
+      <div class="filtro-group"><label>Período</label>
+        <select id="ser-periodo" onchange="seriesRender()"><option value="dia">Por día (90 días)</option><option value="semana">Por semana (52)</option><option value="mes" selected>Por mes</option></select></div>
+      <div class="filtro-group"><label>Abrir por</label>
+        <select id="ser-dim" onchange="seriesRender()"><option value="total">Total</option><option value="canal">Canal</option><option value="marca">Marca</option><option value="zona">Zona</option><option value="loc">Localidad</option></select></div>
+      <div class="filtro-group"><label>Canal</label>
+        <select id="ser-canal" onchange="seriesRender()"><option value="todos">Todos</option><option value="Directo">Directo</option><option value="Mercado Libre">Mercado Libre</option></select></div>
+    </div>
+    <div id="ser-nota" style="font-size:11px;color:var(--gris-dark);margin:8px 0 4px;line-height:1.5"></div>
+    <div id="ser-chart" style="margin-top:6px"><div style="padding:20px;color:var(--gris-dark);font-size:13px">Cargando...</div></div>
+    <div id="ser-comp" style="margin-top:14px"></div>
+  </div>
   <div class="card">
     <div class="card-title">Objetivo vs. real — 2026</div>
     <div id="objetivo-real-chart"></div>
@@ -1098,6 +1114,20 @@ const ZONAS_LOCAL=['pilar','del viso','escobar','maschwitz','maschwitz p','masch
 function esLocal(l){return ZONAS_LOCAL.includes((l||'').trim().toLowerCase());}
 function fmt(n){return '$'+(n/1e6).toFixed(1)+'M';}
 
+// ── Normalización de marcas y zonas (evita duplicados tipo "Pro plan" / "Pro Plan") ──
+const MARCAS_CANON=['Balanced','Club Performance','Eukanuba','Excellent','Fawna','Mon Ami','Nutrique','Old Prince','Optimus','Pro Plan','Prof Vet','Royal Canin','Unik','Vital Can','Golocan','Dog Selection','Cristal Cat','Fit','Bio','Cidar','Roa'];
+const MARCAS_ALIAS={'royal':'Royal Canin','rc':'Royal Canin','euka':'Eukanuba','unilk':'Unik','balance':'Balanced','proplan':'Pro Plan','pp':'Pro Plan','oldprince':'Old Prince','monami':'Mon Ami','profvet':'Prof Vet','clubperformance':'Club Performance','vitalcantherapy':'Vital Can','vitalcan':'Vital Can','rpuppies':'Royal Canin'};
+const _MARCA_IDX={};MARCAS_CANON.forEach(m=>{_MARCA_IDX[m.toLowerCase().replace(/[^a-z0-9]/g,'')]=m;});
+function normMarca(m){
+  const k=(m||'').toString().normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  if(!k||k==='vacia')return'Sin marca';
+  return _MARCA_IDX[k]||MARCAS_ALIAS[k]||'Sin marca';
+}
+const LOC_ALIAS={'recodo':'el recodo','maschwitz p':'maschwitz','maschwitz privado':'maschwitz','maschwits':'maschwitz','maschwits privado':'maschwitz','maschwitch':'maschwitz','maschwitz priivado':'maschwitz','olivos gold':'olivos golf','canton':'el canton','capital federal':'caba','c.a.b.a':'caba','gran bourg':'grand bourg','sheraton pilar':'sheraton'};
+function normLoc(l){let k=(l||'').toString().trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');k=LOC_ALIAS[k]||k;return k;}
+function zonaGrupo(l){const k=normLoc(l);if(!k)return'Sin dato';if(k==='caba'||k.includes('caba')||k.includes('capital'))return'CABA';if(esLocal(k)||esLocal((l||'').trim().toLowerCase()))return'Local 15 km';return'Resto GBA';}
+function capWords(s){return(s||'').split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');}
+
 // ── Nombre del mes actual dinámico ──────────────────────────────────────────
 const MESES_NOM_ES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const MESES_LARGO=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -1765,9 +1795,10 @@ async function cargarVentasLive(){
       porMes[key]=(porMes[key]||0)+fac;
       porMesKg[key]=(porMesKg[key]||0)+kg;
       const zona=r['Barrio/Localidad']||r['Localidad']||'';
-      const marca=r['Marca']||r['marca']||'';
-      if(zona)zonas[zona]=(zonas[zona]||0)+fac;
-      if(marca&&marca!=='Vacia'&&marca!=='Vacía')marcas[marca]=(marcas[marca]||0)+fac;
+      const marca=normMarca(r['Marca']||r['marca']||'');
+      const zonaN=capWords(normLoc(zona));
+      if(zonaN)zonas[zonaN]=(zonas[zonaN]||0)+fac;
+      if(marca!=='Sin marca')marcas[marca]=(marcas[marca]||0)+fac;
     });
 
     const keys=Object.keys(porMes).sort();
@@ -1855,6 +1886,7 @@ async function cargarVentasLive(){
     renderPeq('marcas-bars',MARCAS_DATA,AZUL);
     buildTopProductos(rows);
     buildGraficoDiario(rows);
+    seriesSetDirecto(rows);
   }catch(e){console.log('Error ventas live:',e);}
 }
 
@@ -1862,6 +1894,172 @@ async function cargarVentasLive(){
 renderBarras('bar-inicio');
 
 setTimeout(cargarVentasLive,300);
+
+// ── SERIES HISTÓRICAS: día / semana / mes · canal / marca / zona · kg / $ ──────
+// Directo = hoja Ventas (kg y $ reales). Mercado Libre = hoja Flex meli (sin $; kg estimado por la referencia).
+let SER_DIR=[],SER_ML=[],SER_ML_OK=false,SER_ML_CARGANDO=false;
+const SER_COLORES=['#2d6a4f','#457b9d','#f2c14e','#c0392b','#8b5cf6','#e76f51','#1d3557','#74c69d'];
+function serKeyDia(f){return f.getFullYear()+'-'+String(f.getMonth()+1).padStart(2,'0')+'-'+String(f.getDate()).padStart(2,'0');}
+function serLunes(f){const d=new Date(f.getFullYear(),f.getMonth(),f.getDate());const w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return d;}
+function seriesSetDirecto(rows){
+  const hoy=new Date();hoy.setHours(23,59,59,999);
+  SER_DIR=[];
+  rows.forEach(r=>{
+    const f=parseFecha(r['FECHA']||r['Fecha']||'');if(!f||isNaN(f)||f>hoy)return;
+    const fac=parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0);
+    const kg=parseFloat((r['kg']||0).toString().replace(',','.'))||0;
+    if(!fac&&!kg)return;
+    const loc=r['Barrio/Localidad']||r['Localidad']||'';
+    SER_DIR.push({f,kg,fac,canal:'Directo',marca:normMarca(r['Marca']||r['marca']||''),zona:zonaGrupo(loc),loc:capWords(normLoc(loc))||'Sin dato'});
+  });
+  seriesRender();
+  seriesCargarML();
+}
+function serKgML(ref){
+  const r=(ref||'').toString().toLowerCase();
+  if(/pro ?plan|\bpp\b/.test(r))return 7.5;
+  if(/maxi|med|giant|rcmax/.test(r))return 15;
+  if(/mini/.test(r))return 3;
+  return 10; // línea veterinaria Royal Canin (diabetic, hypo, renal, urinary, gastro, hepatic…)
+}
+async function seriesCargarML(){
+  if(SER_ML_OK||SER_ML_CARGANDO)return;SER_ML_CARGANDO=true;
+  try{
+    const fRows=await fetchCSV('Flex meli');
+    const hoy=new Date();hoy.setHours(23,59,59,999);
+    SER_ML=[];
+    fRows.forEach(r=>{
+      const f=parseFecha(getCol(r,'Fecha compra','Fecha')||'');if(!f||isNaN(f)||f>hoy||f.getFullYear()<2025)return;
+      const ref=getCol(r,'REFERNCIA','REFERENCIA')||'';
+      const loc=getCol(r,'LOCALIDAD')||'';
+      SER_ML.push({f,kg:serKgML(ref),fac:null,canal:'Mercado Libre',marca:/pro ?plan|\bpp\b/i.test(ref)?'Pro Plan':'Royal Canin',zona:zonaGrupo(loc),loc:capWords(normLoc(loc))||'Sin dato'});
+    });
+    SER_ML_OK=true;
+  }catch(e){console.log('Series ML:',e);}
+  SER_ML_CARGANDO=false;
+  seriesRender();
+}
+function serPeriodos(per){
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const out=[];
+  if(per==='dia'){
+    for(let i=89;i>=0;i--){const d=new Date(hoy);d.setDate(d.getDate()-i);out.push({k:serKeyDia(d),lab:d.getDate()+'/'+(d.getMonth()+1),nolab:vdNoLaborable(d.getFullYear(),d.getMonth()+1,d.getDate())});}
+  }else if(per==='semana'){
+    const l=serLunes(hoy);
+    for(let i=51;i>=0;i--){const d=new Date(l);d.setDate(d.getDate()-7*i);out.push({k:serKeyDia(d),lab:d.getDate()+'/'+(d.getMonth()+1)});}
+  }else{
+    const ini=new Date(2025,8,1);
+    for(let d=new Date(ini);d<=hoy;d=new Date(d.getFullYear(),d.getMonth()+1,1))out.push({k:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),lab:MESES_NOM_ES[d.getMonth()]+(d.getMonth()===0||out.length===0?' '+String(d.getFullYear()).slice(2):'')});
+  }
+  return out;
+}
+function serKeyDe(f,per){return per==='dia'?serKeyDia(f):per==='semana'?serKeyDia(serLunes(f)):f.getFullYear()+'-'+String(f.getMonth()+1).padStart(2,'0');}
+function serFilas(med){
+  // En pesos solo hay datos del canal directo
+  const c=(document.getElementById('ser-canal')||{}).value||'todos';
+  const base=med==='fac'?SER_DIR:SER_DIR.concat(SER_ML);
+  return c==='todos'?base:base.filter(r=>r.canal===c);
+}
+function serMedia(arr){return arr.reduce((a,b)=>a+b,0)/arr.length;}
+function serDesvio(arr){const m=serMedia(arr);return Math.sqrt(arr.reduce((a,b)=>a+(b-m)*(b-m),0)/(arr.length-1||1));}
+function serFmt(v,med){return med==='kg'?Math.round(v).toLocaleString('es-AR')+' kg':(Math.abs(v)>=1e6?'$ '+(v/1e6).toLocaleString('es-AR',{maximumFractionDigits:1})+'M':'$ '+Math.round(v).toLocaleString('es-AR'));}
+function seriesRender(){
+  const el=document.getElementById('ser-chart');if(!el)return;
+  if(!SER_DIR.length){return;}
+  const med=document.getElementById('ser-medida').value,per=document.getElementById('ser-periodo').value,dim=document.getElementById('ser-dim').value;
+  const P=serPeriodos(per),idx={};P.forEach((p,i)=>idx[p.k]=i);
+  const filas=serFilas(med);
+  const grupos={};
+  filas.forEach(r=>{
+    const i=idx[serKeyDe(r.f,per)];if(i===undefined)return;
+    const g=dim==='total'?'Total':r[dim];
+    if(!grupos[g])grupos[g]=new Array(P.length).fill(0);
+    grupos[g][i]+=med==='kg'?r.kg:(r.fac||0);
+  });
+  // Top 6 + "Otras"
+  let nombres=Object.keys(grupos).sort((a,b)=>grupos[b].reduce((x,y)=>x+y,0)-grupos[a].reduce((x,y)=>x+y,0));
+  if(nombres.length>7){
+    const otras=new Array(P.length).fill(0);
+    nombres.slice(6).forEach(n=>grupos[n].forEach((v,i)=>otras[i]+=v));
+    nombres=nombres.slice(0,6);grupos['Otras']=otras;nombres.push('Otras');
+  }
+  const series=nombres.map((n,i)=>({name:n,vals:grupos[n],color:n==='Otras'?'#adb5bd':SER_COLORES[i%SER_COLORES.length]}));
+  // Banda de control (promedio ± 3 desvíos) sobre el total, excluyendo el período en curso
+  const total=new Array(P.length).fill(0);series.forEach(s=>s.vals.forEach((v,i)=>total[i]+=v));
+  const base=total.slice(0,-1).map((v,i)=>({v,nolab:P[i].nolab})).filter(x=>per==='dia'?!x.nolab&&x.v>0:x.v>0).slice(per==='mes'?-18:per==='semana'?-52:-90).map(x=>x.v);
+  let band=null;
+  if(base.length>=4){const m=serMedia(base),sd=serDesvio(base);band={m,sd,hi:m+3*sd,lo:Math.max(0,m-3*sd),n:base.length};}
+  const nota=document.getElementById('ser-nota');
+  let txt='Último punto = período en curso (incompleto). ';
+  if(band)txt+='Banda gris: promedio de '+band.n+(per==='mes'?' meses':per==='semana'?' semanas':' días hábiles')+' cerrados ± 3 desvíos ('+serFmt(band.lo,med)+' a '+serFmt(band.hi,med)+'). Punto rojo = fuera de la banda. ';
+  txt+=med==='fac'?'En pesos solo entra el canal directo: la hoja Flex meli no tiene montos.':(SER_ML_OK?'Mercado Libre en kg es estimado según la referencia (Maxi/Medium 15 kg, línea veterinaria 10 kg, Pro Plan 7,5 kg).':'Cargando Mercado Libre…');
+  if(nota)nota.textContent=txt;
+  el.innerHTML=serChartSVG(P,series,dim==='total'?band:null,med,per)+(dim!=='total'&&band?'<div style="font-size:11px;color:var(--gris-dark);margin-top:4px">La banda de control se ve en "Abrir por: Total".</div>':'');
+  seriesComparativo(med,dim);
+}
+function serChartSVG(P,series,band,med,per){
+  const n=P.length,W=900,H=280,pl=58,pr=12,pt=14,pb=30;
+  let maxV=Math.max(1,...series.map(s=>Math.max(...s.vals)));
+  if(band)maxV=Math.max(maxV,band.hi);
+  const x=i=>pl+(n===1?0:i*(W-pl-pr)/(n-1)),y=v=>pt+(H-pt-pb)*(1-v/maxV);
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block" font-family="DM Sans,sans-serif">';
+  for(let t=0;t<=4;t++){const v=maxV*t/4;svg+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#e9ecef"/><text x="'+(pl-6)+'" y="'+(y(v)+3)+'" text-anchor="end" font-size="10" fill="#6c757d">'+(med==='kg'?Math.round(v).toLocaleString('es-AR'):(v/1e6).toLocaleString('es-AR',{maximumFractionDigits:1})+'M')+'</text>';}
+  if(band){
+    svg+='<rect x="'+pl+'" y="'+y(band.hi)+'" width="'+(W-pl-pr)+'" height="'+(y(band.lo)-y(band.hi))+'" fill="#adb5bd" opacity="0.18"/>';
+    svg+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(band.m)+'" y2="'+y(band.m)+'" stroke="#6c757d" stroke-dasharray="5 4"/>';
+    svg+='<text x="'+(W-pr)+'" y="'+(y(band.m)-4)+'" text-anchor="end" font-size="10" fill="#6c757d">promedio '+serFmt(band.m,med)+'</text>';
+  }
+  const paso=Math.ceil(n/16);
+  P.forEach((p,i)=>{if(i%paso===0||i===n-1)svg+='<text x="'+x(i)+'" y="'+(H-10)+'" text-anchor="middle" font-size="10" fill="#6c757d">'+p.lab+'</text>';});
+  series.forEach(s=>{
+    const pts=s.vals.map((v,i)=>x(i)+','+y(v));
+    const full=pts.slice(0,-1).join(' '),tail=pts.slice(-2).join(' ');
+    svg+='<polyline points="'+full+'" fill="none" stroke="'+s.color+'" stroke-width="2"/>';
+    svg+='<polyline points="'+tail+'" fill="none" stroke="'+s.color+'" stroke-width="2" stroke-dasharray="3 3"/>';
+    const r=n>60?2:3;
+    s.vals.forEach((v,i)=>{
+      const fuera=band&&i<n-1&&!(per==='dia'&&P[i].nolab&&v===0)&&(v>band.hi||v<band.lo);
+      svg+='<circle cx="'+x(i)+'" cy="'+y(v)+'" r="'+(fuera?r+2:r)+'" fill="'+(fuera?'#c0392b':s.color)+'"><title>'+P[i].lab+' — '+s.name+': '+serFmt(v,med)+(i===n-1?' (en curso)':'')+(fuera?' · fuera de la banda':'')+'</title></circle>';
+    });
+  });
+  svg+='</svg>';
+  const ley=series.length>1?'<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--gris-dark);margin-bottom:6px">'+series.map(s=>'<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+s.color+';vertical-align:-1px"></span> '+s.name+'</span>').join('')+'</div>':'';
+  return ley+svg;
+}
+// Mes en curso vs mes anterior, al mismo día: ¿quién explica la diferencia?
+function seriesComparativo(med,dim){
+  const el=document.getElementById('ser-comp');if(!el)return;
+  const d=dim==='total'?'marca':dim;
+  const hoy=new Date(),dia=hoy.getDate();
+  const ka=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+  const pr=new Date(hoy.getFullYear(),hoy.getMonth()-1,1),kp=pr.getFullYear()+'-'+String(pr.getMonth()+1).padStart(2,'0');
+  const acc={};
+  serFilas(med).forEach(r=>{
+    if(r.f.getDate()>dia)return;
+    const k=r.f.getFullYear()+'-'+String(r.f.getMonth()+1).padStart(2,'0');
+    if(k!==ka&&k!==kp)return;
+    const g=r[d]||'Sin dato';if(!acc[g])acc[g]={a:0,p:0};
+    const v=med==='kg'?r.kg:(r.fac||0);
+    if(k===ka)acc[g].a+=v;else acc[g].p+=v;
+  });
+  const filas=Object.entries(acc).map(([g,o])=>({g,a:o.a,p:o.p,dif:o.a-o.p})).filter(f=>f.a||f.p);
+  const tA=filas.reduce((s,f)=>s+f.a,0),tP=filas.reduce((s,f)=>s+f.p,0),tD=tA-tP;
+  filas.sort((x,y)=>x.dif-y.dif);
+  const NOM=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const pc=(a,b)=>b?Math.round((a-b)/b*100):null;
+  const col=v=>v===null?'—':'<span style="color:'+(v>=0?'var(--verde)':'#c0392b')+';font-weight:600">'+(v>=0?'+':'')+v+'%</span>';
+  const gc='grid-template-columns:1.4fr 1fr 1fr 1fr 70px 1fr';
+  let h='<div class="card-title" style="font-size:14px;margin-bottom:4px">'+capWords(NOM[hoy.getMonth()])+' vs '+NOM[pr.getMonth()]+', del 1 al '+dia+' — por '+({marca:'marca',canal:'canal',zona:'zona',loc:'localidad'}[d])+'</div>';
+  h+='<div style="font-size:11px;color:var(--gris-dark);margin-bottom:8px">"Peso en la variación": qué parte de la diferencia total explica cada fila. Ordenado de mayor caída a mayor suba.</div>';
+  h+='<div class="table-wrap"><div class="table-head" style="'+gc+'"><span>'+({marca:'Marca',canal:'Canal',zona:'Zona',loc:'Localidad'}[d])+'</span><span>'+capWords(NOM[pr.getMonth()])+'</span><span>'+capWords(NOM[hoy.getMonth()])+'</span><span>Diferencia</span><span>%</span><span>Peso en la variación</span></div><div class="table-body" style="max-height:360px">';
+  filas.slice(0,25).forEach(f=>{
+    const peso=tD?Math.round(f.dif/tD*100):null;
+    h+='<div class="table-row" style="'+gc+'"><span style="font-weight:500">'+f.g+'</span><span>'+serFmt(f.p,med)+'</span><span>'+serFmt(f.a,med)+'</span><span style="color:'+(f.dif>=0?'var(--verde)':'#c0392b')+';font-weight:600">'+(f.dif>=0?'+':'')+serFmt(f.dif,med)+'</span><span>'+col(pc(f.a,f.p))+'</span><span>'+(peso===null?'—':peso+'%')+'</span></div>';
+  });
+  h+='<div class="table-row" style="'+gc+';font-weight:700;background:var(--gris)"><span>Total</span><span>'+serFmt(tP,med)+'</span><span>'+serFmt(tA,med)+'</span><span>'+(tD>=0?'+':'')+serFmt(tD,med)+'</span><span>'+col(pc(tA,tP))+'</span><span>100%</span></div>';
+  h+='</div></div>';
+  el.innerHTML=h;
+}
 
 // ── GRAFICO DIARIO ────────────────────────────────────────────────────────────
 let diarioData={};
@@ -2216,7 +2414,7 @@ function buildTopProductos(vRows){
     if(!fecha)return;
     var mes=fecha.getFullYear()+'-'+(fecha.getMonth()+1).toString().padStart(2,'0');
     var fechaStr=fecha.getFullYear()+'-'+(fecha.getMonth()+1).toString().padStart(2,'0')+'-'+fecha.getDate().toString().padStart(2,'0');
-    var marca=(r['Marca']||'').trim();
+    var marca=normMarca(r['Marca']||'');if(marca==='Sin marca')marca='';
     var prod=(r['producto']||'').trim();
     var kg=parseFloat((r['kg']||0).toString().replace(',','.'))||0;
     var fac=parseFac(getCol(r,'Facturación','Facturacion',' Facturación')||0);
