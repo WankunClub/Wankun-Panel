@@ -2611,26 +2611,28 @@ function renderTopProductos(){
   var desde=(document.getElementById('prod-desde')||{}).value||'';
   var hasta=(document.getElementById('prod-hasta')||{}).value||'';
   var usarRango=desde||hasta;
-  var agg={};
-
-  if(usarRango&&window.prodRows){
-    window.prodRows.forEach(function(r){
-      if(desde&&r.fecha<desde)return;
-      if(hasta&&r.fecha>hasta)return;
-      if(!agg[r.normKey])agg[r.normKey]={nombre:r.displayNombre,normKey:r.normKey,ventas:0,kg:0,fac:0};
-      agg[r.normKey].ventas++;agg[r.normKey].kg+=r.kg;agg[r.normKey].fac+=r.fac;
-    });
-  } else {
-    Object.keys(prodData).forEach(function(mes){
-      if(sel!=='todos'&&mes!==sel)return;
-      Object.values(prodData[mes]).forEach(function(p){
-        if(!agg[p.normKey])agg[p.normKey]={nombre:p.nombre,normKey:p.normKey,ventas:0,kg:0,fac:0};
-        agg[p.normKey].ventas+=p.ventas;
-        agg[p.normKey].kg+=p.kg;
-        agg[p.normKey].fac+=p.fac;
-      });
-    });
+  // Agrupar venta por venta: si matchea un SKU se agrupa por SKU (unifica Hypo / Hypoallergenic / Hypoallergenic Canine), si no por nombre normalizado
+  var matchCache={};
+  function skuDe(r){
+    if(typeof skMatchProduct==='undefined')return null;
+    var ck=r.normKey+'|'+r.kg;
+    if(!(ck in matchCache)){var res=skMatchProduct(r.marca,r.prod,r.kg);matchCache[ck]=res?res.product:null;}
+    return matchCache[ck];
   }
+  function tc(s){return(s||'').toLowerCase().split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ');}
+  var agg={};
+  (window.prodRows||[]).forEach(function(r){
+    if(usarRango){if(desde&&r.fecha<desde)return;if(hasta&&r.fecha>hasta)return;}
+    else if(sel!=='todos'&&r.mes!==sel)return;
+    var sp=skuDe(r);
+    var key=sp?'sku:'+sp.sku:'n:'+r.normKey;
+    if(!agg[key]){
+      var nom=r.displayNombre;
+      if(sp){var mk=r.marca?tc(r.marca):'';var pn=tc(sp.nombre);nom=(mk&&pn.toLowerCase().indexOf(mk.toLowerCase())!==0?mk+' - ':'')+pn+' '+String(sp.kg).replace('.',',')+'kg';}
+      agg[key]={nombre:nom,normKey:key,sku:sp?sp.sku:null,ventas:0,kg:0,fac:0};
+    }
+    agg[key].ventas++;agg[key].kg+=r.kg;agg[key].fac+=r.fac;
+  });
   const lista=Object.values(agg).sort(function(a,b){return b.fac-a.fac;}).slice(0,50);
   const tb=document.getElementById('top-productos');
   if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark)">Sin datos</div>';return;}
@@ -2643,16 +2645,7 @@ function renderTopProductos(){
       else stockMap[mv.sku]-=mv.qty;
     });
   }
-  // Intentar match de SKU (solo display, no afecta agrupacion)
-  var listaFinal=lista.map(function(p){
-    if(typeof skMatchProduct==='undefined')return Object.assign({},p,{sku:null});
-    var partes=p.nombre.split(' - ');
-    var marca=partes.length>1?partes[0]:'';
-    var prod=partes.length>1?partes.slice(1).join(' - '):partes[0];
-    var kg=p.ventas>0?Math.round(p.kg/p.ventas*2)/2:0;
-    var res=skMatchProduct(marca,prod,kg);
-    return Object.assign({},p,{sku:res?res.product.sku:null});
-  });
+  var listaFinal=lista;
   tb.innerHTML=listaFinal.map(function(p,i){
     const bg=i%2===0?'var(--gris)':'transparent';
     var skuStr=p.sku?'<span style="font-family:monospace;font-size:10px;color:var(--azul-med)">'+p.sku+'</span>':'<span style="font-size:11px;color:var(--gris-dark)">—</span>';
@@ -4480,8 +4473,22 @@ function skMatchProduct(marca,prod,kg){
     return norm(s).split(' ').map(function(w){return W[w]||w;}).join(' ');
   }
   var input=expand(marca)+' '+expand(prod);
-  var best=null,bestScore=0,bestQty=1;
+  // Marca: si el input trae marca reconocible, solo se comparan SKUs de esa marca
+  function brandInput(s){
+    var B=[['royal','RC'],['canin','RC'],['optimus','OPT'],['pro plan','PP'],['proplan','PP'],['excellent','EX'],['eukanuba','EK'],['old prince','OP'],['fawna','FW'],['unik','UK'],['club performance','CP'],['balanced','BAL'],['mon ami','MON'],['nutrique','NUT'],['prof','PROF']];
+    for(var i=0;i<B.length;i++){if((' '+s+' ').indexOf(' '+B[i][0])>=0)return B[i][1];}
+    return null;
+  }
+  function brandSku(sku){
+    var s=(sku||'').toUpperCase();
+    var P=[['PROF','PROF'],['OPT','OPT'],['OSCAT','OPT'],['OP','OP'],['RC','RC'],['PP','PP'],['PRO','PP'],['EUKA','EK'],['EK','EK'],['EX','EX'],['FW','FW'],['UK','UK'],['CP','CP'],['BAL','BAL'],['MON','MON'],['NUT','NUT'],['NUR','NUT']];
+    for(var i=0;i<P.length;i++){if(s.indexOf(P[i][0])===0)return P[i][1];}
+    return null;
+  }
+  var inBrand=brandInput(input);
+  var best=null,bestScore=0,bestQty=1,bestExtra=99;
   SK_PRODUCTS.forEach(function(p){
+    if(inBrand&&brandSku(p.sku)!==inBrand)return;
     var skuExp=expand(p.nombre);
     var score=0,qty=1;
     // Score por kg
@@ -4495,14 +4502,22 @@ function skMatchProduct(marca,prod,kg){
       }
     }
     // Score por palabras: cada palabra del SKU que aparece en el input
-    skuExp.split(' ').filter(function(w){return w.length>=3;}).forEach(function(w){
-      if(input.indexOf(w)>=0)score+=2;
+    var extra=0;
+    skuExp.split(' ').filter(Boolean).forEach(function(w){
+      var cuenta=w.length>=3||/[+0-9]/.test(w);
+      if((' '+input+' ').indexOf(' '+w+' ')>=0||(cuenta&&input.indexOf(w)>=0)){if(cuenta)score+=2;}
+      else extra++;
     });
     // Bonus: palabras del input en el SKU (match bidireccional)
     expand(prod).split(' ').filter(function(w){return w.length>=4;}).forEach(function(w){
       if(skuExp.indexOf(w)>=0)score+=1;
     });
-    if(score>bestScore){bestScore=score;best=p;bestQty=qty;}
+    // Penalizar etapa de vida que el input no menciona (ej: "Hypo" no es "Hypo Puppy")
+    ['puppy','kitten','junior','senior','ageing'].forEach(function(w){
+      if(skuExp.indexOf(w)>=0&&input.indexOf(w)<0)score-=3;
+    });
+    // Desempate: gana el SKU con menos palabras que el input no menciona (ej: Gastro vs Gastro MC)
+    if(score>bestScore||(score===bestScore&&best&&extra<bestExtra)){bestScore=score;best=p;bestQty=qty;bestExtra=extra;}
   });
   if(!best||bestScore<5)return null;
   return{product:best,qty:bestQty};
