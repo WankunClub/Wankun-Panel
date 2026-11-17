@@ -2139,6 +2139,12 @@ function baseRender(){
 }
 
 // ── CLIENTES: a quién le tocaba volver este mes y si volvió ─────────────────
+// Estado de clientes: "baja" (perrito fallecido / dejó definitivamente) sale de las listas y de la tasa; "precio" queda marcado.
+// Los fijos van en el código (se ven en todos los dispositivos); los que marques con los botones se guardan en este dispositivo.
+const CLI_ESTADO_FIJO={'t1132467277':{e:'baja',nota:'Falleció la perrita (nov 2026)'},'t1166045240':{e:'precio',nota:'Se queja por el precio (nov 2026)'}};
+function cliEstLeer(){try{return JSON.parse(localStorage.getItem('wankun_cli_estado')||'{}');}catch(e){return{};}}
+function cliEst(k){const l=cliEstLeer();return l[k]!==undefined?l[k]:(CLI_ESTADO_FIJO[k]||null);}
+function cliMarcar(k,e){const l=cliEstLeer();const act=cliEst(k);l[k]=(act&&act.e===e)?{e:'',nota:''}:{e,nota:''};try{localStorage.setItem('wankun_cli_estado',JSON.stringify(l));}catch(x){}cliRender();}
 function cliKey(r){const t=rsNormTel(r.tel);return t.length>=8?'t'+t:'n'+(r.nombre||'').trim().toLowerCase();}
 function cliHistorial(){
   const h={};
@@ -2156,7 +2162,8 @@ function cliTasa(H,corte,fin){
     const ints=[];for(let i=1;i<fechas.length;i++){const d=Math.round((fechas[i]-fechas[i-1])/DIA);if(d>=7)ints.push(d);}
     const ciclo=ints.length?mediana(ints):30;
     const ult=fechas[fechas.length-1],prox=ult+ciclo*DIA;
-    if((corte-ult)/DIA>120)return;                          // ya inactivo hace rato: va por Inactivos
+    if((corte-ult)/DIA>120)return;
+    const est=cliEst(k);if(est&&est.e==='baja')return;      // dado de baja: no cuenta                          // ya inactivo hace rato: va por Inactivos
     if(prox<corte.getTime()-10*DIA||prox>fin.getTime()-5*DIA)return; // no le tocaba en esta ventana (5 días de tolerancia)
     const volvio=H[k].some(r=>r.f>=corte&&r.f<=fin);
     const u=prev[prev.length-1];
@@ -2189,18 +2196,22 @@ function cliRender(){
   el.innerHTML=h;
   // Lista accionable: les tocaba este mes y todavía no volvieron
   const pend=filas[filas.length-1].lista.filter(x=>!x.volvio).sort((a,b)=>a.prox-b.prox);
+  const bajas=Object.keys(H).filter(k=>{const e=cliEst(k);return e&&e.e==='baja';}).map(k=>{const u=H[k][H[k].length-1];const e=cliEst(k);return '<a href="#" title="Click para reactivar" style="color:var(--azul-med)" onclick="cliMarcar(\''+k.replace(/'/g,"\\'")+'\',\'baja\');return false">'+u.nombre+'</a>'+(e.nota?' ('+e.nota+')':'');});
   const porZona={},porMarca={};pend.forEach(p=>{porZona[p.zona]=(porZona[p.zona]||0)+1;porMarca[p.marca]=(porMarca[p.marca]||0)+1;});
   const resumen=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+' '+v).join(' · ');
-  const gl='grid-template-columns:1.2fr 1fr 1.4fr 80px 70px 80px 60px';
+  const gl='grid-template-columns:1.2fr 1fr 1.4fr 70px 70px 60px 50px 110px';
   const DIA=86400000,hoy0=cliDia0(hoy);
   let l='<div class="card-title" style="font-size:14px;margin-bottom:4px">Les tocaba volver en '+MESES_LARGO[hoy.getMonth()].toLowerCase()+' y todavía no compraron: '+pend.length+' clientes · '+Math.round(pend.reduce((s,p)=>s+p.kg,0)).toLocaleString('es-AR')+' kg en su última compra</div>';
-  l+='<div style="font-size:11px;color:var(--gris-dark);margin-bottom:8px">Por zona: '+resumen(porZona)+'<br>Por marca: '+resumen(porMarca)+'</div>';
-  l+='<div class="table-wrap"><div class="table-head" style="'+gl+'"><span>Cliente</span><span>Zona</span><span>Última compra</span><span>Ciclo</span><span>Atraso</span><span>Compras</span><span>WA</span></div><div class="table-body" style="max-height:420px">';
+  l+='<div style="font-size:11px;color:var(--gris-dark);margin-bottom:8px">Por zona: '+resumen(porZona)+'<br>Por marca: '+resumen(porMarca)+(bajas.length?'<br>Dados de baja (no cuentan, click en el nombre para reactivar): '+bajas.join(' · '):'')+'<br>"Baja" saca al cliente de la lista y de la tasa (perrito fallecido o dejó definitivamente). "Precio" lo deja marcado. Lo que marques con los botones se guarda en este dispositivo.</div>';
+  l+='<div class="table-wrap"><div class="table-head" style="'+gl+'"><span>Cliente</span><span>Zona</span><span>Última compra</span><span>Ciclo</span><span>Atraso</span><span>Compras</span><span>WA</span><span>Marcar</span></div><div class="table-body" style="max-height:420px">';
   pend.forEach(p=>{
     const atraso=Math.round((hoy0-p.prox)/DIA);
     const fd=p.ult.getDate()+'/'+(p.ult.getMonth()+1);
+    const est=cliEst(p.k),eAct=est&&est.e;
+    const bt=(e,t)=>'<button class="btn'+(eAct===e?' btn-primary':'')+'" style="padding:2px 6px;font-size:11px" onclick="cliMarcar(\''+p.k.replace(/'/g,"\\'")+'\',\''+e+'\')">'+t+'</button>';
+    const tagPrecio=eAct==='precio'?' <span style="font-size:10px;background:#fde68a;color:#92400e;padding:1px 6px;border-radius:8px">precio</span>':'';
     const wa=p.tel?'<a class="wa-link" href="'+avWaLinkAyer(p.tel,p.nombre)+'" target="_blank">WA</a>':'<span style="font-size:11px;color:var(--gris-dark)">Sin tel</span>';
-    l+='<div class="table-row" style="'+gl+'"><span style="font-weight:500">'+(p.nombre||'--')+'</span><span style="font-size:12px">'+p.loc+' <span class="'+(p.zona==='Local 15 km'?'local-tag':'fuera-tag')+'">'+p.zona+'</span></span><span style="font-size:12px">'+fd+' · '+[p.marca==='Sin marca'?'':p.marca,p.prod].filter(Boolean).join(' ')+'</span><span style="font-size:12px">'+p.ciclo+' días</span><span style="font-size:12px;color:'+(atraso>10?'#c0392b':'var(--texto)')+'">'+(atraso>=0?atraso+' días':'—')+'</span><span style="font-size:12px;text-align:center">'+p.compras+'</span>'+wa+'</div>';
+    l+='<div class="table-row" style="'+gl+'"><span style="font-weight:500">'+(p.nombre||'--')+tagPrecio+'</span><span style="font-size:12px">'+p.loc+' <span class="'+(p.zona==='Local 15 km'?'local-tag':'fuera-tag')+'">'+p.zona+'</span></span><span style="font-size:12px">'+fd+' · '+[p.marca==='Sin marca'?'':p.marca,p.prod].filter(Boolean).join(' ')+'</span><span style="font-size:12px">'+p.ciclo+' días</span><span style="font-size:12px;color:'+(atraso>10?'#c0392b':'var(--texto)')+'">'+(atraso>=0?atraso+' días':'—')+'</span><span style="font-size:12px;text-align:center">'+p.compras+'</span>'+wa+'<span style="display:flex;gap:4px">'+bt('baja','Baja')+bt('precio','Precio')+'</span></div>';
   });
   l+='</div></div>';
   document.getElementById('cli-lista').innerHTML=l;
