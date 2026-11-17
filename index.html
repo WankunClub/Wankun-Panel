@@ -265,6 +265,21 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
     <div id="ser-chart" style="margin-top:6px"><div style="padding:20px;color:var(--gris-dark);font-size:13px">Cargando...</div></div>
     <div id="ser-comp" style="margin-top:14px"></div>
   </div>
+  <div class="card" id="base-card">
+    <div class="results-header">
+      <div class="card-title" style="margin:0">Línea base — ¿este mes es normal o atípico?</div>
+      <div class="filtro-group"><label>Medida</label>
+        <select id="base-medida" onchange="baseRender()"><option value="kg">Kg por día de venta</option><option value="fac">Pesos por día de venta</option></select></div>
+    </div>
+    <div id="base-veredicto" style="margin:10px 0 6px"></div>
+    <div id="base-chart"></div>
+    <div id="base-nota" style="font-size:11px;color:var(--gris-dark);margin-top:6px;line-height:1.5"></div>
+  </div>
+  <div class="card" id="cli-card">
+    <div class="card-title">Clientes del canal directo — ¿quién volvió y quién no?</div>
+    <div id="cli-resumen" style="margin-top:10px"></div>
+    <div id="cli-lista" style="margin-top:12px"></div>
+  </div>
   <div class="card">
     <div class="card-title">Objetivo vs. real — 2026</div>
     <div id="objetivo-real-chart"></div>
@@ -1910,9 +1925,11 @@ function seriesSetDirecto(rows){
     const kg=parseFloat((r['kg']||0).toString().replace(',','.'))||0;
     if(!fac&&!kg)return;
     const loc=r['Barrio/Localidad']||r['Localidad']||'';
-    SER_DIR.push({f,kg,fac,canal:'Directo',marca:normMarca(r['Marca']||r['marca']||''),zona:zonaGrupo(loc),loc:capWords(normLoc(loc))||'Sin dato'});
+    SER_DIR.push({f,kg,fac,canal:'Directo',marca:normMarca(r['Marca']||r['marca']||''),zona:zonaGrupo(loc),loc:capWords(normLoc(loc))||'Sin dato',tel:getCol(r,'TELEFONO','Telefono')||'',nombre:(r['CLIENTE']||r['Cliente']||'').trim(),prod:(r['producto']||r['Producto']||'').trim()});
   });
   seriesRender();
+  try{baseRender();}catch(e){console.log('Base:',e);}
+  try{cliRender();}catch(e){console.log('Clientes:',e);}
   seriesCargarML();
 }
 function serKgML(ref){
@@ -2038,27 +2055,155 @@ function seriesComparativo(med,dim){
     if(r.f.getDate()>dia)return;
     const k=r.f.getFullYear()+'-'+String(r.f.getMonth()+1).padStart(2,'0');
     if(k!==ka&&k!==kp)return;
-    const g=r[d]||'Sin dato';if(!acc[g])acc[g]={a:0,p:0};
+    const g=r[d]||'Sin dato';if(!acc[g])acc[g]={a:0,p:0,fa:0,ka:0,fp:0,kp:0};
     const v=med==='kg'?r.kg:(r.fac||0);
     if(k===ka)acc[g].a+=v;else acc[g].p+=v;
+    if(r.fac){if(k===ka){acc[g].fa+=r.fac;acc[g].ka+=r.kg;}else{acc[g].fp+=r.fac;acc[g].kp+=r.kg;}}
   });
-  const filas=Object.entries(acc).map(([g,o])=>({g,a:o.a,p:o.p,dif:o.a-o.p})).filter(f=>f.a||f.p);
+  const filas=Object.entries(acc).map(([g,o])=>({g,a:o.a,p:o.p,dif:o.a-o.p,pk:(o.ka&&o.kp)?Math.round(((o.fa/o.ka)/(o.fp/o.kp)-1)*100):null})).filter(f=>f.a||f.p);
+  const T=Object.values(acc).reduce((s,o)=>({fa:s.fa+o.fa,ka:s.ka+o.ka,fp:s.fp+o.fp,kp:s.kp+o.kp}),{fa:0,ka:0,fp:0,kp:0});
+  const pkT=(T.ka&&T.kp)?Math.round(((T.fa/T.ka)/(T.fp/T.kp)-1)*100):null;
+  const pkF=v=>v===null?'—':'<span style="color:var(--gris-dark);font-weight:600">'+(v>=0?'+':'')+v+'%</span>';
   const tA=filas.reduce((s,f)=>s+f.a,0),tP=filas.reduce((s,f)=>s+f.p,0),tD=tA-tP;
   filas.sort((x,y)=>x.dif-y.dif);
   const NOM=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const pc=(a,b)=>b?Math.round((a-b)/b*100):null;
   const col=v=>v===null?'—':'<span style="color:'+(v>=0?'var(--verde)':'#c0392b')+';font-weight:600">'+(v>=0?'+':'')+v+'%</span>';
-  const gc='grid-template-columns:1.4fr 1fr 1fr 1fr 70px 1fr';
+  const gc='grid-template-columns:1.4fr 1fr 1fr 1fr 70px 1fr 1fr';
   let h='<div class="card-title" style="font-size:14px;margin-bottom:4px">'+capWords(NOM[hoy.getMonth()])+' vs '+NOM[pr.getMonth()]+', del 1 al '+dia+' — por '+({marca:'marca',canal:'canal',zona:'zona',loc:'localidad'}[d])+'</div>';
-  h+='<div style="font-size:11px;color:var(--gris-dark);margin-bottom:8px">"Peso en la variación": qué parte de la diferencia total explica cada fila. Ordenado de mayor caída a mayor suba.</div>';
-  h+='<div class="table-wrap"><div class="table-head" style="'+gc+'"><span>'+({marca:'Marca',canal:'Canal',zona:'Zona',loc:'Localidad'}[d])+'</span><span>'+capWords(NOM[pr.getMonth()])+'</span><span>'+capWords(NOM[hoy.getMonth()])+'</span><span>Diferencia</span><span>%</span><span>Peso en la variación</span></div><div class="table-body" style="max-height:360px">';
+  h+='<div style="font-size:11px;color:var(--gris-dark);margin-bottom:8px">"Peso en la variación": qué parte de la diferencia total explica cada fila. "Precio por kg": cuánto cambió lo cobrado por kilo (solo canal directo). Ordenado de mayor caída a mayor suba.</div>';
+  h+='<div class="table-wrap"><div class="table-head" style="'+gc+'"><span>'+({marca:'Marca',canal:'Canal',zona:'Zona',loc:'Localidad'}[d])+'</span><span>'+capWords(NOM[pr.getMonth()])+'</span><span>'+capWords(NOM[hoy.getMonth()])+'</span><span>Diferencia</span><span>%</span><span>Peso en la variación</span><span>Precio por kg</span></div><div class="table-body" style="max-height:360px">';
   filas.slice(0,25).forEach(f=>{
     const peso=tD?Math.round(f.dif/tD*100):null;
-    h+='<div class="table-row" style="'+gc+'"><span style="font-weight:500">'+f.g+'</span><span>'+serFmt(f.p,med)+'</span><span>'+serFmt(f.a,med)+'</span><span style="color:'+(f.dif>=0?'var(--verde)':'#c0392b')+';font-weight:600">'+(f.dif>=0?'+':'')+serFmt(f.dif,med)+'</span><span>'+col(pc(f.a,f.p))+'</span><span>'+(peso===null?'—':peso+'%')+'</span></div>';
+    h+='<div class="table-row" style="'+gc+'"><span style="font-weight:500">'+f.g+'</span><span>'+serFmt(f.p,med)+'</span><span>'+serFmt(f.a,med)+'</span><span style="color:'+(f.dif>=0?'var(--verde)':'#c0392b')+';font-weight:600">'+(f.dif>=0?'+':'')+serFmt(f.dif,med)+'</span><span>'+col(pc(f.a,f.p))+'</span><span>'+(peso===null?'—':peso+'%')+'</span><span>'+pkF(f.pk)+'</span></div>';
   });
-  h+='<div class="table-row" style="'+gc+';font-weight:700;background:var(--gris)"><span>Total</span><span>'+serFmt(tP,med)+'</span><span>'+serFmt(tA,med)+'</span><span>'+(tD>=0?'+':'')+serFmt(tD,med)+'</span><span>'+col(pc(tA,tP))+'</span><span>100%</span></div>';
+  h+='<div class="table-row" style="'+gc+';font-weight:700;background:var(--gris)"><span>Total</span><span>'+serFmt(tP,med)+'</span><span>'+serFmt(tA,med)+'</span><span>'+(tD>=0?'+':'')+serFmt(tD,med)+'</span><span>'+col(pc(tA,tP))+'</span><span>100%</span><span>'+pkF(pkT)+'</span></div>';
   h+='</div></div>';
   el.innerHTML=h;
+}
+
+// ── LÍNEA BASE (método Adri): promedio de 12–18 meses ± 3 desvíos, con tendencia ──
+// Se mide por día de venta para poder comparar el mes en curso (incompleto) con los cerrados.
+function baseMeses(med){
+  const m={};
+  SER_DIR.forEach(r=>{const k=r.f.getFullYear()+'-'+String(r.f.getMonth()+1).padStart(2,'0');if(!m[k])m[k]={v:0,dias:new Set()};m[k].v+=med==='kg'?r.kg:r.fac;m[k].dias.add(r.f.getDate());});
+  return Object.keys(m).sort().map(k=>({k,v:m[k].v,dias:m[k].dias.size,pd:m[k].v/m[k].dias.size}));
+}
+function baseRender(){
+  const el=document.getElementById('base-chart');if(!el||!SER_DIR.length)return;
+  const med=document.getElementById('base-medida').value;
+  const hoy=new Date(),kHoy=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+  const M=baseMeses(med);
+  const cerr=M.filter(x=>x.k!==kHoy&&x.dias>=15).slice(-18);   // meses cerrados completos, máx. 18
+  const act=M.find(x=>x.k===kHoy);
+  if(cerr.length<4){el.innerHTML='';return;}
+  const n=cerr.length,ys=cerr.map(x=>x.pd),xs=ys.map((_,i)=>i);
+  const mx=serMedia(xs),my=serMedia(ys);
+  let b=0,d=0;xs.forEach((x,i)=>{b+=(x-mx)*(ys[i]-my);d+=(x-mx)*(x-mx);});b=b/d;const a=my-b*mx;
+  const res=ys.map((y,i)=>y-(a+b*i));const sd=Math.sqrt(res.reduce((s,r)=>s+r*r,0)/(n-2));
+  const sdPlano=serDesvio(ys);
+  const esp=i=>a+b*i;
+  const fv=v=>med==='kg'?Math.round(v).toLocaleString('es-AR')+' kg':'$ '+Math.round(v/1000).toLocaleString('es-AR')+'K';
+  const pts=cerr.map((x,i)=>({lab:MESES_NOM_ES[+x.k.split('-')[1]-1]+' '+x.k.slice(2,4),v:x.pd,e:esp(i),dias:x.dias}));
+  if(act)pts.push({lab:MESES_NOM_ES[+act.k.split('-')[1]-1]+' '+act.k.slice(2,4),v:act.pd,e:esp(n),dias:act.dias,curso:true});
+  // Veredicto
+  const ver=document.getElementById('base-veredicto');
+  if(act&&ver){
+    const p=pts[pts.length-1],z=(p.v-p.e)/sd,lo=p.e-3*sd,hi=p.e+3*sd;
+    const fuera=p.v<lo||p.v>hi;
+    const col=fuera?'#c0392b':Math.abs(z)>=1.5?'#b7791f':'var(--verde)';
+    const txt=fuera?(p.v<lo?'ATÍPICO hacia abajo: hay que buscar la causa.':'ATÍPICO hacia arriba: ver qué lo explicó.'):(Math.abs(z)>=1.5?'Dentro de lo normal, pero en la parte '+(z<0?'baja':'alta')+' de la banda: vigilar.':'Dentro de lo normal: fluctuación esperable.');
+    ver.innerHTML='<div style="padding:12px 14px;border-radius:8px;background:var(--gris);border-left:4px solid '+col+';font-size:13px;line-height:1.6"><b>'+MESES_LARGO[hoy.getMonth()]+' (al día '+hoy.getDate()+', '+p.dias+' días con venta):</b> '+fv(p.v)+' por día. Esperado según la tendencia: '+fv(p.e)+' · banda normal '+fv(Math.max(0,lo))+' a '+fv(hi)+'.<br><span style="color:'+col+';font-weight:700">'+txt+'</span> <span style="color:var(--gris-dark)">('+(z>=0?'+':'')+z.toFixed(1)+' desvíos)</span></div>';
+  }
+  // Gráfico
+  const W=900,H=250,pl=58,pr=12,pt=14,pb=30,N=pts.length;
+  const maxV=Math.max(...pts.map(p=>Math.max(p.v,p.e+3*sd)))*1.02;
+  const x=i=>pl+i*(W-pl-pr)/(N-1),y=v=>pt+(H-pt-pb)*(1-Math.max(0,v)/maxV);
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block" font-family="DM Sans,sans-serif">';
+  for(let t=0;t<=4;t++){const v=maxV*t/4;svg+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#e9ecef"/><text x="'+(pl-6)+'" y="'+(y(v)+3)+'" text-anchor="end" font-size="10" fill="#6c757d">'+(med==='kg'?Math.round(v):Math.round(v/1000)+'K')+'</text>';}
+  const up=pts.map((p,i)=>x(i)+','+y(p.e+3*sd)).join(' '),dn=pts.map((p,i)=>x(i)+','+y(p.e-3*sd)).reverse().join(' ');
+  svg+='<polygon points="'+up+' '+dn+'" fill="#74c69d" opacity="0.18"/>';
+  svg+='<polyline points="'+pts.map((p,i)=>x(i)+','+y(p.e+3*sd)).join(' ')+'" fill="none" stroke="#74c69d" stroke-width="1"/>';
+  svg+='<polyline points="'+pts.map((p,i)=>x(i)+','+y(p.e-3*sd)).join(' ')+'" fill="none" stroke="#74c69d" stroke-width="1"/>';
+  svg+='<polyline points="'+pts.map((p,i)=>x(i)+','+y(p.e)).join(' ')+'" fill="none" stroke="#6c757d" stroke-dasharray="5 4"/>';
+  svg+='<polyline points="'+pts.map((p,i)=>x(i)+','+y(p.v)).join(' ')+'" fill="none" stroke="#1d3557" stroke-width="2.5"/>';
+  pts.forEach((p,i)=>{
+    const fuera=p.v>p.e+3*sd||p.v<p.e-3*sd;
+    svg+='<circle cx="'+x(i)+'" cy="'+y(p.v)+'" r="'+(fuera?6:4)+'" fill="'+(fuera?'#c0392b':p.curso?'#fff':'#1d3557')+'" stroke="'+(fuera?'#c0392b':'#1d3557')+'" stroke-width="2"><title>'+p.lab+(p.curso?' (en curso)':'')+' — '+fv(p.v)+' por día · esperado '+fv(p.e)+' · banda '+fv(Math.max(0,p.e-3*sd))+' a '+fv(p.e+3*sd)+'</title></circle>';
+    svg+='<text x="'+x(i)+'" y="'+(H-10)+'" text-anchor="middle" font-size="10" fill="#6c757d">'+p.lab+'</text>';
+  });
+  svg+='</svg>';
+  el.innerHTML='<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--gris-dark);margin-bottom:6px"><span><span style="display:inline-block;width:14px;height:3px;background:#1d3557;vertical-align:3px"></span> Real por día de venta</span><span><span style="display:inline-block;width:14px;border-top:2px dashed #6c757d;vertical-align:3px"></span> Esperado (tendencia)</span><span><span style="display:inline-block;width:10px;height:10px;background:#74c69d;opacity:.4;vertical-align:-1px"></span> Banda normal ± 3 desvíos</span><span>Punto blanco = mes en curso</span></div>'+svg;
+  const nota=document.getElementById('base-nota');
+  if(nota)nota.innerHTML='Base: '+n+' meses cerrados (los últimos, hasta 18). Se mide <b>por día de venta</b> para poder comparar el mes en curso con los cerrados. Como el negocio viene creciendo, el promedio se calcula sobre la línea de tendencia (crece '+fv(b)+' por día cada mes) y los desvíos se miden contra esa línea. Con promedio plano, sin tendencia, la banda daría '+fv(Math.max(0,my-3*sdPlano))+' a '+fv(my+3*sdPlano)+', tan ancha que nada sale de ella. Regla de Adri: si varios meses seguidos quedan fuera de la banda, el comportamiento cambió y hay que recalcular. Solo canal directo.';
+}
+
+// ── CLIENTES: a quién le tocaba volver este mes y si volvió ─────────────────
+function cliKey(r){const t=rsNormTel(r.tel);return t.length>=8?'t'+t:'n'+(r.nombre||'').trim().toLowerCase();}
+function cliHistorial(){
+  const h={};
+  SER_DIR.forEach(r=>{const k=cliKey(r);if(!h[k])h[k]=[];h[k].push(r);});
+  Object.values(h).forEach(a=>a.sort((x,y)=>x.f-y.f));
+  return h;
+}
+function cliDia0(f){return new Date(f.getFullYear(),f.getMonth(),f.getDate());}
+// Para el mes que arranca en "corte" y se mira hasta "fin": a quién le tocaba volver y quién volvió
+function cliTasa(H,corte,fin){
+  const DIA=86400000,out=[];
+  Object.keys(H).forEach(k=>{
+    const prev=H[k].filter(r=>r.f<corte);if(!prev.length)return;
+    const fechas=[...new Set(prev.map(r=>cliDia0(r.f).getTime()))].sort((a,b)=>a-b);
+    const ints=[];for(let i=1;i<fechas.length;i++){const d=Math.round((fechas[i]-fechas[i-1])/DIA);if(d>=7)ints.push(d);}
+    const ciclo=ints.length?mediana(ints):30;
+    const ult=fechas[fechas.length-1],prox=ult+ciclo*DIA;
+    if((corte-ult)/DIA>120)return;                          // ya inactivo hace rato: va por Inactivos
+    if(prox<corte.getTime()-10*DIA||prox>fin.getTime()-5*DIA)return; // no le tocaba en esta ventana (5 días de tolerancia)
+    const volvio=H[k].some(r=>r.f>=corte&&r.f<=fin);
+    const u=prev[prev.length-1];
+    out.push({k,volvio,ciclo,ult:new Date(ult),prox:new Date(prox),nombre:u.nombre,tel:u.tel,zona:u.zona,loc:u.loc,marca:u.marca,prod:u.prod,kg:prev.filter(r=>cliDia0(r.f).getTime()===ult).reduce((s,r)=>s+r.kg,0),compras:fechas.length});
+  });
+  return out;
+}
+function cliRender(){
+  const el=document.getElementById('cli-resumen');if(!el||!SER_DIR.length)return;
+  const H=cliHistorial(),hoy=new Date(),dia=hoy.getDate();
+  // Primera compra de cada cliente para separar nuevos de recurrentes
+  const primera={};Object.keys(H).forEach(k=>primera[k]=cliDia0(H[k][0].f).getTime());
+  const filas=[];
+  for(let i=3;i>=0;i--){
+    const corte=new Date(hoy.getFullYear(),hoy.getMonth()-i,1);
+    const fin=new Date(corte.getFullYear(),corte.getMonth(),dia,23,59,59);
+    const t=cliTasa(H,corte,fin);
+    const comp={};SER_DIR.forEach(r=>{if(r.f>=corte&&r.f<=fin){const k=cliKey(r);if(!comp[k])comp[k]={kg:0,nuevo:cliDia0(r.f).getTime()===primera[k]};comp[k].kg+=r.kg;}});
+    const cs=Object.values(comp),nu=cs.filter(c=>c.nuevo),re=cs.filter(c=>!c.nuevo);
+    filas.push({lab:MESES_LARGO[corte.getMonth()],tocaba:t.length,volvieron:t.filter(x=>x.volvio).length,nuevos:nu.length,kgNu:nu.reduce((s,c)=>s+c.kg,0),rec:re.length,kgRe:re.reduce((s,c)=>s+c.kg,0),lista:t});
+  }
+  const gc='grid-template-columns:1fr 1fr 1fr 1fr 1fr';
+  let h='<div style="font-size:11px;color:var(--gris-dark);margin-bottom:8px">Cada mes medido del 1 al '+dia+' para que sea comparable. "Les tocaba volver": clientes activos (última compra hace menos de 120 días) cuya próxima compra, según su ciclo habitual, caía en esa ventana (con 5 días de margen).</div>';
+  h+='<div class="table-wrap"><div class="table-head" style="'+gc+'"><span>Mes (1 al '+dia+')</span><span>Les tocaba volver</span><span>Volvieron</span><span>Clientes nuevos</span><span>Recurrentes que compraron</span></div><div class="table-body">';
+  filas.forEach((f,i)=>{
+    const tasa=f.tocaba?Math.round(f.volvieron/f.tocaba*100):0;
+    h+='<div class="table-row" style="'+gc+(i===filas.length-1?';font-weight:700;background:var(--gris)':'')+'"><span>'+f.lab+'</span><span>'+f.tocaba+'</span><span>'+f.volvieron+' <span style="color:var(--gris-dark);font-weight:600">('+tasa+'%)</span></span><span>'+f.nuevos+' · '+Math.round(f.kgNu).toLocaleString('es-AR')+' kg</span><span>'+f.rec+' · '+Math.round(f.kgRe).toLocaleString('es-AR')+' kg</span></div>';
+  });
+  h+='</div></div>';
+  el.innerHTML=h;
+  // Lista accionable: les tocaba este mes y todavía no volvieron
+  const pend=filas[filas.length-1].lista.filter(x=>!x.volvio).sort((a,b)=>a.prox-b.prox);
+  const porZona={},porMarca={};pend.forEach(p=>{porZona[p.zona]=(porZona[p.zona]||0)+1;porMarca[p.marca]=(porMarca[p.marca]||0)+1;});
+  const resumen=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+' '+v).join(' · ');
+  const gl='grid-template-columns:1.2fr 1fr 1.4fr 80px 70px 80px 60px';
+  const DIA=86400000,hoy0=cliDia0(hoy);
+  let l='<div class="card-title" style="font-size:14px;margin-bottom:4px">Les tocaba volver en '+MESES_LARGO[hoy.getMonth()].toLowerCase()+' y todavía no compraron: '+pend.length+' clientes · '+Math.round(pend.reduce((s,p)=>s+p.kg,0)).toLocaleString('es-AR')+' kg en su última compra</div>';
+  l+='<div style="font-size:11px;color:var(--gris-dark);margin-bottom:8px">Por zona: '+resumen(porZona)+'<br>Por marca: '+resumen(porMarca)+'</div>';
+  l+='<div class="table-wrap"><div class="table-head" style="'+gl+'"><span>Cliente</span><span>Zona</span><span>Última compra</span><span>Ciclo</span><span>Atraso</span><span>Compras</span><span>WA</span></div><div class="table-body" style="max-height:420px">';
+  pend.forEach(p=>{
+    const atraso=Math.round((hoy0-p.prox)/DIA);
+    const fd=p.ult.getDate()+'/'+(p.ult.getMonth()+1);
+    const wa=p.tel?'<a class="wa-link" href="'+avWaLinkAyer(p.tel,p.nombre)+'" target="_blank">WA</a>':'<span style="font-size:11px;color:var(--gris-dark)">Sin tel</span>';
+    l+='<div class="table-row" style="'+gl+'"><span style="font-weight:500">'+(p.nombre||'--')+'</span><span style="font-size:12px">'+p.loc+' <span class="'+(p.zona==='Local 15 km'?'local-tag':'fuera-tag')+'">'+p.zona+'</span></span><span style="font-size:12px">'+fd+' · '+[p.marca==='Sin marca'?'':p.marca,p.prod].filter(Boolean).join(' ')+'</span><span style="font-size:12px">'+p.ciclo+' días</span><span style="font-size:12px;color:'+(atraso>10?'#c0392b':'var(--texto)')+'">'+(atraso>=0?atraso+' días':'—')+'</span><span style="font-size:12px;text-align:center">'+p.compras+'</span>'+wa+'</div>';
+  });
+  l+='</div></div>';
+  document.getElementById('cli-lista').innerHTML=l;
 }
 
 // ── GRAFICO DIARIO ────────────────────────────────────────────────────────────
