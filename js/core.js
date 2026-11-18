@@ -136,7 +136,7 @@ function irA(p){
   const el=document.getElementById('page-'+p);
   if(el)el.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick')&&x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active');});
-  if(p==='stock'){setTimeout(function(){skRenderTabla();skRenderMetricas();},50);}
+  if(p==='stock'){setTimeout(function(){skvLoad();},50);}
   const t={'inicio':'Inicio','ventas':'Ventas','financiero':'Financiero','vete':'Vete','clientes':'Clientes','recompras':'Recompras','migracion':'Migración','inactivos':'Migrados que dejaron de comprar','analisis':'Análisis de clientes','resenas':'Reseñas','envios':'Envíos','ruta':'Hoja de ruta','marketing':'Agente Marketing','sorteo':'Sorteo Mundial','roadmap':'Roadmap','precios':'Precios','stock':'Control de Stock','aviso':'Aviso sin reparto 9–11 nov'};
   document.getElementById('page-title').textContent=t[p]||p;
   if(p==='ventas'){renderMensualKg();renderPeq('zonas-bars',ZONAS_DATA,VERDE);renderPeq('marcas-bars',MARCAS_DATA,AZUL);}

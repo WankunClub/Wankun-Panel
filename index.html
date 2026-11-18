@@ -756,181 +756,44 @@ Vamos Argentina!</div>
 
 <!-- STOCK -->
 <div class="page" id="page-stock">
-  <div class="metrics-grid" id="sk-metrics">
-    <div class="metric"><div class="metric-label">Con stock</div><div class="metric-value" id="sk-m-con">—</div></div>
-    <div class="metric"><div class="metric-label">Sin stock</div><div class="metric-value" id="sk-m-sin">—</div></div>
-    <div class="metric"><div class="metric-label">Mov. hoy</div><div class="metric-value" id="sk-m-hoy">—</div></div>
-  </div>
-
-  <div class="card-grid" style="margin-bottom:16px">
-    <!-- Ingreso -->
-    <div class="card" style="border-top:3px solid var(--verde)">
-      <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Ingreso de mercadería</div>
-      <div style="position:relative;margin-bottom:10px">
-        <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Producto</label>
-        <input id="sk-ing-q" type="text" placeholder="Nombre o SKU..." oninput="skAc('ing')" autocomplete="off"
-          style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-        <div id="sk-ing-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--gris-med);border-radius:8px;z-index:100;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);margin-top:2px"></div>
-      </div>
-      <div id="sk-ing-tag" style="min-height:22px;margin-bottom:10px"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-        <div>
-          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Cantidad</label>
-          <input id="sk-ing-n" type="number" min="1" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-        </div>
-        <div>
-          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Fecha</label>
-          <input id="sk-ing-d" type="date" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-        </div>
-      </div>
-      <button class="btn btn-primary" onclick="skReg('ing')" style="width:100%">Registrar ingreso</button>
-    </div>
-
-    <!-- WC automatico -->
-    <div class="card" style="border-top:3px solid var(--verde)">
-      <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Ventas WC <span style="font-size:11px;font-weight:400;color:var(--gris-dark);margin-left:6px">— desde Google Sheets</span></div>
-      <p style="font-size:12px;color:var(--gris-dark);margin-bottom:14px">Sincronizá solo desde la fecha en que cargaste el stock inicial. Las ventas anteriores ya están incluidas en ese número.</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-        <div>
-          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Desde</label>
-          <input id="sk-wc-desde" type="date" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-        </div>
-        <div>
-          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Hasta</label>
-          <input id="sk-wc-hasta" type="date" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-        </div>
-      </div>
-      <button class="btn btn-primary" onclick="skSincWC()" style="width:100%;margin-bottom:10px">Sincronizar ventas WC</button>
-      <div id="sk-wc-status" style="font-size:12px;color:var(--gris-dark)"></div>
-      <div id="sk-wc-noMatch" style="display:none;margin-top:10px">
-        <p style="font-size:12px;color:#856404;font-weight:500;margin-bottom:6px">Sin match de SKU (no afectan el stock):</p>
-        <div id="sk-wc-noMatchList" style="font-size:11px;color:var(--gris-dark);max-height:120px;overflow-y:auto"></div>
-      </div>
-    </div>
-
-    <!-- Meli manual -->
-    <div class="card" style="border-top:3px solid var(--azul-med)">
-      <div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Venta Meli <span style="font-size:11px;font-weight:400;color:var(--gris-dark);margin-left:6px">— carga manual</span></div>
-      <div style="position:relative;margin-bottom:10px">
-        <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Producto</label>
-        <input id="sk-vta-q" type="text" placeholder="Nombre o SKU..." oninput="skAc('vta')" autocomplete="off"
-          style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-        <div id="sk-vta-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--gris-med);border-radius:8px;z-index:100;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);margin-top:2px"></div>
-      </div>
-      <div id="sk-vta-tag" style="min-height:22px;margin-bottom:10px"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-        <div>
-          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Cantidad</label>
-          <input id="sk-vta-n" type="number" min="1" placeholder="0" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-        </div>
-        <div>
-          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Fecha</label>
-          <input id="sk-vta-d" type="date" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-        </div>
-      </div>
-      <button class="btn btn-primary" onclick="skReg('vta')" style="width:100%;background:var(--azul-med);border-color:var(--azul-med)">Registrar venta Meli</button>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+    <div id="skv-status" style="font-size:12px;color:var(--gris-dark)">—</div>
+    <div class="btn-row">
+      <a class="btn" href="https://docs.google.com/spreadsheets/d/12hLk00E3eT9ORZyrk-gHw7dQgUhGJhA1iSbLn5genVI/edit#gid=900014" target="_blank" style="font-size:12px">Abrir Sheet</a>
+      <button class="btn btn-primary" onclick="skvLoad()" style="font-size:12px">Actualizar</button>
     </div>
   </div>
-
+  <div class="metrics-grid" style="margin-bottom:16px">
+    <div class="metric"><div class="metric-label">Bolsas en stock</div><div class="metric-value" id="skv-m-bolsas">—</div></div>
+    <div class="metric"><div class="metric-label">Productos con stock</div><div class="metric-value" id="skv-m-con">—</div></div>
+    <div class="metric"><div class="metric-label">Agotados (que vendemos)</div><div class="metric-value" id="skv-m-agot" style="color:#c0392b">—</div></div>
+    <div class="metric"><div class="metric-label">Valor a costo s/IVA</div><div class="metric-value" id="skv-m-costo">—</div></div>
+    <div class="metric"><div class="metric-label">Valor a costo c/IVA</div><div class="metric-value" id="skv-m-costoiva">—</div></div>
+    <div class="metric"><div class="metric-label">Valor a precio de venta</div><div class="metric-value" id="skv-m-venta">—</div></div>
+  </div>
   <div class="card">
-    <!-- Sub-tabs -->
-    <div style="display:flex;gap:4px;border-bottom:1px solid var(--gris-med);margin-bottom:16px">
-      <button id="sktab-stock" onclick="skSubTab('stock')" style="padding:7px 14px;font-size:13px;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--text-primary);font-weight:600;color:var(--text-primary);font-family:'DM Sans',sans-serif">Stock actual</button>
-      <button id="sktab-movs" onclick="skSubTab('movs')" style="padding:7px 14px;font-size:13px;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gris-dark);font-family:'DM Sans',sans-serif">Movimientos</button>
-      <button id="sktab-ajuste" onclick="skSubTab('ajuste')" style="padding:7px 14px;font-size:13px;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--gris-dark);font-family:'DM Sans',sans-serif">Ajustes</button>
-    </div>
-
-    <!-- Vista: Stock actual -->
-    <div id="skview-stock">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-        <div class="btn-row">
-          <input id="sk-filtro" type="text" placeholder="Filtrar producto..." oninput="skRenderTabla()"
-            style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;width:180px">
-          <select id="sk-estado" onchange="skRenderTabla()" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-            <option value="">Todos</option>
-            <option value="1">Con stock</option>
-            <option value="0">Sin stock</option>
-          </select>
-          <button class="btn" onclick="skBorrarTodo()" style="color:#c0392b;font-size:12px">Borrar todo</button>
-        </div>
-      </div>
-      <div id="sk-recientes" style="margin-bottom:12px"></div>
-      <div class="table-wrap">
-        <div class="table-head" style="grid-template-columns:2fr 1fr 60px 80px 80px 80px 80px">
-          <span>Producto</span><span>SKU</span><span>Kg</span><span>Ingr.</span><span>V.WC</span><span>V.Meli</span><span>Stock</span>
-        </div>
-        <div class="table-body" id="sk-tabla" style="max-height:500px"></div>
-      </div>
-    </div>
-
-    <!-- Vista: Movimientos -->
-    <div id="skview-movs" style="display:none">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <input type="date" id="sk-mov-desde" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-        <input type="date" id="sk-mov-hasta" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-        <select id="sk-mov-tipo" onchange="skRenderMovs()" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-          <option value="">Todos</option>
-          <option value="ing">Ingresos</option>
-          <option value="wc">Ventas WC</option>
-          <option value="meli">Ventas Meli</option>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div class="btn-row">
+        <input id="skv-filtro" type="text" placeholder="Buscar producto o SKU..." oninput="skvRender()" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;width:200px">
+        <select id="skv-marca" onchange="skvRender()" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif"><option value="">Todas las marcas</option></select>
+        <select id="skv-estado" onchange="skvRender()" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+          <option value="">Con movimiento</option><option value="con">Con stock</option><option value="bajo">Stock bajo (1 a 3)</option><option value="agot">Agotados</option><option value="todos">Todo el catálogo</option>
         </select>
-        <button class="btn btn-primary" onclick="skRenderMovs()" style="font-size:12px">Filtrar</button>
+        <select onchange="skvOrden(this.value)" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
+          <option value="marca">Orden: marca</option><option value="stock">Orden: más stock</option><option value="valor">Orden: más valor</option>
+        </select>
       </div>
-      <div class="table-wrap">
-        <div class="table-head" style="grid-template-columns:90px 2fr 1fr 60px 70px 70px 100px 60px">
-          <span>Fecha</span><span>Producto</span><span>SKU</span><span>Kg</span><span>Canal</span><span>Cant.</span><span>Valor costo</span><span></span>
-        </div>
-        <div class="table-body" id="sk-mov-tabla" style="max-height:500px"></div>
-      </div>
-      <div id="sk-mov-total" style="font-size:13px;color:var(--gris-dark);margin-top:10px;text-align:right"></div>
+      <span id="skv-count" style="font-size:12px;color:var(--gris-dark)"></span>
     </div>
-
-    <!-- Vista: Ajustes de stock -->
-    <div id="skview-ajuste" style="display:none">
-      <p style="font-size:13px;color:var(--gris-dark);margin-bottom:16px">Usá esta sección para corregir diferencias entre el stock del sistema y el conteo real del depósito.</p>
-      <div class="card" style="border-top:3px solid #f59e0b;margin-bottom:16px">
-        <div class="card-title" style="margin-bottom:12px">Nuevo ajuste</div>
-        <div style="position:relative;margin-bottom:10px">
-          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Producto</label>
-          <input id="sk-aj-q" type="text" placeholder="Nombre o SKU..." oninput="skAc('aj')" autocomplete="off"
-            style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-          <div id="sk-aj-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--gris-med);border-radius:8px;z-index:100;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1);margin-top:2px"></div>
+    <div class="table-wrap" style="overflow-x:auto">
+      <div style="min-width:900px">
+        <div class="table-head" style="grid-template-columns:2.2fr 1.3fr 50px 55px 55px 55px 55px 55px 60px 105px 105px">
+          <span>Producto</span><span>SKU</span><span>Kg</span><span>Conteo 2/11</span><span>Ingr.</span><span>V. propias</span><span>V. Meli</span><span>Ajustes</span><span>Stock</span><span>Valor costo</span><span>Valor venta</span>
         </div>
-        <div id="sk-aj-tag" style="min-height:22px;margin-bottom:10px"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
-          <div>
-            <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Tipo</label>
-            <select id="sk-aj-tipo" style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-              <option value="suma">Sumar unidades</option>
-              <option value="resta">Restar unidades</option>
-              <option value="fija">Fijar cantidad exacta</option>
-            </select>
-          </div>
-          <div>
-            <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Cantidad</label>
-            <input id="sk-aj-n" type="number" min="0" placeholder="0"
-              style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-          </div>
-          <div>
-            <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Fecha</label>
-            <input id="sk-aj-d" type="date"
-              style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-          </div>
-        </div>
-        <div>
-          <label style="font-size:12px;color:var(--gris-dark);margin-bottom:4px;display:block">Motivo</label>
-          <input id="sk-aj-motivo" type="text" placeholder="Ej: diferencia en conteo, producto dañado..."
-            style="width:100%;padding:8px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;margin-bottom:10px">
-        </div>
-        <button class="btn btn-primary" onclick="skRegistrarAjuste()" style="width:100%;background:#f59e0b;border-color:#f59e0b">Registrar ajuste</button>
-      </div>
-      <div class="table-wrap">
-        <div class="table-head" style="grid-template-columns:90px 2fr 80px 80px 1fr 60px">
-          <span>Fecha</span><span>Producto</span><span>Tipo</span><span>Cantidad</span><span>Motivo</span><span></span>
-        </div>
-        <div class="table-body" id="sk-aj-tabla" style="max-height:400px"></div>
+        <div class="table-body" id="skv-tabla" style="max-height:600px"></div>
       </div>
     </div>
+    <p style="font-size:11px;color:var(--gris-dark);margin-top:10px">Solo lectura. Para cargar ingresos, ventas o ajustes se usa el Sheet (o se le pasa a Claude la factura / el Excel de ML). Costo sin IVA y precio de venta salen de la Lista de precios.</p>
   </div>
 </div>
 
@@ -964,7 +827,7 @@ Vamos Argentina!</div>
 
   </div>
 </div>
-<script src="js/core.js?v=1"></script>
+<script src="js/core.js?v=2"></script>
 <script src="js/vete.js?v=1"></script>
 <script src="js/finanzas.js?v=1"></script>
 <script src="js/ventas.js?v=1"></script>
@@ -974,6 +837,7 @@ Vamos Argentina!</div>
 <script src="js/migracion.js?v=1"></script>
 <script src="js/marketing.js?v=1"></script>
 <script src="js/stock.js?v=1"></script>
+<script src="js/stock-vivo.js?v=1"></script>
 <script src="js/analisis-clientes.js?v=1"></script>
 <script src="js/hoja-ruta.js?v=1"></script>
 <script src="js/precios.js?v=1"></script>
