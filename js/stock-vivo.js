@@ -22,6 +22,7 @@ async function skvLoad(){
 }
 
 function skvMovido(r){return r.conteo||r.ing||r.vta||r.ml||r.aj;}
+function skvRevisar(r){return r.st<0||(r.st>0&&!r.costo);}
 
 function skvRender(){
   var rows=skvRows;
@@ -35,7 +36,7 @@ function skvRender(){
   var vc=rows.reduce(function(a,r){return a+r.vcosto;},0),vv=rows.reduce(function(a,r){return a+r.vventa;},0);
   var set=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
   set('skv-m-bolsas',bolsas);set('skv-m-con',con.length);set('skv-m-agot',agot.length);
-  set('skv-m-costo',skvMoney(vc));set('skv-m-costoiva',skvMoney(vc*1.21));set('skv-m-venta',skvMoney(vv));
+  set('skv-m-costo',skvMoney(vc));set('skv-m-revisar',rows.filter(skvRevisar).length);set('skv-m-costoiva',skvMoney(vc*1.21));set('skv-m-venta',skvMoney(vv));
   // marcas
   var ms=document.getElementById('skv-marca');
   if(ms&&ms.options.length<=1){Array.from(new Set(rows.map(function(r){return r.marca;}))).sort().forEach(function(m){var o=document.createElement('option');o.value=m;o.textContent=m;ms.appendChild(o);});}
@@ -44,12 +45,13 @@ function skvRender(){
     if(q&&(r.prod+' '+r.sku+' '+r.marca).toLowerCase().indexOf(q)<0)return false;
     if(est==='con'&&r.st<=0)return false;
     if(est==='agot'&&!(r.st<=0&&skvMovido(r)))return false;
+    if(est==='revisar'&&!skvRevisar(r))return false;
     if(est==='bajo'&&!(r.st>0&&r.st<=3))return false;
     if(est===''&&!(r.st!==0||skvMovido(r)))return false;
     return true;});
   var s=skvSort;
   f.sort(function(a,b){if(s==='stock')return b.st-a.st;if(s==='valor')return b.vcosto-a.vcosto;return (a.marca+a.prod+a.kg).localeCompare(b.marca+b.prod+b.kg);});
-  var cols='2.2fr 1.3fr 50px 55px 55px 55px 55px 55px 60px 105px 105px';
+  var cols='2.2fr 1.3fr 50px 55px 55px 55px 55px 55px 60px 95px 110px 95px 110px';
   var h=f.map(function(r){
     var c=r.st<=0?'#c0392b':(r.st<=3?'#b7791f':'#1e7e34');
     return '<div class="table-row" style="grid-template-columns:'+cols+'">'+
@@ -57,7 +59,10 @@ function skvRender(){
       '<span style="font-family:monospace;font-size:11px;color:#888">'+r.sku+'</span><span>'+r.kg+'</span>'+
       '<span>'+r.conteo+'</span><span>'+r.ing+'</span><span>'+r.vta+'</span><span>'+r.ml+'</span><span>'+r.aj+'</span>'+
       '<span style="font-weight:700;color:'+c+'">'+r.st+'</span>'+
-      '<span>'+(r.vcosto?skvMoney(r.vcosto):'—')+'</span><span>'+(r.vventa?skvMoney(r.vventa):'—')+'</span></div>';}).join('');
+      (r.st>0&&!r.costo?'<span style="color:#c0392b;font-weight:600">SIN COSTO</span>':'<span>'+(r.costo?skvMoney(r.costo):'—')+'</span>')+
+      '<span>'+(r.vcosto?skvMoney(r.vcosto):'—')+'</span>'+
+      '<span>'+(r.precio?skvMoney(r.precio):'—')+'</span>'+
+      '<span>'+(r.vventa?skvMoney(r.vventa):'—')+'</span></div>';}).join('');
   var t=document.getElementById('skv-tabla');if(t)t.innerHTML=h||'<div style="padding:20px;color:#999;font-size:13px">Sin resultados</div>';
   set('skv-count',f.length+' productos');
 }

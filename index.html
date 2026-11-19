@@ -770,6 +770,7 @@ Vamos Argentina!</div>
     <div class="metric"><div class="metric-label">Valor a costo s/IVA</div><div class="metric-value" id="skv-m-costo">—</div></div>
     <div class="metric"><div class="metric-label">Valor a costo c/IVA</div><div class="metric-value" id="skv-m-costoiva">—</div></div>
     <div class="metric"><div class="metric-label">Valor a precio de venta</div><div class="metric-value" id="skv-m-venta">—</div></div>
+    <div class="metric"><div class="metric-label">A revisar (sin costo / stock negativo)</div><div class="metric-value" id="skv-m-revisar" style="color:#c0392b;cursor:pointer" onclick="document.getElementById('skv-estado').value='revisar';skvRender()">—</div></div>
   </div>
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
@@ -777,7 +778,7 @@ Vamos Argentina!</div>
         <input id="skv-filtro" type="text" placeholder="Buscar producto o SKU..." oninput="skvRender()" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;width:200px">
         <select id="skv-marca" onchange="skvRender()" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif"><option value="">Todas las marcas</option></select>
         <select id="skv-estado" onchange="skvRender()" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
-          <option value="">Con movimiento</option><option value="con">Con stock</option><option value="bajo">Stock bajo (1 a 3)</option><option value="agot">Agotados</option><option value="todos">Todo el catálogo</option>
+          <option value="">Con movimiento</option><option value="con">Con stock</option><option value="bajo">Stock bajo (1 a 3)</option><option value="agot">Agotados</option><option value="revisar">A revisar</option><option value="todos">Todo el catálogo</option>
         </select>
         <select onchange="skvOrden(this.value)" style="padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif">
           <option value="marca">Orden: marca</option><option value="stock">Orden: más stock</option><option value="valor">Orden: más valor</option>
@@ -786,9 +787,9 @@ Vamos Argentina!</div>
       <span id="skv-count" style="font-size:12px;color:var(--gris-dark)"></span>
     </div>
     <div class="table-wrap" style="overflow-x:auto">
-      <div style="min-width:900px">
-        <div class="table-head" style="grid-template-columns:2.2fr 1.3fr 50px 55px 55px 55px 55px 55px 60px 105px 105px">
-          <span>Producto</span><span>SKU</span><span>Kg</span><span>Conteo 2/11</span><span>Ingr.</span><span>V. propias</span><span>V. Meli</span><span>Ajustes</span><span>Stock</span><span>Valor costo</span><span>Valor venta</span>
+      <div style="min-width:1150px">
+        <div class="table-head" style="grid-template-columns:2.2fr 1.3fr 50px 55px 55px 55px 55px 55px 60px 95px 110px 95px 110px">
+          <span>Producto</span><span>SKU</span><span>Kg</span><span>Conteo 2/11</span><span>Ingr.</span><span>V. propias</span><span>V. Meli</span><span>Ajustes</span><span>Stock</span><span>Costo unit. s/IVA</span><span>Valor a costo</span><span>Precio venta</span><span>Valor a venta</span>
         </div>
         <div class="table-body" id="skv-tabla" style="max-height:600px"></div>
       </div>
