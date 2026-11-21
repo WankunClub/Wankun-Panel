@@ -1326,12 +1326,6 @@
    "p": "Perro Cachorro Pequeño",
    "e": "Perro"
   },
-  "UKDOGMED3": {
-   "m": "Unik",
-   "l": "",
-   "p": "Perro Mediano y Grande",
-   "e": "Perro"
-  },
   "PROFDOGCACHSMALL3": {
    "m": "Prof Vet",
    "l": "",
@@ -1396,6 +1390,12 @@
    "m": "Royal Canin",
    "l": "Por raza",
    "p": "Bulldog Francés Adulto",
+   "e": "Perro"
+  },
+  "UKDOGADUMED3": {
+   "m": "Unik",
+   "l": "",
+   "p": "Perro Adulto Mediano y Grande",
    "e": "Perro"
   }
  },
