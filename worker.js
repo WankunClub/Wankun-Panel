@@ -13,6 +13,10 @@ const GID_MAP = {
   "Meli":          "347057047",
   "Precios":       "545005826",
   "Movimientos":   "1632731645",
+  // Vete (Sheet Ventas original) — venta viva de la veterinaria
+  "Vete Historial":   "1981445926",
+  "Vete Movimientos": "649112781",
+  "Vete Stock":       "1833768948",
 };
 
 const STOCK_SHEETS = ["Stock", "Meli", "Precios", "Movimientos"];

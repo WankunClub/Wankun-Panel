@@ -234,20 +234,30 @@
     <div class="metric"><div class="metric-label">Utilidad</div><div class="metric-value" id="vete-utilidad">&mdash;</div></div>
   </div>
   <div class="metrics-grid" style="margin-top:12px">
-    <div class="metric"><div class="metric-label">Cobro la veterinaria</div><div class="metric-value" id="vete-cobro-vete" style="color:#b45309">&mdash;</div></div>
-    <div class="metric"><div class="metric-label">Cobro El Club</div><div class="metric-value" id="vete-cobro-club" style="color:var(--verde)">&mdash;</div></div>
-    <div class="metric"><div class="metric-label">Diferencia</div><div class="metric-value" id="vete-diferencia">&mdash;</div></div>
+    <div class="metric"><div class="metric-label">Costo que debe la Vete<br><small>(ella cobró, al costo)</small></div><div class="metric-value" id="vete-cobro-vete" style="color:#b45309">&mdash;</div></div>
+    <div class="metric"><div class="metric-label">Ganancia que debe el Club<br><small>(cobró el Club, su ganancia)</small></div><div class="metric-value" id="vete-cobro-club" style="color:var(--verde)">&mdash;</div></div>
+    <div class="metric"><div class="metric-label">Internos (uso del Club)</div><div class="metric-value" id="vete-diferencia">&mdash;</div></div>
   </div>
   <div class="metrics-grid" style="margin-top:12px">
-    <div class="metric"><div class="metric-label">Le debes a la vete (Costos Internos)</div><div class="metric-value" id="vete-debes" style="color:#dc2626">&mdash;</div></div>
-    <div class="metric"><div class="metric-label">Balance neto</div><div class="metric-value" id="vete-neto">&mdash;</div></div>
+    <div class="metric"><div class="metric-label">Ya liquidado (pagos + internos)</div><div class="metric-value" id="vete-debes" style="color:#dc2626">&mdash;</div></div>
+    <div class="metric"><div class="metric-label">Saldo de cuenta</div><div class="metric-value" id="vete-neto">&mdash;</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Stock bajo minimo en la gondola (menos de 2 bolsas)</div>
+    <div class="table-wrap" style="margin-top:12px">
+      <div class="table-head" style="grid-template-columns:1fr 1.6fr 0.6fr 0.6fr">
+        <span>Marca</span><span>Producto</span><span>Kg</span><span>Cantidad</span>
+      </div>
+      <div class="table-body" id="vete-tabla-pendientes"></div>
+    </div>
   </div>
 
   <div class="card">
     <div class="card-title">Desglose por mes</div>
     <div class="table-wrap" style="margin-top:12px">
       <div class="table-head" style="grid-template-columns:1fr 1fr 1.2fr 1fr 1fr 1.2fr 1.2fr">
-        <span>Mes</span><span>Kg</span><span>Total vendido</span><span>Costo</span><span>Utilidad</span><span>Cobro vete</span><span>Cobro club</span>
+        <span>Mes</span><span>Kg</span><span>Total vendido</span><span>Costo</span><span>Utilidad</span><span>Costo (cobro Vete)</span><span>Ganancia (cobro Club)</span>
       </div>
       <div class="table-body" id="vete-tabla-mensual"></div>
     </div>
@@ -260,16 +270,6 @@
         <span>Alimento</span><span>Unidades</span><span>Kg</span><span>Venta</span><span>Costo</span>
       </div>
       <div class="table-body" id="vete-tabla-alimento"></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Pendiente por antiguedad</div>
-    <div class="table-wrap" style="margin-top:12px">
-      <div class="table-head" style="grid-template-columns:1fr 1.6fr 1fr 0.7fr">
-        <span>Fecha</span><span>Alimento</span><span>Costo</span><span>Dias</span>
-      </div>
-      <div class="table-body" id="vete-tabla-pendientes"></div>
     </div>
   </div>
 </div>

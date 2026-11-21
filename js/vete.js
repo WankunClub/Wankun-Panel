@@ -1,24 +1,27 @@
-// ── VETE ─────────────────────────────────────────────────────────────────────
+// ── VETE (venta viva de la veterinaria) ───────────────────────────────────────
+// Fuente: pestañas "Vete Historial", "Vete Movimientos" y "Vete Stock" del Sheet Ventas,
+// sincronizadas desde la base del artifact "Ventas Vete · Wankun Club".
 let VETE_DATA=null, VETE_CARGANDO=false;
 
 function fmtARS(n){return '$'+Math.round(n||0).toLocaleString('es-AR');}
 
 function parseVeteNum(v){
   if(v===undefined||v===null)return 0;
+  if(typeof v==='number')return v;
   let s=v.toString().trim();
   if(!s)return 0;
   s=s.replace(/[$"'\s]/g,'');
-  s=s.replace(/\./g,'');   // punto = separador de miles en esta planilla
-  s=s.replace(/,/g,'.');    // por si viniera con coma decimal
+  s=s.replace(/\./g,'');   // punto = separador de miles
+  s=s.replace(/,/g,'.');    // coma decimal
   const n=parseFloat(s);
   return isNaN(n)?0:n;
 }
 
-function parsePesoKg(v){
-  if(!v)return 0;
-  let s=v.toString().toLowerCase().replace('kg','').replace(',','.').trim();
-  const n=parseFloat(s);
-  return isNaN(n)?0:n;
+// Extrae el peso en kg del texto libre del producto (ej: "RC MAXI PUPPY 15KG" -> 15, "FIT GATO 1,5KG" -> 1.5)
+function parseKgDeProducto(producto){
+  const s=(producto||'').toLowerCase().replace(',', '.');
+  const m=s.match(/(\d+(?:\.\d+)?)\s*kg/);
+  return m?parseFloat(m[1]):0;
 }
 
 async function veteCargar(){
@@ -27,8 +30,10 @@ async function veteCargar(){
   const err=document.getElementById('vete-error');
   if(err)err.style.display='none';
   try{
-    const [ventas,internos]=await Promise.all([fetchCSV('Vete'),fetchCSV('Costos Internos')]);
-    VETE_DATA={ventas,internos};
+    const [historial,movimientos,stock]=await Promise.all([
+      fetchCSV('Vete Historial'),fetchCSV('Vete Movimientos'),fetchCSV('Vete Stock')
+    ]);
+    VETE_DATA={historial,movimientos,stock};
     veteRenderTodo();
   }catch(e){
     console.error('Error Vete:',e);
@@ -40,66 +45,66 @@ async function veteCargar(){
 
 function veteRenderTodo(){
   if(!VETE_DATA)return;
-  const {ventas,internos}=VETE_DATA;
+  const {historial,movimientos,stock}=VETE_DATA;
 
-  let kgTot=0,ventaTot=0,costoTot=0,cobroVete=0,cobroClub=0;
+  let kgTot=0,ventaTot=0,costoTot=0,costoCobroVete=0,gananciaCobroClub=0;
   const porMes={};
   const porAlimento={};
-  const pendientes=[];
 
-  ventas.forEach(r=>{
-    const alimento=(getCol(r,'Alimento')||'').trim();
+  historial.forEach(r=>{
+    const alimento=(getCol(r,'Producto')||'').trim();
     if(!alimento)return;
     const fechaStr=getCol(r,'Fecha');
     const fecha=parseFecha(fechaStr);
-    const peso=parsePesoKg(getCol(r,'Peso'));
+    const peso=parseKgDeProducto(alimento);
+    const precio=parseVeteNum(getCol(r,'Precio'));
     const costo=parseVeteNum(getCol(r,'Costo'));
-    const venta=parseVeteNum(getCol(r,'Precio de Venta'));
-    const destino=(getCol(r,'Destino')||'').trim().toLowerCase();
+    const cobro=(getCol(r,'Cobro')||'').trim();
 
-    kgTot+=peso; ventaTot+=venta; costoTot+=costo;
-    if(destino.indexOf('pendiente')>-1)cobroVete+=costo;
-    else if(destino.indexOf('cobrado')>-1)cobroClub+=costo;
+    kgTot+=peso; ventaTot+=precio; costoTot+=costo;
+    if(cobro==='Vete')costoCobroVete+=costo;
+    else gananciaCobroClub+=(precio-costo);
 
     if(fecha){
       const key=fecha.getFullYear()+'-'+(fecha.getMonth()+1).toString().padStart(2,'0');
       if(!porMes[key])porMes[key]={kg:0,venta:0,costo:0,cobroVete:0,cobroClub:0,anio:fecha.getFullYear(),mesIdx:fecha.getMonth()};
-      porMes[key].kg+=peso;porMes[key].venta+=venta;porMes[key].costo+=costo;
-      if(destino.indexOf('pendiente')>-1)porMes[key].cobroVete+=costo;
-      else if(destino.indexOf('cobrado')>-1)porMes[key].cobroClub+=costo;
+      porMes[key].kg+=peso;porMes[key].venta+=precio;porMes[key].costo+=costo;
+      if(cobro==='Vete')porMes[key].cobroVete+=costo;
+      else porMes[key].cobroClub+=(precio-costo);
     }
 
-    if(!porAlimento[alimento])porAlimento[alimento]={unidades:0,kg:0,venta:0,costo:0};
-    porAlimento[alimento].unidades+=1;
-    porAlimento[alimento].kg+=peso;
-    porAlimento[alimento].venta+=venta;
-    porAlimento[alimento].costo+=costo;
-
-    if(destino.indexOf('pendiente')>-1){
-      pendientes.push({fecha,fechaStr,alimento,costo});
-    }
+    const keyAli=alimento.trim().toUpperCase().replace(/\s+/g,' ');
+    if(!porAlimento[keyAli])porAlimento[keyAli]={unidades:0,kg:0,venta:0,costo:0};
+    porAlimento[keyAli].unidades+=1;
+    porAlimento[keyAli].kg+=peso;
+    porAlimento[keyAli].venta+=precio;
+    porAlimento[keyAli].costo+=costo;
   });
 
   const utilidad=ventaTot-costoTot;
-  const diferencia=costoTot-(cobroVete+cobroClub);
 
-  let debesInternos=0;
-  internos.forEach(r=>{debesInternos+=parseVeteNum(getCol(r,'Costo'));});
-  const neto=cobroVete-debesInternos;
+  let pagoVete=0,pagoWankun=0,interno=0;
+  movimientos.forEach(r=>{
+    const tipo=(getCol(r,'Tipo')||'').trim();
+    const monto=parseVeteNum(getCol(r,'Monto'));
+    if(tipo==='pagoVete')pagoVete+=monto;
+    else if(tipo==='pagoWankun')pagoWankun+=monto;
+    else if(tipo==='interno')interno+=monto;
+  });
+  const liquidado=pagoVete-pagoWankun+interno;
+  const saldo=costoCobroVete-gananciaCobroClub-liquidado;
 
   document.getElementById('vete-kg').textContent=Math.round(kgTot).toLocaleString('es-AR')+' kg';
   document.getElementById('vete-total').textContent=fmtARS(ventaTot);
   document.getElementById('vete-costo').textContent=fmtARS(costoTot);
   document.getElementById('vete-utilidad').textContent=fmtARS(utilidad);
-  document.getElementById('vete-cobro-vete').textContent=fmtARS(cobroVete);
-  document.getElementById('vete-cobro-club').textContent=fmtARS(cobroClub);
-  const difEl=document.getElementById('vete-diferencia');
-  difEl.textContent=Math.abs(diferencia)<1?'$0':fmtARS(diferencia);
-  difEl.style.color=Math.abs(diferencia)<1?'var(--verde)':'#dc2626';
-  document.getElementById('vete-debes').textContent=fmtARS(debesInternos);
+  document.getElementById('vete-cobro-vete').textContent=fmtARS(costoCobroVete);
+  document.getElementById('vete-cobro-club').textContent=fmtARS(gananciaCobroClub);
+  document.getElementById('vete-diferencia').textContent=fmtARS(interno);
+  document.getElementById('vete-debes').textContent=fmtARS(liquidado);
   const netoEl=document.getElementById('vete-neto');
-  netoEl.textContent=(neto>=0?'':'-')+fmtARS(Math.abs(neto));
-  netoEl.style.color=neto>=0?'var(--verde)':'#dc2626';
+  netoEl.textContent=(saldo>=0?'':'-')+fmtARS(Math.abs(saldo))+(saldo>=0?' (te debe la Vete)':' (le debes al Club)');
+  netoEl.style.color=saldo>=0?'var(--verde)':'#dc2626';
 
   const mesesKeys=Object.keys(porMes).sort();
   let mesHtml='';
@@ -131,19 +136,16 @@ function veteRenderTodo(){
   });
   document.getElementById('vete-tabla-alimento').innerHTML=aliHtml||'<div style="padding:20px;color:var(--gris-dark);font-size:13px">Sin datos</div>';
 
-  pendientes.sort((x,y)=>(x.fecha?x.fecha.getTime():0)-(y.fecha?y.fecha.getTime():0));
-  const hoy=new Date();
-  let pendHtml='';
-  pendientes.forEach(p=>{
-    const dias=p.fecha?Math.floor((hoy-p.fecha)/86400000):null;
-    const color=dias>14?'#dc2626':(dias>7?'#b45309':'inherit');
-    pendHtml+='<div class="table-row" style="grid-template-columns:1fr 1.6fr 1fr 0.7fr">'
-      +'<span>'+p.fechaStr+'</span>'
-      +'<span>'+p.alimento+'</span>'
-      +'<span>'+fmtARS(p.costo)+'</span>'
-      +'<span style="color:'+color+';font-weight:600">'+(dias!=null?dias:'\u2014')+'</span>'
+  const bajos=stock.filter(r=>parseVeteNum(getCol(r,'Cantidad'))<2)
+    .sort((a,b)=>parseVeteNum(getCol(a,'Cantidad'))-parseVeteNum(getCol(b,'Cantidad')));
+  let bajosHtml='';
+  bajos.forEach(r=>{
+    bajosHtml+='<div class="table-row" style="grid-template-columns:1fr 1.6fr 0.6fr 0.6fr">'
+      +'<span>'+(getCol(r,'Marca')||'')+'</span>'
+      +'<span>'+(getCol(r,'Producto')||'')+'</span>'
+      +'<span>'+(getCol(r,'Kg')||'')+'</span>'
+      +'<span style="color:#dc2626;font-weight:600">'+(getCol(r,'Cantidad')||'0')+'</span>'
       +'</div>';
   });
-  document.getElementById('vete-tabla-pendientes').innerHTML=pendHtml||'<div style="padding:20px;color:var(--gris-dark);font-size:13px">Sin pendientes</div>';
+  document.getElementById('vete-tabla-pendientes').innerHTML=bajosHtml||'<div style="padding:20px;color:var(--gris-dark);font-size:13px">Sin alertas de stock</div>';
 }
-
