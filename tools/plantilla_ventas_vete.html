@@ -48,7 +48,7 @@ input:focus{border-color:var(--acc)}
 </style></head><body>
 <header><div class="wrap">
 <h1>Ventas Vete · Wankun Club</h1>
-<nav><button data-t="cargar" class="on">Cargar venta</button><button data-t="ventas">Ventas</button><button data-t="cuenta" class="hide" id="tabCuenta">Cuenta</button></nav>
+<nav><button data-t="cargar" class="on">Cargar venta</button><button data-t="ventas">Ventas</button><button data-t="stock">Stock vete</button><button data-t="cuenta" class="hide" id="tabCuenta">Cuenta</button></nav>
 </div></header>
 <main class="wrap">
 
@@ -64,6 +64,9 @@ input:focus{border-color:var(--acc)}
 
  <label>Precio</label>
  <input id="precio" inputmode="numeric" placeholder="Se completa solo">
+
+ <label>¿De dónde salió la bolsa?</label>
+ <div class="opts" id="origen"><button class="opt on" data-v="Vete">Góndola de la vete</button><button class="opt" data-v="Depósito">Salió del depósito</button></div>
 
  <label>¿A quién le llegó la plata?</label>
  <div class="opts" id="cobro"><button class="opt" data-v="Vete">Vete</button><button class="opt" data-v="Wankun Club">Wankun Club</button></div>
@@ -88,6 +91,21 @@ input:focus{border-color:var(--acc)}
  <div class="card" id="lista"><div class="vacio">Cargando…</div></div>
 </section>
 
+<section id="t-stock" class="hide">
+ <div class="card"><input id="sq" placeholder="Buscar en el stock de la vete…" autocomplete="off"><div class="nota" id="sInfo"></div></div>
+ <div class="card" id="sLista"><div class="vacio">Cargando…</div></div>
+ <div class="card hide" id="sEntrada">
+  <b>Llevé bolsas a la vete</b>
+  <div class="nota">Suma a la góndola de la vete y resta del depósito.</div>
+  <label>Alimento</label><input id="eq" placeholder="Escribí: maxi puppy 15…" autocomplete="off">
+  <div id="esug" class="sug hide"></div>
+  <div id="esel" class="sel hide"><span id="eselN"></span><button id="eselX">Cambiar</button></div>
+  <div class="row2"><div><label>Bolsas</label><input id="eCant" inputmode="numeric" value="1"></div><div><label>Fecha</label><input id="eFecha" type="date"></div></div>
+  <button class="go" id="eGuardar">Guardar</button>
+  <div class="msg" id="eMsg"></div>
+ </div>
+</section>
+
 <section id="t-cuenta" class="hide">
  <div class="kpis">
   <div class="kpi big"><small id="sLbl">Saldo</small><b id="sVal">$ 0</b><div class="nota" id="sNota"></div></div>
@@ -96,7 +114,23 @@ input:focus{border-color:var(--acc)}
   <div class="kpi"><small>Ganancia total de la Vete</small><b id="cU">$ 0</b></div>
   <div class="kpi"><small>Ventas sin costo todavía</small><b id="cP">0</b></div>
  </div>
- <div class="nota">Todo el período, desde la primera venta cargada. El costo de cada venta queda fijo con la lista del día siguiente a la venta (se completa solo cada mañana).</div>
+ <div class="kpis">
+  <div class="kpi"><small>La Vete ya te pagó</small><b id="mPV">$ 0</b></div>
+  <div class="kpi"><small>Vos ya le pagaste a la Vete</small><b id="mPW">$ 0</b></div>
+  <div class="kpi"><small>Productos de la Vete que usó o vendió el Club</small><b id="mIn">$ 0</b></div>
+ </div>
+ <div class="nota">Saldo = lo que la Vete te debe − lo que vos le debés − lo que ya te pagó + lo que ya le pagaste − productos de la Vete que usó el Club. Todo el período desde el 2/2/2026. El costo de cada venta queda fijo con la lista del día siguiente.</div>
+
+ <div class="card" style="margin-top:12px">
+  <b>Cargar pago o movimiento</b>
+  <label>¿Qué es?</label>
+  <div class="opts" id="mTipo"><button class="opt" data-v="pagoVete">La Vete me pagó</button><button class="opt" data-v="pagoWankun">Le pagué a la Vete</button><button class="opt" data-v="interno">Producto de la Vete que usó el Club</button></div>
+  <div class="row2"><div><label>Monto</label><input id="mMonto" inputmode="numeric"></div><div><label>Fecha</label><input id="mFecha" type="date"></div></div>
+  <label>Detalle (ej. transferencia, efectivo, Simparica x2)</label><input id="mDet" autocomplete="off">
+  <button class="go" id="mGuardar">Guardar</button>
+  <div class="msg" id="mMsg"></div>
+ </div>
+ <div class="card" id="mLista"><div class="vacio">Sin pagos ni movimientos cargados.</div></div>
 </section>
 </main>
 
@@ -109,13 +143,14 @@ P.forEach(x=>x.h=N(x.n+' '+x.s));
 const SIN={cachorro:['cachorro','puppy','junior','kitten'],gato:['gato','cat'],perro:['perro','dog'],rc:['royal canin'],royal:['royal canin'],pp:['pro plan'],castrado:['castra','steril','weight control'],chico:['mini','small','pequen','toy'],grande:['large','maxi','grande','giant']};
 function match(t,h){if(/^\d+([.,]\d+)?$/.test(t)){const k=t.replace('.',',');return h.includes(' '+k+' kg');}const a=SIN[t]?SIN[t]:[t];return a.some(v=>h.includes(v));}
 
-let db=null,user=null,soyDueno=false,miId=null,VENTAS=[],COSTOS={};
-let prod=null,medio='',cobro='',precioTocado=false;
+let db=null,user=null,soyDueno=false,miId=null,VENTAS=[],NUEVAS=[],HIST=[],COSTOS={},MOVS=[];
+const unir=()=>{VENTAS=HIST.concat(NUEVAS);};
+let prod=null,medio='',cobro='',origen='Vete',precioTocado=false;
 const hoy=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 $('fecha').value=hoy();
 
 // pestañas
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));['cargar','ventas','cuenta'].forEach(t=>$('t-'+t).classList.toggle('hide',t!==b.dataset.t));});
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));['cargar','ventas','stock','cuenta'].forEach(t=>$('t-'+t).classList.toggle('hide',t!==b.dataset.t));});
 
 // buscador de alimento
 $('q').addEventListener('input',()=>{const ts=N($('q').value).replace(/\s*kg\b/g,'').split(/\s+/).filter(Boolean);
@@ -127,7 +162,7 @@ $('q').addEventListener('input',()=>{const ts=N($('q').value).replace(/\s*kg\b/g
 function elegir(x){prod=x;$('selN').textContent=x.n;$('sel').classList.remove('hide');$('q').classList.add('hide');$('sug').classList.add('hide');ponerPrecio();}
 $('selX').onclick=()=>{prod=null;$('sel').classList.add('hide');$('q').classList.remove('hide');$('q').value='';$('q').focus();if(!precioTocado)$('precio').value='';};
 function grupo(id,set){$(id).querySelectorAll('.opt').forEach(b=>b.onclick=()=>{$(id).querySelectorAll('.opt').forEach(o=>o.classList.toggle('on',o===b));set(b.dataset.v);});}
-grupo('medio',v=>{medio=v;ponerPrecio();});grupo('cobro',v=>{cobro=v;});
+grupo('medio',v=>{medio=v;ponerPrecio();});grupo('origen',v=>{origen=v;});grupo('cobro',v=>{cobro=v;});
 function ponerPrecio(){if(precioTocado||!prod)return;const p=medio==='Tarjeta'?prod.c:prod.t;$('precio').value=p.toLocaleString('es-AR');}
 $('precio').addEventListener('input',()=>{precioTocado=true;});
 const numero=s=>parseInt(String(s).replace(/\D/g,''),10)||0;
@@ -140,13 +175,13 @@ $('guardar').onclick=async()=>{
  if(!cobro)return msg('Marcá a quién le llegó la plata.','err');
  if(!db)return msg('No hay conexión para guardar. Probá recargar la página.','err');
  $('guardar').disabled=true;msg('Guardando…');
- const v={fecha:$('fecha').value||hoy(),sku:prod.s,alimento:prod.n,medio,precio,cobro,
+ const v={fecha:$('fecha').value||hoy(),sku:prod.s,alimento:prod.n,medio,precio,cobro,origen,
   cliente:$('cli').value.trim(),telefono:$('tel').value.trim(),domicilio:$('dom').value.trim(),
   precioLista:medio==='Tarjeta'?prod.c:prod.t,por:miId||'',creado:new Date().toISOString()};
  try{await db.collection('ventas').add(v);
   msg('Venta guardada ✓','ok');
   prod=null;medio='';cobro='';precioTocado=false;['q','precio','cli','tel','dom'].forEach(i=>$(i).value='');
-  $('sel').classList.add('hide');$('q').classList.remove('hide');document.querySelectorAll('.opt').forEach(o=>o.classList.remove('on'));
+  $('sel').classList.add('hide');$('q').classList.remove('hide');document.querySelectorAll('#t-cargar .opt').forEach(o=>o.classList.remove('on'));origen='Vete';$('origen').querySelector('[data-v="Vete"]').classList.add('on');
  }catch(e){msg(e&&e.code==='invalid_argument'?'No tenés permiso para cargar ventas. Pedile a Nacho que te dé acceso de Editor.':'No se pudo guardar. Probá de nuevo.','err');}
  $('guardar').disabled=false;};
 
@@ -169,9 +204,9 @@ async function pintar(){
   const d=document.createElement('div');d.className='d';
   const f=v.d.fecha.split('-').reverse().join('/');
   const quien=v.d.por&&nombres[v.d.por]&&nombres[v.d.por].name?' · cargó '+nombres[v.d.por].name:'';
-  d.textContent=f+' · '+(v.d.cliente||'sin nombre')+(v.d.telefono?' · '+v.d.telefono:'')+' · '+v.d.medio+quien;
+  d.textContent=f+' · '+(v.d.cliente||'sin nombre')+(v.d.telefono?' · '+v.d.telefono:'')+(v.d.medio?' · '+v.d.medio:'')+(v.d.origen==='Depósito'?' · del depósito':'')+quien;
   a.append(n,d);
-  if(soyDueno||v.d.por===miId){const x=document.createElement('button');x.className='del';x.textContent='Borrar';x.onclick=()=>borrar(v,x);a.append(x);}
+  if(!v.hist&&(soyDueno||v.d.por===miId)){const x=document.createElement('button');x.className='del';x.textContent='Borrar';x.onclick=()=>borrar(v,x);a.append(x);}
   const p=document.createElement('div');p.className='p';
   const t=document.createElement('div');t.textContent=ars(v.d.precio);
   const g=document.createElement('span');g.className='tag'+(v.d.cobro==='Vete'?'':' v2');g.textContent=v.d.cobro;
@@ -184,20 +219,83 @@ async function borrar(v,b){if(b.dataset.ok!=='1'){b.dataset.ok='1';b.textContent
 function cuenta(){let cVe=0,gW=0,gT=0,pend=0;
  VENTAS.forEach(v=>{const c=COSTOS[v.id];if(typeof c!=='number'){pend++;return;}
   const g=v.d.precio-c;gT+=g;if(v.d.cobro==='Vete')cVe+=c;else gW+=g;});
- const s=cVe-gW;
+ let pV=0,pW=0,iN=0;MOVS.forEach(m=>{const x=m.d.monto||0;if(m.d.tipo==='pagoVete')pV+=x;else if(m.d.tipo==='pagoWankun')pW+=x;else if(m.d.tipo==='interno')iN+=x;});
+ const s=cVe-gW-pV+pW-iN;
+ $('mPV').textContent=ars(pV);$('mPW').textContent=ars(pW);$('mIn').textContent=ars(iN);
  $('sLbl').textContent=s>=0?'Saldo: la Vete te debe':'Saldo: vos le debés a la Vete';
  $('sVal').textContent=ars(Math.abs(s));
- $('sNota').textContent='Lo que la Vete te debe menos lo que vos le debés a ella.';
+ $('sNota').textContent='Ya descuenta pagos y productos de la Vete cargados abajo.';
  $('cVe').textContent=ars(cVe);$('cW').textContent=ars(gW);$('cU').textContent=ars(gT);$('cP').textContent=pend;}
+
+// pagos y movimientos (solo Nacho)
+const TIPOS={pagoVete:'La Vete me pagó',pagoWankun:'Le pagué a la Vete',interno:'Producto de la Vete que usó el Club'};
+let mTipo='';$('mFecha').value=hoy();
+grupo('mTipo',v=>{mTipo=v;});
+$('mGuardar').onclick=async()=>{const mm=t=>{$('mMsg').textContent=t[0];$('mMsg').className='msg '+t[1];};
+ if(!mTipo)return mm(['Marcá qué es.','err']);const monto=numero($('mMonto').value);if(!monto)return mm(['Falta el monto.','err']);
+ $('mGuardar').disabled=true;
+ try{await db.collection('movimientos').add({tipo:mTipo,monto,fecha:$('mFecha').value||hoy(),detalle:$('mDet').value.trim(),creado:new Date().toISOString()});
+  mm(['Guardado ✓','ok']);mTipo='';$('mMonto').value='';$('mDet').value='';$('mTipo').querySelectorAll('.opt').forEach(o=>o.classList.remove('on'));
+ }catch(e){mm(['No se pudo guardar. Probá de nuevo.','err']);}
+ $('mGuardar').disabled=false;};
+function pintarMovs(){const L=$('mLista');L.innerHTML='';
+ if(!MOVS.length){L.innerHTML='<div class="vacio">Sin pagos ni movimientos cargados.</div>';return;}
+ MOVS.slice().sort((a,b)=>(b.d.fecha+b.d.creado).localeCompare(a.d.fecha+a.d.creado)).forEach(m=>{
+  const r=document.createElement('div');r.className='v';const a=document.createElement('div');a.className='a';
+  const n=document.createElement('div');n.className='n';n.textContent=TIPOS[m.d.tipo]||m.d.tipo;
+  const d=document.createElement('div');d.className='d';d.textContent=String(m.d.fecha).split('-').reverse().join('/')+(m.d.detalle?' · '+m.d.detalle:'');
+  const x=document.createElement('button');x.className='del';x.textContent='Borrar';
+  x.onclick=async()=>{if(x.dataset.ok!=='1'){x.dataset.ok='1';x.textContent='¿Seguro? Tocá de nuevo';setTimeout(()=>{x.dataset.ok='';x.textContent='Borrar';},4000);return;}
+   try{await db.collection('movimientos').doc(m.id).delete();}catch(e){x.textContent='No se pudo borrar';}};
+  a.append(n,d,x);const p=document.createElement('div');p.className='p';const t=document.createElement('div');t.textContent=ars(m.d.monto);p.append(t);r.append(a,p);L.append(r);});}
+
+// stock de la vete = último conteo + entradas − ventas de góndola (desde el conteo)
+let STOCK=[];
+function stockVete(){const conts=STOCK.filter(x=>x.d.tipo==='conteo').sort((a,b)=>(a.d.fecha+a.d.creado).localeCompare(b.d.fecha+b.d.creado));
+ const c=conts[conts.length-1];if(!c)return null;const base={...c.d.items},desde=c.d.fecha;
+ STOCK.forEach(x=>{if(x.d.tipo==='entrada'&&x.d.fecha>=desde){base[x.d.sku]=(base[x.d.sku]||0)+(x.d.cant||0);}});
+ NUEVAS.forEach(v=>{if((v.d.origen||'Vete')==='Vete'&&v.d.fecha>=desde){base[v.d.sku]=(base[v.d.sku]||0)-1;}});
+ return {desde,base};}
+function pintarStock(){const r=stockVete(),L=$('sLista');L.innerHTML='';
+ if(!r){$('sInfo').textContent='';L.innerHTML='<div class="vacio">Todavía no hay un conteo de la góndola cargado.</div>';return;}
+ const nom={};P.forEach(x=>nom[x.s]=x.n);const ts=N($('sq').value).replace(/\s*kg\b/g,'').split(/\s+/).filter(Boolean);
+ let rows=Object.entries(r.base).filter(([s,q])=>q!==0).map(([s,q])=>({s,q,n:nom[s]||s,h:N((nom[s]||s)+' '+s)}));
+ if(ts.length)rows=rows.filter(x=>ts.every(t=>match(t,x.h)));
+ rows.sort((a,b)=>a.n.localeCompare(b.n));
+ const tot=Object.values(r.base).reduce((a,b)=>a+b,0);
+ $('sInfo').textContent='Conteo del '+r.desde.split('-').reverse().join('/')+' · '+tot+' bolsas en la góndola';
+ if(!rows.length){L.innerHTML='<div class="vacio">Nada para mostrar.</div>';return;}
+ rows.forEach(x=>{const d=document.createElement('div');d.className='v';const a=document.createElement('div');a.className='a';a.textContent=x.n;
+  const p=document.createElement('div');p.className='p';const b=document.createElement('b');b.textContent=x.q;if(x.q<0)b.style.color='var(--warn)';p.append(b);d.append(a,p);L.append(d);});}
+$('sq').addEventListener('input',pintarStock);
+let eprod=null;$('eFecha').value=hoy();
+$('eq').addEventListener('input',()=>{const ts=N($('eq').value).replace(/\s*kg\b/g,'').split(/\s+/).filter(Boolean);
+ if(!ts.length){$('esug').classList.add('hide');return;}
+ const hits=P.filter(x=>ts.every(t=>match(t,x.h))).slice(0,30);$('esug').innerHTML='';
+ hits.forEach(x=>{const d=document.createElement('div');d.textContent=x.n;d.onclick=()=>{eprod=x;$('eselN').textContent=x.n;$('esel').classList.remove('hide');$('eq').classList.add('hide');$('esug').classList.add('hide');};$('esug').appendChild(d);});
+ $('esug').classList.remove('hide');});
+$('eselX').onclick=()=>{eprod=null;$('esel').classList.add('hide');$('eq').classList.remove('hide');$('eq').value='';};
+$('eGuardar').onclick=async()=>{const mm=(t,c)=>{$('eMsg').textContent=t;$('eMsg').className='msg '+c;};
+ if(!eprod)return mm('Elegí el alimento.','err');const cant=numero($('eCant').value);if(!cant)return mm('Faltan las bolsas.','err');
+ $('eGuardar').disabled=true;
+ try{await db.collection('stock').add({tipo:'entrada',sku:eprod.s,cant,fecha:$('eFecha').value||hoy(),creado:new Date().toISOString()});
+  mm('Guardado ✓','ok');eprod=null;$('esel').classList.add('hide');$('eq').classList.remove('hide');$('eq').value='';$('eCant').value='1';
+ }catch(e){mm('No se pudo guardar.','err');}$('eGuardar').disabled=false;};
 
 (async()=>{
  db=await claude.use('db');user=await claude.use('user');
  if(user){soyDueno=await user.isOwner();miId=await user.id();}
  if(!db){$('lista').innerHTML='<div class="vacio">No se pueden ver las ventas en esta vista.</div>';return;}
  const t=setTimeout(()=>{$('lista').innerHTML='<div class="vacio">No se pudo conectar todavía…</div>';},10000);
- db.collection('ventas').onSnapshot(s=>{clearTimeout(t);VENTAS=s.docs.map(d=>({id:d.id,d:d.data()}));pintar();if(soyDueno)cuenta();},
+ db.collection('historial').onSnapshot(s=>{HIST=[];s.docs.forEach(doc=>{const x=doc.data();(x.v||[]).forEach((r,i)=>{
+  HIST.push({id:'h-'+x.m+'-'+i,hist:true,d:{fecha:x.m+'-'+String(r[0]).padStart(2,'0'),alimento:r[1],precio:r[2]||0,cobro:r[3]?'Wankun Club':'Vete',cliente:r[4]||'',medio:'',creado:String(i).padStart(4,'0')}});});});
+  unir();pintar();if(soyDueno)cuenta();},()=>{});
+ db.collection('ventas').onSnapshot(s=>{clearTimeout(t);NUEVAS=s.docs.map(d=>({id:d.id,d:d.data()}));unir();pintar();pintarStock();if(soyDueno)cuenta();},
   e=>{clearTimeout(t);$('lista').innerHTML='<div class="vacio">No se pudieron cargar las ventas.</div>';});
- if(soyDueno){$('tabCuenta').classList.remove('hide');
-  db.collection('costos').onSnapshot(s=>{COSTOS={};s.docs.forEach(d=>{COSTOS[d.id]=d.data().costo;});cuenta();},()=>{});}
+ db.collection('stock').onSnapshot(s=>{STOCK=s.docs.map(d=>({id:d.id,d:d.data()}));pintarStock();},()=>{});
+ if(soyDueno){$('tabCuenta').classList.remove('hide');$('sEntrada').classList.remove('hide');
+  db.collection('costos').onSnapshot(s=>{COSTOS={};s.docs.forEach(d=>{const x=d.data();
+   if(Array.isArray(x.c)){x.c.forEach((c,i)=>{if(typeof c==='number')COSTOS['h-'+x.m+'-'+i]=c;});}else COSTOS[d.id]=x.costo;});cuenta();},()=>{});
+  db.collection('movimientos').onSnapshot(s=>{MOVS=s.docs.map(d=>({id:d.id,d:d.data()}));pintarMovs();cuenta();},()=>{});}
 })();
 </script></body></html>
