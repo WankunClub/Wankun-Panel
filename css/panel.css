@@ -102,7 +102,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f4f0;color:var(--texto);min-
 .tag-warn{background:#fff3cd;color:#856404}
 .tag-bad{background:#ffe5e5;color:#c0392b}
 .hr-in{padding:7px 10px;border:1px solid var(--gris-med);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--blanco);color:var(--texto);min-width:0}
-.aus-msg{width:100%;min-height:90px;resize:vertical;line-height:1.6}
+.aus-msg{width:100%;min-height:90px;resize:vertical;line-height:1.6;font-family:'DM Sans','Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol','Noto Color Emoji',sans-serif}
 .hr-help{font-size:12px;color:var(--gris-dark);margin-bottom:12px}
 .hr-add{display:grid;grid-template-columns:1.2fr 1.6fr 1fr 1.2fr auto;gap:8px}
 .hr-row{display:grid;grid-template-columns:32px 1.2fr 1.6fr 1fr 1.2fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--gris-med)}
