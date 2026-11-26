@@ -58,32 +58,54 @@ async function ausCargarClientes(){
   try{
     const[vRows,fRows]=await Promise.all([fetchCSV('Ventas'),fetchCSV('Flex meli').catch(()=>[])]);
     const idx={};
-    function acum(nombreRaw,telRaw,fechaStr){
-      const nombre=(nombreRaw||'').trim();if(!nombre)return;
-      const tel=(telRaw||'').toString().trim();
-      const telN=ausNormTel(tel);
-      const f=parseFecha(fechaStr||'');
-      const key=ausKey(tel,nombre);
+    function upsert(key,nombre,telefono,f){
       const ex=idx[key];
       if(ex){
-        if(telN&&telN.length>=8&&!ex.telefono)ex.telefono=tel;
+        if(telefono&&!ex.telefono)ex.telefono=telefono;
         if(f&&!isNaN(f)&&(!ex.ultimaFecha||f>ex.ultimaFecha))ex.ultimaFecha=f;
       }else{
-        idx[key]={nombre,telefono:(telN&&telN.length>=8)?tel:'',ultimaFecha:(f&&!isNaN(f))?f:null,key};
+        idx[key]={nombre,telefono:telefono||'',ultimaFecha:(f&&!isNaN(f))?f:null,key};
       }
     }
     vRows.forEach(r=>{
-      // Encabezado TELEFONO no siempre matchea (tilde/mayúscula/otro nombre); el
-      // teléfono siempre está en la columna K de Ventas (_col10) como respaldo,
-      // validado con cara de teléfono (6+ dígitos seguidos).
+      const nombre=(r['CLIENTE']||r['Cliente']||'').trim();if(!nombre)return;
+      // La planilla de Ventas ya trae un ID de cliente propio (WK0101...), repetido
+      // en todas sus compras: es la identidad más confiable que hay, mejor que
+      // teléfono (que recién se carga de forma sistemática desde mediados de año)
+      // o nombre (varía de tipeo entre filas de la misma persona).
+      const idCliente=(r['ID']||'').trim();
       const telHeader=getCol(r,'TELEFONO','Teléfono','TELÉFONO','Telefono','telefono','Cel','Celular');
       const telColK=(r['_col10']||'').toString();
       const telRaw=telHeader||(/\d{6,}/.test(telColK)?telColK:'');
-      acum(r['CLIENTE']||r['Cliente'],telRaw,r['FECHA']||r['Fecha']||'');
+      const telN=ausNormTel(telRaw);
+      const f=parseFecha(r['FECHA']||r['Fecha']||'');
+      const key=idCliente?('ID:'+idCliente):ausKey(telRaw,nombre);
+      upsert(key,nombre,(telN&&telN.length>=8)?telRaw:'',f);
     });
-    fRows.forEach(r=>acum(r['NOMBRE'],r['TELEFONO'],r['Fecha compra']||r['Fecha envio']||r['Fecha envío']||''));
-    ausManualLeer().forEach(m=>{const key=ausKey(m.telefono,m.nombre);if(!idx[key])idx[key]={nombre:m.nombre,telefono:m.telefono,ultimaFecha:null,key,manual:true};});
-    ausData=Object.values(idx).sort((a,b)=>{
+    fRows.forEach(r=>{
+      const nombre=(r['NOMBRE']||'').trim();if(!nombre)return;
+      const telRaw=(r['TELEFONO']||'').toString();
+      const telN=ausNormTel(telRaw);
+      const f=parseFecha(r['Fecha compra']||r['Fecha envio']||r['Fecha envío']||'');
+      upsert(ausKey(telRaw,nombre),nombre,(telN&&telN.length>=8)?telRaw:'',f);
+    });
+    ausManualLeer().forEach(m=>upsert(ausKey(m.telefono,m.nombre),m.nombre,m.telefono,null));
+    // Flex Meli no tiene ID propio: si un cliente aparece también con el mismo
+    // teléfono del lado de Ventas (clave 'ID:...'), es la misma persona — unificar
+    // para no mostrarla dos veces en la lista.
+    const porTel={},sinTel=[];
+    Object.values(idx).forEach(c=>{
+      const telN=ausNormTel(c.telefono);
+      if(telN&&telN.length>=8){
+        if(porTel[telN]){
+          const base=porTel[telN];
+          if(c.ultimaFecha&&(!base.ultimaFecha||c.ultimaFecha>base.ultimaFecha))base.ultimaFecha=c.ultimaFecha;
+          return;
+        }
+        porTel[telN]=c;
+      }else sinTel.push(c);
+    });
+    ausData=[...Object.values(porTel),...sinTel].sort((a,b)=>{
       if(a.ultimaFecha&&b.ultimaFecha)return b.ultimaFecha-a.ultimaFecha;
       if(a.ultimaFecha)return -1;
       if(b.ultimaFecha)return 1;
