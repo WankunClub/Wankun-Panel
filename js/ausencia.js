@@ -1,8 +1,12 @@
 // ── AVISO DE AUSENCIA — avisarle a los compradores que no vamos a repartir ──
-// Herramienta permanente (no es para un solo evento). La lista de compradores se
-// arma sola desde Ventas + Flex Meli (como las otras tarjetas de Envíos), con filtro
-// de estado y buscador. El botón WA marca avisado solo al tocarlo. Para un cliente
-// que todavía no compró (nuevo, "paracaidista"), se agrega a mano al final.
+// Herramienta permanente (no es para un solo evento). Por default NO muestra a todos
+// los compradores históricos: mandar 400+ WhatsApp de golpe desde el mismo número
+// termina en baneo. Muestra solo a quienes, según el mismo cálculo de frecuencia de
+// Recompras, tienen la reposición vencida o próxima (quienes realmente necesitan
+// saber que no va a haber reparto) — el universo completo queda disponible destildando
+// el filtro, por si hace falta buscar a alguien puntual. El botón WA marca avisado
+// solo al tocarlo. Para un cliente que todavía no compró (nuevo, "paracaidista"), se
+// agrega a mano al final — esos siempre aparecen, sin filtrar.
 const AUS_EST_KEY='wankun_aviso_ausencia_est';
 const AUS_TPL_KEY='wankun_aviso_ausencia_tpl';
 const AUS_MANUAL_KEY='wankun_aviso_ausencia_manual';
@@ -58,13 +62,14 @@ async function ausCargarClientes(){
   try{
     const[vRows,fRows]=await Promise.all([fetchCSV('Ventas'),fetchCSV('Flex meli').catch(()=>[])]);
     const idx={};
-    function upsert(key,nombre,telefono,f){
+    function upsert(key,nombre,telefono,f,manual){
       const ex=idx[key];
       if(ex){
         if(telefono&&!ex.telefono)ex.telefono=telefono;
-        if(f&&!isNaN(f)&&(!ex.ultimaFecha||f>ex.ultimaFecha))ex.ultimaFecha=f;
+        if(f&&!isNaN(f))ex.fechas.push(f);
+        if(manual)ex.manual=true;
       }else{
-        idx[key]={nombre,telefono:telefono||'',ultimaFecha:(f&&!isNaN(f))?f:null,key};
+        idx[key]={nombre,telefono:telefono||'',fechas:(f&&!isNaN(f))?[f]:[],manual:!!manual,key};
       }
     }
     vRows.forEach(r=>{
@@ -89,29 +94,52 @@ async function ausCargarClientes(){
       const f=parseFecha(r['Fecha compra']||r['Fecha envio']||r['Fecha envío']||'');
       upsert(ausKey(telRaw,nombre),nombre,(telN&&telN.length>=8)?telRaw:'',f);
     });
-    ausManualLeer().forEach(m=>upsert(ausKey(m.telefono,m.nombre),m.nombre,m.telefono,null));
+    ausManualLeer().forEach(m=>upsert(ausKey(m.telefono,m.nombre),m.nombre,m.telefono,null,true));
     // Flex Meli no tiene ID propio: si un cliente aparece también con el mismo
     // teléfono del lado de Ventas (clave 'ID:...'), es la misma persona — unificar
-    // para no mostrarla dos veces en la lista.
+    // para no mostrarla dos veces en la lista (y sumar su historial de fechas).
     const porTel={},sinTel=[];
     Object.values(idx).forEach(c=>{
       const telN=ausNormTel(c.telefono);
       if(telN&&telN.length>=8){
         if(porTel[telN]){
           const base=porTel[telN];
-          if(c.ultimaFecha&&(!base.ultimaFecha||c.ultimaFecha>base.ultimaFecha))base.ultimaFecha=c.ultimaFecha;
+          base.fechas=base.fechas.concat(c.fechas);
+          if(c.manual)base.manual=true;
           return;
         }
         porTel[telN]=c;
       }else sinTel.push(c);
     });
-    ausData=[...Object.values(porTel),...sinTel].sort((a,b)=>{
+    const hoy=new Date();hoy.setHours(0,0,0,0);
+    // Mismo cálculo de frecuencia/estado que Recompras (mediana de intervalos entre
+    // compras): vencido/próximo = le toca reponer alimento ya o en los próximos días,
+    // así que es a quien hay que avisarle sí o sí que no va a haber reparto.
+    function calcularEstado(c){
+      const fechas=(c.fechas||[]).filter(f=>f&&!isNaN(f)).sort((a,b)=>a-b);
+      if(!fechas.length){c.ultimaFecha=null;c.estadoRecompra=c.manual?'nuevo':'sin_datos';c.urgente=!!c.manual;return;}
+      const ultima=fechas[fechas.length-1];
+      c.ultimaFecha=ultima;
+      const dias=Math.floor((hoy-ultima)/(1000*60*60*24));
+      let freq=null;
+      if(fechas.length>=2){const diffs=[];for(let i=1;i<fechas.length;i++){const d=Math.floor((fechas[i]-fechas[i-1])/(1000*60*60*24));if(d>0&&d<200)diffs.push(d);}if(diffs.length)freq=mediana(diffs);}
+      let estado;
+      if(freq!==null){const prox=freq-dias;estado=prox<-5?'vencido':(prox<=5?'proximo':'ok');}
+      else estado=dias>45?'vencido':(dias>38?'proximo':'ok');
+      c.estadoRecompra=estado;
+      c.urgente=c.manual||estado==='vencido'||estado==='proximo';
+    }
+    const combinados=[...Object.values(porTel),...sinTel];
+    combinados.forEach(calcularEstado);
+    ausData=combinados.sort((a,b)=>{
+      if(a.urgente!==b.urgente)return a.urgente?-1:1;
       if(a.ultimaFecha&&b.ultimaFecha)return b.ultimaFecha-a.ultimaFecha;
       if(a.ultimaFecha)return -1;
       if(b.ultimaFecha)return 1;
       return a.nombre.localeCompare(b.nombre,'es');
     });
-    st.textContent=ausData.length+' compradores';
+    const urgentes=ausData.filter(c=>c.urgente).length;
+    st.textContent=urgentes+' con recompra próxima/vencida · '+ausData.length+' compradores en total';
   }catch(e){st.textContent='Error al cargar';}
   ausCargando=false;
   ausFiltrar();
@@ -133,13 +161,17 @@ function ausWaLinkFila(c){
   return ausWaLink(c.telefono,msgTpl.replace(/\[Nombre\]/g,primer));
 }
 
+const AUS_ESTADO_TAG={vencido:'<span class="check-tag tag-bad">vencido</span>',proximo:'<span class="check-tag tag-warn">próximo</span>',nuevo:'<span class="check-tag" style="background:#dbeafe;color:#1d4ed8">nuevo</span>',ok:'',sin_datos:''};
+
 function ausFiltrar(){
   if(!ausData.length&&!document.getElementById('aus-table'))return;
   const f=document.getElementById('aus-filtro').value;
   const q=(document.getElementById('aus-buscar').value||'').trim().toLowerCase();
+  const soloUrgentes=document.getElementById('aus-solo-urgentes').checked;
   const est=ausGetEstadoMapa();
   const lista=ausData.filter(c=>{
     c._avisado=!!(est[c.key]&&est[c.key].avisado);
+    if(soloUrgentes&&!c.urgente)return false;
     if(f==='pendiente'&&c._avisado)return false;
     if(f==='avisado'&&!c._avisado)return false;
     if(q&&c.nombre.toLowerCase().indexOf(q)<0)return false;
@@ -147,12 +179,13 @@ function ausFiltrar(){
   });
   document.getElementById('aus-count').textContent=lista.length+' clientes';
   const tb=document.getElementById('aus-table');
-  if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin resultados</div>';return;}
+  if(!lista.length){tb.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:13px">Sin resultados'+(soloUrgentes?' — probá destildar "solo recompra próxima/vencida"':'')+'</div>';return;}
   tb.innerHTML=lista.map(c=>{
     const fecha=c.ultimaFecha?ausFmtFechaObj(c.ultimaFecha):'--';
+    const tag=AUS_ESTADO_TAG[c.estadoRecompra]||'';
     const wa=c.telefono?`<a class="wa-link" href="${ausWaLinkFila(c)}" target="_blank" onclick="event.stopPropagation();ausMarcarAvisado('${c.key}')">WA</a>`:'<span style="color:var(--gris-dark);font-size:12px">--</span>';
     return `<div class="table-row" style="grid-template-columns:1fr 100px 120px 90px 80px">
-      <span style="font-weight:500">${c.nombre}</span>
+      <span style="font-weight:500">${c.nombre} ${tag}</span>
       <span style="font-size:12px">${fecha}</span>
       <span style="font-family:'DM Mono',monospace;font-size:12px">${c.telefono||'--'}</span>
       <span style="text-align:center"><input type="checkbox" ${c._avisado?'checked':''} onchange="ausToggle('${c.key}')" style="width:18px;height:18px;cursor:pointer"></span>
@@ -168,7 +201,7 @@ function ausAgregarManual(){
   if(!tel.replace(/\D/g,'')){alert('Cargá el teléfono.');return;}
   const key=ausKey(tel,nombre);
   if(!ausData.some(c=>c.key===key)){
-    ausData.unshift({nombre,telefono:tel,ultimaFecha:null,key,manual:true});
+    ausData.unshift({nombre,telefono:tel,ultimaFecha:null,estadoRecompra:'nuevo',urgente:true,key,manual:true});
     const man=ausManualLeer();man.push({nombre,telefono:tel});ausManualGuardar(man);
   }
   document.getElementById('aus-add-nombre').value='';document.getElementById('aus-add-tel').value='';

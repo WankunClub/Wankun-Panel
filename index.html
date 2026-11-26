@@ -559,7 +559,7 @@ Muchas gracias!</div>
 <div class="page" id="page-envios">
   <div class="card" id="aus-card" style="margin-bottom:16px;border-left:4px solid #d97706">
     <div class="card-title" style="color:#d97706;margin:0 0 8px">Aviso de ausencia</div>
-    <div style="font-size:13px;color:var(--gris-dark);line-height:1.5;margin-bottom:12px">Lista de compradores (Ventas + Flex Meli) para avisarles que vamos a estar ausentes y no va a haber reparto. El botón WA abre el chat con el mensaje de abajo y lo marca como avisado solo. Si aparece un cliente nuevo que no compró todavía, agregalo a mano al final de la lista.</div>
+    <div style="font-size:13px;color:var(--gris-dark);line-height:1.5;margin-bottom:12px">Por default solo muestra a quienes tienen la recompra vencida o próxima (mismo cálculo que Recompras) — no a los 400+ compradores históricos, para no mandar tantos WhatsApp de golpe que termine baneando el número. El botón WA abre el chat con el mensaje de abajo y lo marca como avisado solo. Si aparece un cliente nuevo que no compró todavía, agregalo a mano al final de la lista.</div>
     <div class="btn-row" style="margin-bottom:10px;align-items:flex-end">
       <div class="filtro-group"><label>Desde</label><input type="date" id="aus-desde" class="hr-in" onchange="ausFechaCambio()"></div>
       <div class="filtro-group"><label>Hasta</label><input type="date" id="aus-hasta" class="hr-in" onchange="ausFechaCambio()"></div>
@@ -573,6 +573,7 @@ Muchas gracias!</div>
       <div class="btn-row">
         <input class="hr-in" id="aus-buscar" placeholder="Buscar por nombre" oninput="ausFiltrar()">
         <div class="filtro-group"><label>Estado</label><select id="aus-filtro" onchange="ausFiltrar()"><option value="pendiente">Sin avisar</option><option value="todos">Todos</option><option value="avisado">Ya avisado</option></select></div>
+        <label style="font-size:12px;display:flex;gap:6px;align-items:center;align-self:center"><input type="checkbox" id="aus-solo-urgentes" checked onchange="ausFiltrar()"> Solo recompra próxima/vencida</label>
         <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500;align-self:center" id="aus-count">0</span>
       </div>
     </div>
@@ -873,7 +874,7 @@ Vamos Argentina!</div>
 <script src="js/analisis-clientes.js?v=1"></script>
 <script src="js/hoja-ruta.js?v=1"></script>
 <script src="js/precios.js?v=1"></script>
-<script src="js/ausencia.js?v=5"></script>
+<script src="js/ausencia.js?v=6"></script>
 </body>
 </html>
 
