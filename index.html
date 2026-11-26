@@ -559,22 +559,33 @@ Muchas gracias!</div>
 <div class="page" id="page-envios">
   <div class="card" id="aus-card" style="margin-bottom:16px;border-left:4px solid #d97706">
     <div class="card-title" style="color:#d97706;margin:0 0 8px">Aviso de ausencia</div>
-    <div style="font-size:13px;color:var(--gris-dark);line-height:1.5;margin-bottom:12px">Para avisarle a cualquier comprador que vamos a estar ausentes y no va a haber reparto. No arma una lista sola — buscá al cliente por nombre (se autocompleta el teléfono) o cargalo a mano si es alguien nuevo. Las fechas y el mensaje se pueden editar.</div>
+    <div style="font-size:13px;color:var(--gris-dark);line-height:1.5;margin-bottom:12px">Lista de compradores (Ventas + Flex Meli) para avisarles que vamos a estar ausentes y no va a haber reparto. El botón WA abre el chat con el mensaje de abajo y lo marca como avisado solo. Si aparece un cliente nuevo que no compró todavía, agregalo a mano al final de la lista.</div>
     <div class="btn-row" style="margin-bottom:10px;align-items:flex-end">
       <div class="filtro-group"><label>Desde</label><input type="date" id="aus-desde" class="hr-in" onchange="ausFechaCambio()"></div>
       <div class="filtro-group"><label>Hasta</label><input type="date" id="aus-hasta" class="hr-in" onchange="ausFechaCambio()"></div>
-      <button class="btn" onclick="ausCargarClientes()">Actualizar clientes</button>
-      <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500" id="aus-status">Sin cargar</span>
+      <button class="btn" onclick="ausCargarClientes()" style="align-self:flex-end">Actualizar compradores</button>
+      <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500" id="aus-status">Cargando…</span>
     </div>
-    <div class="hr-add" style="grid-template-columns:1.2fr 1fr auto;margin-bottom:10px">
-      <input class="hr-in" id="aus-nombre" list="aus-clientes" placeholder="Cliente" oninput="ausAutocompletar()">
-      <input class="hr-in" id="aus-tel" placeholder="Teléfono">
-      <button class="btn btn-primary" onclick="ausEnviar()">Generar y abrir WhatsApp</button>
-    </div>
-    <datalist id="aus-clientes"></datalist>
     <textarea class="hr-in aus-msg" id="aus-msg" onchange="ausGuardarTpl()"></textarea>
-    <div id="aus-historial" style="margin-top:12px"></div>
-    <div style="margin-top:6px"><a href="#" onclick="ausVaciarHist();return false" style="font-size:12px;color:var(--gris-dark)">Vaciar lista de avisados (nueva tanda)</a></div>
+
+    <div class="results-header" style="margin-top:14px">
+      <div class="card-title" style="margin:0;font-size:13px">Compradores</div>
+      <div class="btn-row">
+        <input class="hr-in" id="aus-buscar" placeholder="Buscar por nombre" oninput="ausFiltrar()">
+        <div class="filtro-group"><label>Estado</label><select id="aus-filtro" onchange="ausFiltrar()"><option value="pendiente">Sin avisar</option><option value="todos">Todos</option><option value="avisado">Ya avisado</option></select></div>
+        <span style="font-size:12px;padding:4px 12px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-weight:500;align-self:center" id="aus-count">0</span>
+      </div>
+    </div>
+    <div class="table-wrap" id="aus-wrap" style="margin-top:8px">
+      <div class="table-head" style="grid-template-columns:1fr 100px 120px 90px 80px"><span>Cliente</span><span>Última compra</span><span>Telefono</span><span>Avisado</span><span>WA</span></div>
+      <div class="table-body" id="aus-table" style="max-height:360px"></div>
+    </div>
+
+    <div class="hr-add" style="grid-template-columns:1.2fr 1fr auto;margin-top:12px">
+      <input class="hr-in" id="aus-add-nombre" placeholder="Cliente nuevo (no está en la lista)">
+      <input class="hr-in" id="aus-add-tel" placeholder="Teléfono">
+      <button class="btn" onclick="ausAgregarManual()">+ Agregar a la lista</button>
+    </div>
   </div>
 
   <div class="metrics-grid" id="env-metrics">
