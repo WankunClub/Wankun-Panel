@@ -8,7 +8,12 @@ const AUS_TPL_KEY='wankun_aviso_ausencia_tpl';
 const AUS_MANUAL_KEY='wankun_aviso_ausencia_manual';
 let ausData=[],ausCargando=false,ausUltimasFechas={desde:'',hasta:''};
 
-function ausKey(tel,nombre){const t=(tel||'').toString().replace(/\D/g,'');return t?('tel:'+t):('nom:'+(nombre||'').trim().toLowerCase());}
+// Identidad de cliente: por teléfono (único ID confiable) cuando hay 8+ dígitos,
+// si no por nombre normalizado. Agrupar solo por nombre fragmenta a un mismo
+// cliente en variantes de tipeo y, con un universo de 1500+ filas de compras,
+// infla el conteo de "compradores" muy por encima de los clientes reales.
+function ausNormTel(t){return(t||'').toString().replace(/\D/g,'');}
+function ausKey(tel,nombre){const t=ausNormTel(tel);return(t&&t.length>=8)?('T:'+t):('N:'+(nombre||'').trim().toLowerCase());}
 function ausFmtFecha(iso){if(!iso)return'';const[,m,d]=iso.split('-');return d+'/'+m;}
 function ausFmtFechaObj(f){return String(f.getDate()).padStart(2,'0')+'/'+String(f.getMonth()+1).padStart(2,'0');}
 function ausSumarDias(iso,n){const[y,m,d]=iso.split('-').map(Number);const f=new Date(y,m-1,d);f.setDate(f.getDate()+n);return f.getFullYear()+'-'+String(f.getMonth()+1).padStart(2,'0')+'-'+String(f.getDate()).padStart(2,'0');}
@@ -56,17 +61,26 @@ async function ausCargarClientes(){
     function acum(nombreRaw,telRaw,fechaStr){
       const nombre=(nombreRaw||'').trim();if(!nombre)return;
       const tel=(telRaw||'').toString().trim();
+      const telN=ausNormTel(tel);
       const f=parseFecha(fechaStr||'');
       const key=ausKey(tel,nombre);
       const ex=idx[key];
       if(ex){
-        if(tel&&!ex.telefono)ex.telefono=tel;
+        if(telN&&telN.length>=8&&!ex.telefono)ex.telefono=tel;
         if(f&&!isNaN(f)&&(!ex.ultimaFecha||f>ex.ultimaFecha))ex.ultimaFecha=f;
       }else{
-        idx[key]={nombre,telefono:tel,ultimaFecha:(f&&!isNaN(f))?f:null,key};
+        idx[key]={nombre,telefono:(telN&&telN.length>=8)?tel:'',ultimaFecha:(f&&!isNaN(f))?f:null,key};
       }
     }
-    vRows.forEach(r=>acum(r['CLIENTE']||r['Cliente'],getCol(r,'TELEFONO','Telefono','Teléfono'),r['FECHA']||r['Fecha']||''));
+    vRows.forEach(r=>{
+      // Encabezado TELEFONO no siempre matchea (tilde/mayúscula/otro nombre); el
+      // teléfono siempre está en la columna K de Ventas (_col10) como respaldo,
+      // validado con cara de teléfono (6+ dígitos seguidos).
+      const telHeader=getCol(r,'TELEFONO','Teléfono','TELÉFONO','Telefono','telefono','Cel','Celular');
+      const telColK=(r['_col10']||'').toString();
+      const telRaw=telHeader||(/\d{6,}/.test(telColK)?telColK:'');
+      acum(r['CLIENTE']||r['Cliente'],telRaw,r['FECHA']||r['Fecha']||'');
+    });
     fRows.forEach(r=>acum(r['NOMBRE'],r['TELEFONO'],r['Fecha compra']||r['Fecha envio']||r['Fecha envío']||''));
     ausManualLeer().forEach(m=>{const key=ausKey(m.telefono,m.nombre);if(!idx[key])idx[key]={nombre:m.nombre,telefono:m.telefono,ultimaFecha:null,key,manual:true};});
     ausData=Object.values(idx).sort((a,b)=>{
