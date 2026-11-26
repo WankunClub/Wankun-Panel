@@ -60,7 +60,11 @@ async function ausCargarClientes(){
   if(ausCargando)return;ausCargando=true;
   const st=document.getElementById('aus-status');st.textContent='Cargando…';
   try{
-    const[vRows,fRows]=await Promise.all([fetchCSV('Ventas'),fetchCSV('Flex meli').catch(()=>[])]);
+    // Solo canal directo (Ventas): la regla del proyecto es no mezclar nunca la
+    // lógica de recompra con Flex Meli (volumen altísimo de Mercado Libre, en su
+    // mayoría compras sueltas, sin ID de cliente propio). Mezclarla fue lo que
+    // infló la lista a miles de "compradores".
+    const vRows=await fetchCSV('Ventas');
     const idx={};
     function upsert(key,nombre,telefono,f,manual){
       const ex=idx[key];
@@ -87,17 +91,9 @@ async function ausCargarClientes(){
       const key=idCliente?('ID:'+idCliente):ausKey(telRaw,nombre);
       upsert(key,nombre,(telN&&telN.length>=8)?telRaw:'',f);
     });
-    fRows.forEach(r=>{
-      const nombre=(r['NOMBRE']||'').trim();if(!nombre)return;
-      const telRaw=(r['TELEFONO']||'').toString();
-      const telN=ausNormTel(telRaw);
-      const f=parseFecha(r['Fecha compra']||r['Fecha envio']||r['Fecha envío']||'');
-      upsert(ausKey(telRaw,nombre),nombre,(telN&&telN.length>=8)?telRaw:'',f);
-    });
     ausManualLeer().forEach(m=>upsert(ausKey(m.telefono,m.nombre),m.nombre,m.telefono,null,true));
-    // Flex Meli no tiene ID propio: si un cliente aparece también con el mismo
-    // teléfono del lado de Ventas (clave 'ID:...'), es la misma persona — unificar
-    // para no mostrarla dos veces en la lista (y sumar su historial de fechas).
+    // Un cliente puede tener dos ID distintos si en algún momento se cargó mal
+    // (p.ej. dos altas por error) pero comparte teléfono: unificar por las dudas.
     const porTel={},sinTel=[];
     Object.values(idx).forEach(c=>{
       const telN=ausNormTel(c.telefono);
@@ -127,7 +123,12 @@ async function ausCargarClientes(){
       if(freq!==null){const prox=freq-dias;estado=prox<-5?'vencido':(prox<=5?'proximo':'ok');}
       else estado=dias>45?'vencido':(dias>38?'proximo':'ok');
       c.estadoRecompra=estado;
-      c.urgente=c.manual||estado==='vencido'||estado==='proximo';
+      // Tope de actividad: "vencido" sin techo marca para siempre a cualquiera que
+      // compró una sola vez hace un año (no es alguien que espera un pedido esta
+      // semana, es un cliente que ya se fue). Sin esto, casi toda la base histórica
+      // termina "vencida" y la lista deja de ser chica. Solo cuenta como urgente si
+      // compró hace 60 días o menos — ahí sí hay una relación activa en curso.
+      c.urgente=c.manual||(dias<=60&&(estado==='vencido'||estado==='proximo'));
     }
     const combinados=[...Object.values(porTel),...sinTel];
     combinados.forEach(calcularEstado);
