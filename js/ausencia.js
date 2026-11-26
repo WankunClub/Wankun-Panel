@@ -25,7 +25,7 @@ function ausSumarDias(iso,n){const[y,m,d]=iso.split('-').map(Number);const f=new
 function ausPlantilla(desde,hasta){
   if(!desde||!hasta)return'';
   const vuelve=ausSumarDias(hasta,1);
-  return 'Buen día [Nombre]! Queremos contarte que entre el '+ausFmtFecha(desde)+' y el '+ausFmtFecha(hasta)+' inclusive Wankun Club no va a estar recibiendo pedidos. Si necesitás que coordinemos la reposición para esos días, avisanos hoy por favor, para que no le falte alimento a tu perrito en esos días. El '+ausFmtFecha(vuelve)+' retomamos todo con normalidad. ¡Gracias por elegirnos y confiar en nosotros siempre! Nacho';
+  return 'Buen día [Nombre]. ¿Cómo estás? Queremos contarte que entre el '+ausFmtFecha(desde)+' y el '+ausFmtFecha(hasta)+' inclusive Wankun Club no estará recibiendo pedidos.\n\nSi necesitás que coordinemos la reposición para esos días, avisanos hoy por favor, para que no le falte alimento a tu perrito en esos días. El '+ausFmtFecha(vuelve)+' retomamos todo con normalidad. ¡Gracias por elegirnos y confiar en nosotros siempre!\n\n\nNacho.';
 }
 
 function ausGuardarTpl(){
